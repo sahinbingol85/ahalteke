@@ -1,0 +1,323 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ahal Teke Tenis Kulübü</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Poppins:wght@300;600&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            /* Renk Paleti */
+            --tennis-green: #1e4d2b; /* Koyu Yeşil */
+            --tennis-yellow: #ccff00; /* Neon Sarı */
+            --text-dark: #222222;
+            --text-light: #ffffff;
+            --bg-light: #f4f7f5;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            color: var(--text-dark);
+            background-color: var(--bg-light);
+        }
+
+        h1, h2, h3, .navbar-brand {
+            font-family: 'Montserrat', sans-serif;
+            font-weight: 700;
+        }
+
+        /* Navbar */
+        .navbar {
+            background-color: var(--tennis-green);
+            padding: 0.5rem 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .navbar-brand {
+            color: var(--text-light) !important;
+            letter-spacing: 1px;
+            font-size: 1.6rem;
+            display: flex;
+            align-items: center;
+        }
+
+        /* LOGO AYARLARI (NAVBAR İÇİN - GÜNCELLENDİ) */
+        .brand-logo {
+            width: 55px; /* SABİT GENİŞLİK */
+            height: 55px; /* SABİT YÜKSEKLİK (KARE OLMASI İÇİN AYNI) */
+            object-fit: contain; /* Resim kare içine yamulmadan sığsın */
+            border-radius: 10px; /* Hafif yuvarlatılmış köşe (tam kare yerine daha şık) */
+            margin-right: 15px;
+            border: 2px solid var(--tennis-yellow);
+            background-color: white;
+            padding: 2px; /* Çerçeve ile logo arası ince boşluk */
+        }
+
+        .nav-link {
+            color: rgba(255,255,255,0.85) !important;
+            margin-left: 20px;
+            font-size: 0.95rem;
+            transition: all 0.3s;
+        }
+        .nav-link:hover {
+            color: var(--tennis-yellow) !important;
+        }
+        .instagram-btn {
+            background-color: rgba(255,255,255,0.1);
+            padding: 8px 20px;
+            border-radius: 30px;
+            color: var(--tennis-yellow) !important;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s;
+        }
+        .instagram-btn:hover {
+            background-color: var(--tennis-yellow);
+            color: var(--tennis-green) !important;
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(rgba(30, 77, 43, 0.85), rgba(30, 77, 43, 0.7)), url('https://images.unsplash.com/photo-1622279457486-62dcc4a431d6?q=80&w=1920&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            color: white;
+            text-align: center;
+            position: relative;
+        }
+        .hero::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 8px;
+            background-color: white;
+        }
+        .hero h1 {
+            font-size: 4rem;
+            line-height: 1.1;
+            margin-bottom: 20px;
+        }
+        .hero span {
+            color: var(--tennis-yellow);
+        }
+        .btn-tennis {
+            background-color: var(--tennis-yellow);
+            color: var(--tennis-green);
+            padding: 15px 40px;
+            font-weight: 700;
+            border-radius: 50px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border: none;
+            transition: transform 0.3s, box-shadow 0.3s;
+            text-decoration: none;
+            display: inline-block;
+        }
+        .btn-tennis:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+            background-color: #d9ff33;
+            color: var(--tennis-green);
+        }
+
+        /* Sections */
+        .section-padding {
+            padding: 90px 0;
+        }
+        .section-title {
+            color: var(--tennis-green);
+            margin-bottom: 20px;
+            font-size: 2.5rem;
+        }
+        .divider {
+            width: 80px;
+            height: 5px;
+            background-color: var(--tennis-yellow);
+            margin-bottom: 30px;
+        }
+
+        /* Images */
+        .about-img {
+            border-radius: 20px;
+            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+            width: 100%;
+            height: auto;
+            object-fit: cover;
+        }
+
+        /* Footer */
+        footer {
+            background-color: var(--tennis-green);
+            color: var(--text-light);
+            padding: 60px 0 30px;
+            text-align: center;
+            border-top: 8px solid white;
+        }
+
+        /* LOGO AYARLARI (FOOTER İÇİN - GÜNCELLENDİ) */
+        .footer-logo {
+            width: 120px; /* SABİT BÜYÜK KARE */
+            height: 120px;
+            object-fit: contain;
+            border-radius: 15px;
+            border: 3px solid var(--tennis-yellow);
+            margin-bottom: 30px;
+            background-color: white;
+            padding: 5px;
+        }
+
+        .footer-link {
+            color: white;
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+        .footer-link:hover {
+            color: var(--tennis-yellow);
+        }
+        .map-link {
+            color: var(--tennis-yellow);
+            text-decoration: none;
+            font-weight: 500;
+        }
+        .map-link:hover {
+            text-decoration: underline;
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg fixed-top">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <img src="{% static 'core/logo.jpg' %}" alt="Ahal Teke Logo" class="brand-logo">
+                AHAL TEKE TENİS KULUBÜ
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon" style="filter: invert(1);"></span>
+            </button>
+            <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+                <ul class="navbar-nav align-items-center">
+                    <li class="nav-item"><a class="nav-link" href="#hakkimizda">Kulüp</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#galeri">Kortlar</a></li>
+                    <li class="nav-item"><a class="nav-link" href="#iletisim">İletişim</a></li>
+                    <li class="nav-item ms-lg-3 mt-3 mt-lg-0">
+                        <a class="nav-link instagram-btn" href="https://instagram.com/ahalteketeniskulubu" target="_blank">
+                            <i class="fa-brands fa-instagram fa-lg"></i> Takip Et
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <header class="hero">
+        <div class="container">
+            <p class="text-uppercase mb-2" style="letter-spacing: 3px; font-weight: 600; color: var(--tennis-yellow);">Profesyonel Tenis Akademisi</p>
+            <h1>OYUNU<br><span>DEĞİŞTİR.</span></h1>
+            <p class="lead mb-5" style="opacity: 0.9;">Ahal Teke ruhuyla, kortta hız ve dayanıklılığın yeni adresi.</p>
+            <a href="#iletisim" class="btn btn-tennis">İletişime Geç</a>
+        </div>
+    </header>
+
+    <section id="hakkimizda" class="section-padding">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-md-6 mb-4 mb-md-0">
+                    <img src="https://images.unsplash.com/photo-1595435934249-5df7ed86e1c0?q=80&w=800&auto=format&fit=crop" class="img-fluid about-img" alt="Tenis Antrenmanı">
+                </div>
+                <div class="col-md-6 ps-md-5">
+                    <h2 class="section-title">Disiplin ve Tutku</h2>
+                    <div class="divider"></div>
+                    <p class="lead text-muted">"Tenis sadece bir spor değil, bir karakter eğitimidir."</p>
+                    <p>Ahal Teke Tenis Kulübü olarak amacımız, çocuklarımıza raket tutmayı öğretmekten ötesidir. Dünyanın en dayanıklı atlarından ilham alan ismimizle, kortta gösterilen eforun hayatta karşılaşılan zorluklarla başa çıkma becerisine dönüştüğü bir akademi kültürünü benimsiyoruz.</p>
+                    <ul class="list-unstyled mt-4">
+                        <li class="mb-2">✅ <strong>Profesyonel Antrenörler:</strong> Her yaş grubu için özel programlar.</li>
+                        <li class="mb-2">✅ <strong>Modern Kortlar:</strong> Uluslararası standartlarda zemin kalitesi.</li>
+                        <li class="mb-2">✅ <strong>Lisanslı Sporcu Yetiştirme:</strong> Geleceğin şampiyonları için doğru adres.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <section id="galeri" class="section-padding" style="background-color: white;">
+        <div class="container text-center">
+            <h2 class="section-title">Sahadan Kareler</h2>
+            <div class="divider mx-auto"></div>
+            <p class="mb-5">Antrenmanlarımızdan ve kulüp atmosferinden anlar.</p>
+
+            <div class="row g-4">
+                <div class="col-md-4">
+                    <img src="https://images.unsplash.com/photo-1612872087720-bb876e2e67d1?q=80&w=600&auto=format&fit=crop" class="img-fluid rounded shadow-sm" alt="Tenis Kortu">
+                </div>
+                <div class="col-md-4">
+                    <img src="https://images.unsplash.com/photo-1587280501635-68a0e82cd5ff?q=80&w=600&auto=format&fit=crop" class="img-fluid rounded shadow-sm" alt="Kort çizgisi">
+                </div>
+                <div class="col-md-4">
+                    <img src="https://images.unsplash.com/photo-1560012057-4372e14c5085?q=80&w=600&auto=format&fit=crop" class="img-fluid rounded shadow-sm" alt="Raket ve Top">
+                </div>
+            </div>
+
+            <div class="mt-5">
+                <a href="https://instagram.com/ahalteketeniskulubu" target="_blank" class="btn btn-outline-dark rounded-pill px-4">
+                    <i class="fa-brands fa-instagram me-2"></i>Instagram'da Bizi Takip Edin
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <footer id="iletisim">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-md-8">
+                    <img src="{% static 'core/logo.jpg' %}" alt="Ahal Teke Logo" class="footer-logo">
+
+                    <h3 class="mb-4">İletişim ve Ulaşım</h3>
+                    <p class="mb-5" style="opacity: 0.8;">Kort kiralama, özel ders ve akademi kayıtları için bize ulaşın.</p>
+
+                    <div class="mb-4">
+                        <i class="fa-solid fa-location-dot fa-2x mb-2" style="color: var(--tennis-yellow);"></i>
+                        <br>
+                        <a href="https://www.google.com/maps/search/?api=1&query=Emniyet+Mahallesi,+Alparslan+T%C3%BCrke%C5%9F+Cd.+No:12,+06052+Yenimahalle,+Ankara,+Turkey" target="_blank" class="map-link fs-5">
+                            Emniyet Mahallesi, Alparslan Türkeş Cd. No:12,<br>06052 Yenimahalle, Ankara
+                        </a>
+                        <div class="small mt-1 text-white-50">(Haritada görmek için adrese tıklayın)</div>
+                    </div>
+
+                    <div class="d-flex justify-content-center gap-4 flex-wrap mb-5">
+                        <a href="tel:05313788361" class="btn btn-tennis px-4">
+                            <i class="fa-solid fa-phone me-2"></i>0 (531) 378 83 61
+                        </a>
+                        <a href="tel:05342139474" class="btn btn-tennis px-4">
+                            <i class="fa-solid fa-phone me-2"></i>0 (534) 213 94 74
+                        </a>
+                    </div>
+
+                    <hr style="border-color: rgba(255,255,255,0.2); margin-top: 40px;">
+
+                    <div class="d-flex justify-content-center gap-3">
+                        <a href="https://instagram.com/ahalteketeniskulubu" target="_blank" class="footer-link">
+                            <i class="fa-brands fa-instagram fa-2x"></i>
+                        </a>
+                    </div>
+
+                    <p class="small mt-3 mb-0">© 2026 Ahal Teke Tenis Kulübü</p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
