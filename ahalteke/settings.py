@@ -36,7 +36,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
-    # Whitenoise burada olmalı (Security'den hemen sonra):
+    # WhiteNoise Middleware'i BURADA olmalı (Security'den hemen sonra):
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -113,22 +113,19 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/5.0/howto/static-files/
 
 STATIC_URL = 'static/'
+
+# Vercel'in dosyaları toplayacağı yer (Root)
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
-# Whitenoise Sıkıştırma Ayarı (Vercel için kritik)
+# WhiteNoise Sıkıştırma Ayarı (Vercel'de resimlerin görünmesi için KRİTİK)
 STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Django'nun statik dosyaları (logo vb.) nerede arayacağı
+STATICFILES_DIRS = [
+    os.path.join(BASE_DIR, "core/static"),
+]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
-
-# settings.py dosyasının en altı
-
-STATIC_URL = 'static/'
-
-# Eğer geliştirme aşamasındaysak (Localde) şu ayar gerekebilir:
-import os
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "core/static"),
-]
