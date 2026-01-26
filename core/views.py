@@ -1,5 +1,9 @@
 from django.shortcuts import render
 
+# Ana Sayfa
 def index(request):
-    # Turnuva verilerini kaldırdık, sadece sayfayı gösteriyoruz.
     return render(request, 'core/index.html')
+
+# Yeni Turnuvalar Sayfası
+def turnuvalar(request):
+    return render(request, 'core/turnuvalar.html')
