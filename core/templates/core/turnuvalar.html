@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Turnuvalar | Ahal Teke Tenis Kulübü</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;800&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --main-navy: #0a2342;
+            --accent-green: #28a745;
+            --text-dark: #222222;
+            --text-light: #ffffff;
+            --bg-light: #f8f9fa;
+        }
+        body {
+            font-family: 'Poppins', sans-serif;
+            color: var(--text-dark);
+            background-color: var(--bg-light);
+            padding-top: 76px; /* Navbar yüksekliği kadar boşluk */
+        }
+        h1, h2, h3, .navbar-brand, .btn { font-family: 'Montserrat', sans-serif; font-weight: 700; }
+        /* Navbar Still */
+        .navbar { background-color: var(--main-navy); padding: 0.5rem 0; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .navbar-brand { color: var(--text-light) !important; letter-spacing: 1px; font-size: 1.5rem; display: flex; align-items: center; font-weight: 800; }
+        .brand-logo { width: 50px; height: 50px; object-fit: contain; border-radius: 8px; margin-right: 12px; border: 2px solid var(--accent-green); background-color: white; padding: 2px; }
+        .nav-link { color: rgba(255,255,255,0.8) !important; margin-left: 20px; font-size: 0.95rem; font-weight: 600; transition: all 0.3s; }
+        .nav-link:hover, .nav-link.active { color: var(--accent-green) !important; }
+        .instagram-btn { background-color: rgba(40, 167, 69, 0.15); padding: 8px 20px; border-radius: 30px; color: var(--accent-green) !important; font-weight: bold; display: flex; align-items: center; gap: 8px; transition: all 0.3s; border: 1px solid var(--accent-green); }
+        .instagram-btn:hover { background-color: var(--accent-green); color: white !important; }
+
+        /* Turnuva Sayfası Özel Stiller */
+        .tournament-hero {
+            background-color: var(--main-navy);
+            color: white;
+            padding: 80px 0;
+            text-align: center;
+            background-image: linear-gradient(rgba(10, 35, 66, 0.9), rgba(10, 35, 66, 0.8)), url('https://images.unsplash.com/photo-1554068865-24cecd4e34b8?q=80&w=1920&auto=format&fit=crop');
+            background-size: cover;
+            background-position: center;
+        }
+        .coming-soon-box {
+            background: white;
+            border-radius: 20px;
+            padding: 50px;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.1);
+            text-align: center;
+            border-top: 6px solid var(--accent-green);
+            margin-top: -50px; /* Hero'nun üzerine çıksın */
+        }
+        .btn-accent { background-color: var(--accent-green); color: white; padding: 15px 45px; border-radius: 50px; text-transform: uppercase; letter-spacing: 1px; border: none; transition: all 0.3s; text-decoration: none; display: inline-block; box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3); }
+        .btn-accent:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4); background-color: #218838; color: white; }
+
+        /* Footer */
+        footer { background-color: var(--main-navy); color: var(--text-light); padding: 60px 0 30px; text-align: center; }
+        .footer-link { color: rgba(255,255,255,0.7); text-decoration: none; transition: color 0.3s; }
+        .footer-link:hover { color: var(--accent-green); }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg fixed-top navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'index' %}">
+                <img src="https://i.ibb.co/HTPhptVQ/logo.png" alt="Ahal Teke Logo" class="brand-logo">
+                AHAL TEKE
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
+                <ul class="navbar-nav align-items-center">
+                    <li class="nav-item"><a class="nav-link" href="{% url 'index' %}#hakkimizda">Kulüp</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="{% url 'turnuvalar' %}">Turnuvalar</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'index' %}#galeri">Kortlar</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'index' %}#iletisim">İletişim</a></li>
+                    <li class="nav-item ms-lg-3 mt-3 mt-lg-0">
+                        <a class="nav-link instagram-btn" href="https://instagram.com/ahalteketeniskulubu" target="_blank">
+                            <i class="fa-brands fa-instagram fa-lg"></i> Takip Et
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <section class="tournament-hero">
+        <div class="container">
+            <h1 class="display-4 fw-bolder">TURNUVA TAKVİMİ</h1>
+            <p class="lead mb-0" style="opacity: 0.9;">Rekabetin ve sportmenliğin adresi.</p>
+        </div>
+    </section>
+
+    <section class="section-padding pb-5">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-8">
+                    <div class="coming-soon-box">
+                        <span class="badge bg-accent-green mb-3" style="background-color: var(--accent-green); font-size: 1rem; padding: 10px 20px; border-radius: 30px;">ÇOK YAKINDA</span>
+                        <h2 style="color: var(--main-navy); font-size: 2.5rem; margin-bottom: 25px;">BAHAR KUPASI GELİYOR!</h2>
+                        <p class="lead text-muted mb-4">
+                            Kortlarda heyecan fırtınası estirmeye hazır mısınız? Ahal Teke Tenis Kulübü Geleneksel Bahar Turnuvası için geri sayım başladı.
+                        </p>
+                        <p class="mb-5" style="font-size: 1.1rem;">
+                            Kategoriler, başvuru tarihleri ve detaylı bilgi çok yakında burada ve sosyal medya hesaplarımızda duyurulacaktır. Raketinizi hazırlayın!
+                        </p>
+
+                        <div class="d-flex justify-content-center gap-3 flex-wrap">
+                            <a href="https://instagram.com/ahalteketeniskulubu" target="_blank" class="btn btn-accent">
+                                <i class="fa-brands fa-instagram me-2"></i> Duyuruları Takip Et
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <footer id="iletisim">
+        <div class="container">
+            <div class="d-flex justify-content-center gap-4 mt-4">
+                <a href="https://instagram.com/ahalteketeniskulubu" target="_blank" class="footer-link">
+                    <i class="fa-brands fa-instagram fa-2x"></i>
+                </a>
+                <a href="https://wa.me/905313788361" target="_blank" class="footer-link">
+                    <i class="fa-brands fa-whatsapp fa-2x"></i>
+                </a>
+            </div>
+            <p class="small mt-4 mb-0" style="opacity: 0.6;">© 2026 Ahal Teke Tenis Kulübü.</p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
