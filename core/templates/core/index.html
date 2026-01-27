@@ -190,7 +190,7 @@
         <div class="container">
             <a class="navbar-brand" href="{% url 'index' %}">
                 <img src="https://i.ibb.co/HTPhptVQ/logo.png" alt="Ahal Teke Logo" class="brand-logo">
-                AHAL TEKE TENİS KULUBÜ
+                AHAL TEKE TENİS
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -198,8 +198,8 @@
             <div class="collapse navbar-collapse justify-content-end" id="navbarNav">
                 <ul class="navbar-nav align-items-center">
                     <li class="nav-item"><a class="nav-link" href="{% url 'index' %}#hakkimizda">Kulüp</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'turnuvalar' %}">Turnuvalar</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'index' %}#galeri">Kortlar</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'turnuvalar' %}">Turnuvalar</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'index' %}#iletisim">İletişim</a></li>
                     <li class="nav-item ms-lg-3 mt-3 mt-lg-0">
                         <a class="nav-link instagram-btn" href="https://instagram.com/ahalteketeniskulubu" target="_blank">
@@ -220,7 +220,7 @@
         </div>
     </header>
 
-    <section id="hakkimizda" class="section-padding">
+<section id="hakkimizda" class="section-padding">
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-md-6 mb-5 mb-md-0">
@@ -231,12 +231,33 @@
                     <div class="divider"></div>
                     <p class="lead fw-bold" style="color: var(--main-navy);">"Tenis sadece bir spor değil, bir karakter eğitimidir."</p>
                     <p>Ahal Teke Tenis Kulübü olarak amacımız, çocuklarımıza raket tutmayı öğretmekten ötesidir. Dünyanın en dayanıklı atlarından ilham alan ismimizle, kortta gösterilen eforun hayatta karşılaşılan zorluklarla başa çıkma becerisine dönüştüğü bir akademi kültürünü benimsiyoruz.</p>
+
                     <ul class="list-unstyled mt-4">
-                        <li class="mb-3 d-flex align-items-center"><i class="fa-solid fa-circle-check me-3" style="color: var(--accent-green);"></i> <strong>Profesyonel Antrenörler:</strong> Her yaş grubu için özel programlar.</li>
-                        <li class="mb-3 d-flex align-items-center"><i class="fa-solid fa-circle-check me-3" style="color: var(--accent-green);"></i> <strong>Modern Kortlar:</strong> Uluslararası standartlarda zemin kalitesi.</li>
-                        <li class="mb-3 d-flex align-items-center"><i class="fa-solid fa-circle-check me-3" style="color: var(--accent-green);"></i> <strong>Lisanslı Sporcu Yetiştirme:</strong> Geleceğin şampiyonları.</li>
+                        <li class="mb-4 d-flex align-items-start">
+                            <i class="fa-solid fa-circle-check fa-lg mt-1 me-3" style="color: var(--accent-green);"></i>
+                            <div>
+                                <strong class="d-block" style="color: var(--main-navy); font-size: 1.1rem;">Profesyonel Antrenörler:</strong>
+                                <span class="text-muted">Her yaş grubu ve seviye için kişiye özel programlar.</span>
+                            </div>
+                        </li>
+
+                        <li class="mb-4 d-flex align-items-start">
+                            <i class="fa-solid fa-circle-check fa-lg mt-1 me-3" style="color: var(--accent-green);"></i>
+                            <div>
+                                <strong class="d-block" style="color: var(--main-navy); font-size: 1.1rem;">Modern Kortlar:</strong>
+                                <span class="text-muted">Uluslararası standartlarda zemin ve ışıklandırma kalitesi.</span>
+                            </div>
+                        </li>
+
+                        <li class="mb-4 d-flex align-items-start">
+                            <i class="fa-solid fa-circle-check fa-lg mt-1 me-3" style="color: var(--accent-green);"></i>
+                            <div>
+                                <strong class="d-block" style="color: var(--main-navy); font-size: 1.1rem;">Lisanslı Sporcu Yetiştirme:</strong>
+                                <span class="text-muted">Geleceğin şampiyonlarını keşfediyor ve destekliyoruz.</span>
+                            </div>
+                        </li>
                     </ul>
-                </div>
+                    </div>
             </div>
         </div>
     </section>
