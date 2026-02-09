@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -35,13 +36,15 @@
             padding: 0.5rem 0;
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
+
         .navbar-brand {
             color: var(--text-light) !important;
             letter-spacing: 1px;
-            font-size: 1.5rem;
+            font-size: 1.5rem; /* PC için varsayılan boyut */
             display: flex;
             align-items: center;
             font-weight: 800;
+            white-space: nowrap; /* Normalde tek satır kalsın */
         }
 
         /* LOGO AYARLARI */
@@ -55,6 +58,22 @@
             background-color: white;
             padding: 2px;
         }
+
+        /* --- MOBİL UYUMLULUK AYARI (EKLEME BURADA) --- */
+        @media (max-width: 768px) {
+            .navbar-brand {
+                font-size: 1rem; /* Mobilde yazı boyutu küçülür */
+                white-space: normal; /* Gerekirse alt satıra geçmesine izin ver */
+                line-height: 1.2; /* Satır aralığını daralt */
+                max-width: 80%; /* Menü butonuna çarpmaması için genişlik sınırı */
+            }
+            .brand-logo {
+                width: 40px; /* Logo mobilde biraz küçülür */
+                height: 40px;
+                margin-right: 8px;
+            }
+        }
+        /* --------------------------------------------- */
 
         .nav-link {
             color: rgba(255,255,255,0.8) !important;
@@ -190,7 +209,7 @@
         <div class="container">
             <a class="navbar-brand" href="{% url 'index' %}">
                 <img src="https://i.ibb.co/HTPhptVQ/logo.png" alt="Ahal Teke Logo" class="brand-logo">
-                AHAL TEKE TENİS
+                AHAL TEKE TENİS KULÜBÜ
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
@@ -220,7 +239,7 @@
         </div>
     </header>
 
-<section id="hakkimizda" class="section-padding">
+    <section id="hakkimizda" class="section-padding">
         <div class="container">
             <div class="row align-items-center">
                 <div class="col-md-6 mb-5 mb-md-0">
@@ -257,7 +276,7 @@
                             </div>
                         </li>
                     </ul>
-                    </div>
+                </div>
             </div>
         </div>
     </section>
@@ -270,13 +289,13 @@
 
             <div class="row g-4">
                 <div class="col-md-4">
-                    <img src="https://images.pexels.com/photos/209977/pexels-photo-209977.jpeg?auto=compress&cs=tinysrgb&w=600" class="img-fluid gallery-img shadow-sm" alt="Tenis Topu">
+                    <img src="{% static 'core/galeri1.jpg' %}" class="img-fluid gallery-img shadow-sm" alt="Antreman">
                 </div>
                 <div class="col-md-4">
-                    <img src="https://images.pexels.com/photos/2961966/pexels-photo-2961966.jpeg?auto=compress&cs=tinysrgb&w=600" class="img-fluid gallery-img shadow-sm" alt="Tenis Kortu">
+                    <img src="{% static 'core/galeri2.jpg' %}" class="img-fluid gallery-img shadow-sm" alt="Tenis Raketleri">
                 </div>
                 <div class="col-md-4">
-                    <img src="https://images.pexels.com/photos/1432039/pexels-photo-1432039.jpeg?auto=compress&cs=tinysrgb&w=600" class="img-fluid gallery-img shadow-sm" alt="Raket ve Top">
+                    <img src="{% static 'core/galeri3.jpg' %}" class="img-fluid gallery-img shadow-sm" alt="Raket ve Top">
                 </div>
             </div>
 
