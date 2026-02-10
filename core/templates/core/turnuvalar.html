@@ -23,10 +23,47 @@
             padding-top: 76px; /* Navbar yüksekliği kadar boşluk */
         }
         h1, h2, h3, .navbar-brand, .btn { font-family: 'Montserrat', sans-serif; font-weight: 700; }
+
         /* Navbar Still */
         .navbar { background-color: var(--main-navy); padding: 0.5rem 0; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-        .navbar-brand { color: var(--text-light) !important; letter-spacing: 1px; font-size: 1.5rem; display: flex; align-items: center; font-weight: 800; }
-        .brand-logo { width: 50px; height: 50px; object-fit: contain; border-radius: 8px; margin-right: 12px; border: 2px solid var(--accent-green); background-color: white; padding: 2px; }
+
+        .navbar-brand {
+            color: var(--text-light) !important;
+            letter-spacing: 1px;
+            font-size: 1.5rem; /* PC Boyutu */
+            display: flex;
+            align-items: center;
+            font-weight: 800;
+            white-space: nowrap; /* Tek satırda tut */
+        }
+
+        .brand-logo {
+            width: 50px;
+            height: 50px;
+            object-fit: contain;
+            border-radius: 8px;
+            margin-right: 12px;
+            border: 2px solid var(--accent-green);
+            background-color: white;
+            padding: 2px;
+        }
+
+        /* --- MOBİL UYUMLULUK AYARI (BURASI EKLENDİ) --- */
+        @media (max-width: 768px) {
+            .navbar-brand {
+                font-size: 1rem; /* Mobilde yazı boyutu küçülür */
+                white-space: normal; /* Gerekirse alt satıra geçmesine izin ver */
+                line-height: 1.2;
+                max-width: 80%;
+            }
+            .brand-logo {
+                width: 40px; /* Logo mobilde biraz küçülür */
+                height: 40px;
+                margin-right: 8px;
+            }
+        }
+        /* --------------------------------------------- */
+
         .nav-link { color: rgba(255,255,255,0.8) !important; margin-left: 20px; font-size: 0.95rem; font-weight: 600; transition: all 0.3s; }
         .nav-link:hover, .nav-link.active { color: var(--accent-green) !important; }
         .instagram-btn { background-color: rgba(40, 167, 69, 0.15); padding: 8px 20px; border-radius: 30px; color: var(--accent-green) !important; font-weight: bold; display: flex; align-items: center; gap: 8px; transition: all 0.3s; border: 1px solid var(--accent-green); }
@@ -66,7 +103,7 @@
         <div class="container">
             <a class="navbar-brand" href="{% url 'index' %}">
                 <img src="https://i.ibb.co/HTPhptVQ/logo.png" alt="Ahal Teke Logo" class="brand-logo">
-                AHAL TEKE TENİS
+                AHAL TEKE TENİS KULÜBÜ
             </a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
                 <span class="navbar-toggler-icon"></span>
