@@ -59,7 +59,7 @@
             padding: 2px;
         }
 
-        /* --- MOBİL UYUMLULUK AYARI (EKLEME BURADA) --- */
+        /* --- MOBİL UYUMLULUK AYARI --- */
         @media (max-width: 768px) {
             .navbar-brand {
                 font-size: 1rem; /* Mobilde yazı boyutu küçülür */
@@ -73,7 +73,6 @@
                 margin-right: 8px;
             }
         }
-        /* --------------------------------------------- */
 
         .nav-link {
             color: rgba(255,255,255,0.8) !important;
@@ -200,6 +199,26 @@
             justify-content: center;
             margin: 0 auto 15px;
             color: var(--accent-green);
+        }
+
+        /* --- YÖNETİCİ BUTONU STİLİ (EKLENDİ) --- */
+        .admin-link {
+            color: rgba(255, 255, 255, 0.15); /* Normalde çok silik */
+            text-decoration: none;
+            font-size: 0.8rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.3s ease;
+            margin-top: 10px;
+            padding: 5px 10px;
+            border-radius: 20px;
+        }
+        .admin-link:hover {
+            color: white;
+            background-color: var(--accent-green);
+            opacity: 1;
+            transform: translateY(-2px);
         }
     </style>
 </head>
@@ -352,6 +371,13 @@
                     </div>
 
                     <p class="small mt-4 mb-0" style="opacity: 0.6;">© 2026 Ahal Teke Tenis Kulübü. Tüm hakları saklıdır.</p>
+
+                    <div class="mt-2">
+                        <a href="https://yonetim.ahalteketeniskulubu.com" target="_blank" class="admin-link">
+                            <i class="fa-solid fa-lock"></i> Yönetici Girişi
+                        </a>
+                    </div>
+
                 </div>
             </div>
         </div>
