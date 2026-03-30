@@ -3,6 +3,8 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.utils import timezone
 from datetime import datetime, timedelta
+from django.contrib.auth import logout, update_session_auth_hash
+from django.contrib.auth.forms import PasswordChangeForm
 
 from .models import Rezervasyon
 
@@ -143,3 +145,25 @@ def manifest_view(request):
         ]
     }
     return JsonResponse(data)
+
+# ÇIKIŞ YAPMA
+def cikis_yap(request):
+    logout(request)
+    messages.success(request, "Başarıyla çıkış yapıldı.")
+    return redirect('index')
+
+# ŞİFRE DEĞİŞTİRME
+@login_required(login_url='/admin/login/')
+def sifre_degistir(request):
+    if request.method == 'POST':
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user) # Şifre değişince oturum kapanmasın
+            messages.success(request, 'Şifreniz başarıyla güncellendi!')
+            return redirect('rezervasyon_paneli')
+        else:
+            messages.error(request, 'Lütfen hataları düzeltin.')
+    else:
+        form = PasswordChangeForm(request.user)
+    return render(request, 'core/sifre_degistir.html', {'form': form})
