@@ -20,4 +20,5 @@ urlpatterns = [
     
     # PWA Ayarları (Uygulamayı telefona kurabilmek için)
     path('sw.js', TemplateView.as_view(template_name='core/sw.js', content_type='application/javascript'), name='sw.js'),
+    path('manifest_rezervasyon.json', manifest_view, name='manifest_rezervasyon.json'),
 ]
