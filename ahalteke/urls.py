@@ -18,6 +18,9 @@ urlpatterns = [
     # ==========================================
     path('rezervasyon/', rezervasyon_paneli, name='rezervasyon_paneli'),
     path('rezervasyon/sil/<int:rez_id>/', rezervasyon_sil, name='rezervasyon_sil'),
+    # Import listesine cikis_yap ve sifre_degistir eklemeyi unutma!
+    path('cikis/', cikis_yap, name='cikis_yap'),
+    path('sifre-degistir/', sifre_degistir, name='sifre_degistir'),
     
     # PWA Ayarları (Uygulamayı telefona kurabilmek için)
     path('sw.js', TemplateView.as_view(template_name='core/sw.js', content_type='application/javascript'), name='sw.js'),
