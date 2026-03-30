@@ -4,6 +4,7 @@ Django settings for ahalteke project.
 
 from pathlib import Path
 import os
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -70,11 +71,11 @@ WSGI_APPLICATION = 'ahalteke.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
+# Neon.tech'ten aldığın linki buraya yapıştır
+VERITABANI_LINKI = "postgresql://neondb_owner:npg_mlT9hHRMZzO8@ep-falling-queen-abk9iqv8-pooler.eu-west-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': dj_database_url.config(default=VERITABANI_LINKI, conn_max_age=600)
 }
 
 
