@@ -1,0 +1,23 @@
+{
+  "id": "/rezervasyon-uygulamasi/",
+  "name": "Ahal Teke Kort Rezervasyon",
+  "short_name": "AT Rezervasyon",
+  "start_url": "/rezervasyon/",
+  "scope": "/rezervasyon/",
+  "display": "standalone",
+  "background_color": "#f4f6f9",
+  "theme_color": "#0a2342",
+  "description": "Ahal Teke Tenis Kulübü personel kort rezervasyon sistemi.",
+  "icons": [
+    {
+      "src": "https://i.ibb.co/HTPhptVQ/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://i.ibb.co/HTPhptVQ/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
