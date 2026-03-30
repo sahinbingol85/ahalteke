@@ -7,13 +7,10 @@ from datetime import datetime, timedelta
 from .models import Rezervasyon
 
 # ==========================================
-# ANA SAYFA VE SUBDOMAIN ZEKASI
+# ANA SAYFA EKRANI
 # ==========================================
 def index(request):
-    # Eğer ziyaretçi adres çubuğuna 'rezervasyon' yazıp geldiyse onu direkt sisteme ışınla!
-    if request.get_host() and 'rezervasyon' in request.get_host():
-        return redirect('rezervasyon_paneli')
-        
+    # Artık subdomain kontrolü yapmıyoruz, direkt ana sayfayı gösteriyoruz.
     return render(request, 'core/index.html')
 
 # ==========================================
