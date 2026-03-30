@@ -4,7 +4,7 @@ from django.views.generic import TemplateView  # PWA (Mobil uygulama) için ekle
 
 # İhtiyacımız olan tüm view'ları import ediyoruz
 # urls.py dosyasının en üstü
-from core.views import index, turnuvalar, rezervasyon_paneli, rezervasyon_sil, manifest_view
+from core.views import index, turnuvalar, rezervasyon_paneli, rezervasyon_sil, manifest_view, cikis_yap, sifre_degistir
 
 urlpatterns = [
     path('admin/', admin.site.urls),
