@@ -120,4 +120,26 @@ def rezervasyon_sil(request, rez_id):
     return redirect(f'/rezervasyon/?tarih={donulecek_tarih}')
 
 def manifest_view(request):
-    return render(request, 'core/manifest_rezervasyon.json', content_type='application/json')
+    data = {
+        "name": "Ahal Teke Rezervasyon",
+        "short_name": "AT Rezervasyon",
+        "start_url": "/rezervasyon/",
+        "display": "standalone",
+        "background_color": "#f4f6f9",
+        "theme_color": "#0a2342",
+        "icons": [
+            {
+                "src": "https://i.ibb.co/HTPhptVQ/logo.png",
+                "sizes": "192x192",
+                "type": "image/png",
+                "purpose": "any maskable"
+            },
+            {
+                "src": "https://i.ibb.co/HTPhptVQ/logo.png",
+                "sizes": "512x512",
+                "type": "image/png",
+                "purpose": "any maskable"
+            }
+        ]
+    }
+    return JsonResponse(data)
