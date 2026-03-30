@@ -7,7 +7,7 @@ from datetime import datetime, timedelta
 from .models import Rezervasyon
 
 # ==========================================
-# ANA SAYFA EKRANI
+# ANA SAYFA 
 # ==========================================
 def index(request):
     # Artık subdomain kontrolü yapmıyoruz, direkt ana sayfayı gösteriyoruz.
@@ -118,3 +118,6 @@ def rezervasyon_sil(request, rez_id):
     rez.delete()
     messages.success(request, "Rezervasyon iptal edildi.")
     return redirect(f'/rezervasyon/?tarih={donulecek_tarih}')
+
+def manifest_view(request):
+    return render(request, 'core/manifest_rezervasyon.json', content_type='application/json')
