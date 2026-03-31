@@ -7,28 +7,17 @@ from django.contrib.auth import logout, update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
 from django.http import JsonResponse
 
-from .models import Rezervasyon
+# KapaliDurum modelini de buraya ekledik!
+from .models import Rezervasyon, KapaliDurum 
 
-# ==========================================
-# ANA SAYFA 
-# ==========================================
 def index(request):
-    # Artık subdomain kontrolü yapmıyoruz, direkt ana sayfayı gösteriyoruz.
     return render(request, 'core/index.html')
 
-# ==========================================
-# ESKİ TURNUVALAR SAYFASI (Değişmedi)
-# ==========================================
 def turnuvalar(request):
     return render(request, 'core/turnuvalar.html')
 
-# ==========================================
-# KORT REZERVASYON SİSTEMİ (SADECE PERSONEL)
-# ==========================================
-# Giriş yapmamış hocaları Django'nun admin girişine yönlendirir
 @login_required(login_url='/giris/')
 def rezervasyon_paneli(request):
-    # GÜVENLİK: Sadece yetkili personel (Hocalar ve Yöneticiler) girebilir
     if not request.user.is_staff:
         messages.error(request, 'Bu sayfaya sadece yetkili kulüp personeli erişebilir!')
         return redirect('index')
@@ -51,6 +40,11 @@ def rezervasyon_paneli(request):
         for hafta in range(tekrar_hafta):
             hedef_tarih = secili_tarih + timedelta(days=7 * hafta)
             
+            # GÜVENLİK: Seçilen gün ve kort kapalıysa o haftayı atla!
+            hedef_gun_kapali = KapaliDurum.objects.filter(tarih=hedef_tarih)
+            if hedef_gun_kapali.filter(kort='Hepsi').exists() or hedef_gun_kapali.filter(kort=kort_no).exists():
+                continue # Kapalı, kayıt yapma diğer haftaya geç
+
             dolu_mu = Rezervasyon.objects.filter(kort=kort_no, tarih=hedef_tarih, saat=saat).exists()
             
             if not dolu_mu:
@@ -66,17 +60,22 @@ def rezervasyon_paneli(request):
 
         if basarili_kayit_sayisi > 0:
             if tekrar_hafta > 1:
-                messages.success(request, f"Harika! {tekrar_hafta} haftalık periyot için rezervasyon oluşturuldu.")
+                messages.success(request, f"Harika! {basarili_kayit_sayisi} hafta için rezervasyon oluşturuldu. (Kapalı/Dolu günler atlandı)")
             else:
                 messages.success(request, "Rezervasyon başarıyla eklendi.")
         else:
-            messages.error(request, "Seçilen saatlerde zaten başka bir rezervasyon mevcut!")
+            messages.error(request, "İşlem başarısız! Seçilen saatler dolu veya kort o gün kapalı.")
             
         return redirect(f'/rezervasyon/?tarih={secili_tarih.strftime("%Y-%m-%d")}')
 
     # MATRIX (IZGARA) EKRANINI HAZIRLAMA
     gunun_rezervasyonlari = Rezervasyon.objects.filter(tarih=secili_tarih)
     rez_dict = {(r.kort, r.saat): r for r in gunun_rezervasyonlari}
+
+    # O gün için kapalı olan durumları çekiyoruz
+    kapali_durumlar = KapaliDurum.objects.filter(tarih=secili_tarih)
+    kapali_kortlar = {k.kort: k.sebep for k in kapali_durumlar}
+    genel_kapanis = kapali_kortlar.get('Hepsi') # Tüm kulüp kapalıysa
 
     saat_dilimleri = [f"{s:02d}:00" for s in range(8, 24)]
     kortlar = ['1', '2', '3', '4']
@@ -85,15 +84,28 @@ def rezervasyon_paneli(request):
     for saat in saat_dilimleri:
         satir = {
             'saat': saat,
-            'saat_bitis': f"{int(saat[:2])+1:02d}:00",
             'kortlar': []
         }
         for kort in kortlar:
             rez = rez_dict.get((kort, saat))
+            sebep = genel_kapanis or kapali_kortlar.get(kort)
+            
+            # Kortun o anki durumunu belirliyoruz
+            if sebep:
+                durum = 'kapali'
+                gosterilecek_sebep = sebep
+            elif rez:
+                durum = 'dolu'
+                gosterilecek_sebep = None
+            else:
+                durum = 'bos'
+                gosterilecek_sebep = None
+
             satir['kortlar'].append({
                 'kort_no': kort,
-                'durum': 'dolu' if rez else 'bos',
-                'rezervasyon': rez 
+                'durum': durum,
+                'rezervasyon': rez,
+                'sebep': gosterilecek_sebep # HTML'e sebebi gönderiyoruz
             })
         matrix.append(satir)
 
@@ -108,9 +120,6 @@ def rezervasyon_paneli(request):
     }
     return render(request, 'core/rezervasyon.html', context)
 
-# ==========================================
-# REZERVASYON SİLME FONKSİYONU
-# ==========================================
 @login_required(login_url='/giris/')
 def rezervasyon_sil(request, rez_id):
     if not request.user.is_staff:
@@ -126,8 +135,8 @@ def manifest_view(request):
     data = {
         "name": "Ahal Teke Rezervasyon",
         "short_name": "AT Rezervasyon",
-        "start_url": "/giris/",  # DEĞİŞEN KISIM: Uygulama giriş sayfasından başlayacak
-        "scope": "/",            # DEĞİŞEN KISIM: Tüm siteyi kapsayacak
+        "start_url": "/giris/",
+        "scope": "/",
         "display": "standalone",
         "background_color": "#f4f6f9",
         "theme_color": "#0a2342",
@@ -148,20 +157,18 @@ def manifest_view(request):
     }
     return JsonResponse(data)
 
-# ÇIKIŞ YAPMA
 def cikis_yap(request):
     logout(request)
     messages.info(request, "Güvenli bir şekilde çıkış yaptınız.")
-    return redirect('giris')  # <-- Ana sayfa yerine giriş ekranına yönlendiriyoruz
+    return redirect('giris')
 
-# ŞİFRE DEĞİŞTİRME
 @login_required(login_url='/giris/')
 def sifre_degistir(request):
     if request.method == 'POST':
         form = PasswordChangeForm(request.user, request.POST)
         if form.is_valid():
             user = form.save()
-            update_session_auth_hash(request, user) # Şifre değişince oturum kapanmasın
+            update_session_auth_hash(request, user)
             messages.success(request, 'Şifreniz başarıyla güncellendi!')
             return redirect('rezervasyon_paneli')
         else:
