@@ -68,12 +68,29 @@
 <body>
 
     <nav class="navbar navbar-dark">
-        <div class="container d-flex justify-content-center">
+        <div class="container d-flex justify-content-between align-items-center">
             <div class="navbar-brand m-0">
                 <i class="fa-solid fa-calendar-check text-success me-2"></i> KORT REZERVASYON
             </div>
+            
+            <div class="d-flex align-items-center">
+                <a href="{% url 'cikis_yap' %}" class="btn btn-outline-danger btn-sm fw-bold border-2">
+                    <i class="fa-solid fa-power-off"></i> <span class="d-none d-md-inline">Çıkış</span>
+                </a>
+            </div>
         </div>
     </nav>
+    
+    <div class="container mt-2">
+        <div class="d-flex justify-content-between align-items-center p-2 px-3 bg-white shadow-sm rounded-4 border-start border-4 border-primary">
+            <div class="small text-muted">
+                <i class="fa-solid fa-user-tie me-1"></i> <strong>Hocam:</strong> {{ request.user.username }}
+            </div>
+            <a href="{% url 'sifre_degistir' %}" class="btn btn-link btn-sm text-decoration-none text-primary fw-600">
+                <i class="fa-solid fa-key me-1"></i> Şifre Değiştir
+            </a>
+        </div>
+    </div>
 
     <div class="container mt-3">
         
