@@ -37,3 +37,23 @@ class Rezervasyon(models.Model):
 
     def __str__(self):
         return f"Kort {self.kort} | {self.tarih.strftime('%d.%m.%Y')} - {self.saat} | {self.kisi_adi}"
+
+class KapaliDurum(models.Model):
+    KORT_SECIMLERI = [
+        ('Hepsi', 'Tüm Kulüp Kapalı (Tatil/Hava Durumu)'),
+        ('1', 'Kort 1'),
+        ('2', 'Kort 2'),
+        ('3', 'Kort 3'),
+        ('4', 'Kort 4'),
+    ]
+    
+    tarih = models.DateField(verbose_name="Kapanma Tarihi")
+    kort = models.CharField(max_length=10, choices=KORT_SECIMLERI, verbose_name="Kapatılacak Kort", default='Hepsi')
+    sebep = models.CharField(max_length=100, verbose_name="Sebep (Örn: Yağmur, Kordaj Bakımı, Resmi Tatil)")
+
+    class Meta:
+        verbose_name = "Kapalı Gün / Tadilat"
+        verbose_name_plural = "Kapalı Günler ve Tadilatlar"
+
+    def __str__(self):
+        return f"{self.tarih.strftime('%d.%m.%Y')} | {self.get_kort_display()} | {self.sebep}"

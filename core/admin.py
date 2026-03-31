@@ -1,7 +1,5 @@
 from django.contrib import admin
-from .models import Rezervasyon
-
-# Register your models here.
+from .models import Rezervasyon, KapaliDurum
 
 # ==========================================
 # KORT REZERVASYON ADMİN PANELİ
@@ -16,3 +14,17 @@ class RezervasyonAdmin(admin.ModelAdmin):
     
     # Yukarıdaki arama çubuğunun nerelerde arama yapacağı
     search_fields = ('kisi_adi', 'aciklama')
+
+# ==========================================
+# KAPALI GÜNLER VE TADİLAT ADMİN PANELİ
+# ==========================================
+@admin.register(KapaliDurum)
+class KapaliDurumAdmin(admin.ModelAdmin):
+    # Admin listesinde görünecek sütunlar
+    list_display = ('tarih', 'kort', 'sebep')
+    
+    # Sağ tarafta çıkacak filtreleme seçenekleri
+    list_filter = ('tarih', 'kort')
+    
+    # Yukarıdaki arama çubuğunun nerelerde arama yapacağı
+    search_fields = ('sebep',)
