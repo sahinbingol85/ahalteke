@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Kort Rezervasyon | Ahal Teke Yönetim</title>
     
-    <link rel="manifest" href="/manifest_rezervasyon.json">
+    <link rel="manifest" href="{% url 'manifest_rezervasyon.json' %}">
     <meta name="theme-color" content="#0a2342">
     <link rel="apple-touch-icon" href="https://i.ibb.co/HTPhptVQ/logo.png">
     <meta name="apple-mobile-web-app-capable" content="yes">
@@ -22,17 +22,14 @@
         body { font-family: 'Poppins', sans-serif; background-color: #f4f6f9; padding-bottom: 50px; }
         h1, h2, h3, .navbar-brand { font-family: 'Montserrat', sans-serif; font-weight: 700; }
         
-        /* ÜST MENÜ VE TARİH SEÇİCİ */
         .navbar { background-color: var(--main-navy); padding: 15px 0; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
         .date-navigator { background: white; padding: 15px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin: 20px auto; display: flex; justify-content: space-between; align-items: center; max-width: 600px; }
         .date-btn { background-color: #e9ecef; color: var(--main-navy); border: none; padding: 10px 20px; border-radius: 10px; font-weight: bold; text-decoration: none; transition: 0.3s; z-index: 2; }
         .date-btn:hover { background-color: var(--main-navy); color: white; }
         
-        /* TARİH BAŞLIĞI VE HOVER EFEKTİ */
         .current-date { font-size: 1.2rem; font-weight: 700; color: var(--main-navy); margin: 0; transition: 0.3s; }
         .date-form:hover .current-date { color: var(--accent-green); }
 
-        /* MATRIX TABLOSU */
         .table-container { background: white; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); overflow: hidden; }
         .table-matrix { width: 100%; margin-bottom: 0; table-layout: fixed; }
         .table-matrix th { background-color: var(--main-navy); color: white; text-align: center; padding: 15px 5px; border: 1px solid rgba(255,255,255,0.1); font-size: 0.9rem; }
@@ -40,7 +37,6 @@
         
         .time-cell { background-color: #f8f9fa; font-weight: 700; color: var(--main-navy); font-size: 0.9rem; }
         
-        /* BOŞ VE DOLU HÜCRE TASARIMLARI */
         .cell-empty { background-color: rgba(40, 167, 69, 0.05); cursor: pointer; position: relative; }
         .cell-empty:hover { background-color: rgba(40, 167, 69, 0.2); }
         .cell-empty i { color: var(--accent-green); opacity: 0.3; font-size: 1.5rem; transition: 0.3s; }
@@ -51,17 +47,21 @@
         .rez-name { font-weight: 800; font-size: 0.85rem; color: #856404; display: block; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 3px; }
         .rez-note { font-size: 0.7rem; color: #6c757d; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         
-        /* MOBİL (KAYDIRMA İPTAL, EKRANA SIĞDIRMA) */
+        /* YENİ: KAPALI HÜCRE TASARIMI */
+        .cell-closed { background-color: #e9ecef; color: #6c757d; cursor: not-allowed; position: relative; padding: 10px !important; background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.03) 10px, rgba(0,0,0,0.03) 20px); border-left: 5px solid #6c757d !important; }
+        .closed-title { font-weight: 800; font-size: 0.85rem; display: block; line-height: 1.2; text-transform: uppercase; margin-bottom: 3px; }
+        .closed-reason { font-size: 0.7rem; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
         @media (max-width: 768px) {
             .table-matrix th { font-size: 0.6rem; padding: 8px 1px; }
             .time-cell { font-size: 0.65rem; width: 14% !important; padding: 2px;}
-            .rez-name { font-size: 0.65rem; white-space: normal; overflow: visible; word-wrap: break-word; }
-            .rez-note { display: none; } /* Mobilde not gizlenir, detaya tıklayınca görünür */
+            .rez-name, .closed-title { font-size: 0.65rem; white-space: normal; overflow: visible; word-wrap: break-word; }
+            .rez-note, .closed-reason { display: none; } 
             .date-btn { padding: 6px 10px; font-size: 0.75rem; }
             .current-date { font-size: 0.9rem; }
-            .table-container { overflow-x: hidden; } /* Kaydırmayı kapat */
-            .table-matrix { min-width: 100%; } /* Ekrana tam sığdır */
-            .cell-full { padding: 4px !important; }
+            .table-container { overflow-x: hidden; } 
+            .table-matrix { min-width: 100%; } 
+            .cell-full, .cell-closed { padding: 4px !important; }
         }
     </style>
 </head>
@@ -70,7 +70,7 @@
     <nav class="navbar navbar-dark">
         <div class="container d-flex justify-content-between align-items-center">
             <div class="navbar-brand m-0">
-                <i class="fa-solid fa-calendar-check text-success me-2"></i> KORT REZERVASYON SİSTEMİ
+                <i class="fa-solid fa-calendar-check text-success me-2"></i> KORT REZERVASYON
             </div>
             
             <div class="d-flex align-items-center">
@@ -84,7 +84,7 @@
     <div class="container mt-2">
         <div class="d-flex justify-content-between align-items-center p-2 px-3 bg-white shadow-sm rounded-4 border-start border-4 border-primary">
             <div class="small text-muted">
-                <i class="fa-solid fa-user-tie me-1"></i> <strong>Kullanıcı:</strong> {{ request.user.username }}
+                <i class="fa-solid fa-user-tie me-1"></i> <strong>Hocam:</strong> {{ request.user.username }}
             </div>
             <a href="{% url 'sifre_degistir' %}" class="btn btn-link btn-sm text-decoration-none text-primary fw-600">
                 <i class="fa-solid fa-key me-1"></i> Şifre Değiştir
@@ -143,6 +143,13 @@
                                     <td class="cell-empty" onclick="acRezervasyonModal('{{ kort.kort_no }}', '{{ satir.saat }}', '{{ secili_tarih|date:"d M Y" }}')">
                                         <i class="fa-solid fa-plus"></i>
                                     </td>
+                                
+                                {% elif kort.durum == 'kapali' %}
+                                    <td class="cell-closed" onclick="Swal.fire({title: 'Kapalı!', text: '{{ kort.sebep }}', icon: 'info', confirmButtonColor: '#0a2342'})">
+                                        <span class="closed-title"><i class="fa-solid fa-lock text-secondary me-1"></i>KAPALI</span>
+                                        <span class="closed-reason">{{ kort.sebep }}</span>
+                                    </td>
+                                    
                                 {% else %}
                                     <td class="cell-full" onclick="acDetayModal('{{ kort.rezervasyon.id }}', '{{ kort.rezervasyon.kisi_adi|escapejs }}', '{{ kort.rezervasyon.aciklama|escapejs }}', '{{ kort.kort_no }}', '{{ satir.saat }}', '{{ secili_tarih|date:"d M Y" }}')">
                                         <span class="rez-name" title="{{ kort.rezervasyon.kisi_adi }}">{{ kort.rezervasyon.kisi_adi }}</span>
@@ -171,8 +178,7 @@
                     {% csrf_token %}
                     <div class="modal-body p-4">
                         
-                        <div class="alert alert-success py-3 mb-4 text-center fs-5" id="modalOzetMetni" style="border-left: 5px solid var(--accent-green);">
-                        </div>
+                        <div class="alert alert-success py-3 mb-4 text-center fs-5" id="modalOzetMetni" style="border-left: 5px solid var(--accent-green);"></div>
 
                         <input type="hidden" name="kort" id="modalKortInput">
                         <input type="hidden" name="saat" id="modalSaatInput">
@@ -193,7 +199,7 @@
                                 <input type="number" name="tekrar" class="form-control fw-bold border-primary text-center" value="1" min="1" max="52" style="background-color: #e6f2ff;">
                                 <span class="input-group-text bg-primary text-white fw-bold">Hafta boyunca rezerve et</span>
                             </div>
-                            <div class="form-text small">Sadece bu gün için 1, dört hafta için 4 yazın. Boş haftalara eklenir, dolu olanlar atlanır.</div>
+                            <div class="form-text small">Sadece bu gün için 1, dört hafta için 4 yazın. Boş haftalara eklenir, dolu/kapalı olanlar atlanır.</div>
                         </div>
                         
                         <button type="submit" class="btn btn-success w-100 py-3 fw-bold fs-5 rounded-3 shadow-sm"><i class="fa-solid fa-check-double me-2"></i> REZERVASYONU KAYDET</button>
@@ -229,30 +235,29 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
     <script>
-        // Yeni Kayıt Modalı Aç
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register("{% url 'sw.js' %}");
+            });
+        }
+
         function acRezervasyonModal(kortNo, saat, tarihMetni) {
             document.getElementById('modalKortInput').value = kortNo;
             document.getElementById('modalSaatInput').value = saat;
             document.getElementById('modalOzetMetni').innerHTML = `<div class="fw-bold mb-1"><i class="fa-regular fa-calendar-check me-1"></i> ${tarihMetni}</div> <span class="badge bg-primary fs-6 me-2">Saat: ${saat}</span> <span class="badge bg-dark fs-6">Kort: ${kortNo}</span>`;
-            
             var myModal = new bootstrap.Modal(document.getElementById('rezModal'));
             myModal.show();
         }
 
-        // Detay ve Silme Modalı Aç
         function acDetayModal(rezId, kisiAdi, aciklama, kortNo, saat, tarihMetni) {
             document.getElementById('detayKisi').innerText = kisiAdi;
             document.getElementById('detayAciklama').innerText = aciklama ? aciklama : "Bu rezervasyon için not eklenmemiş.";
             document.getElementById('detayOzet').innerHTML = `<span class="badge bg-dark fs-6 me-1">${tarihMetni}</span> <span class="badge bg-primary fs-6 me-1">Saat: ${saat}</span> <span class="badge bg-success fs-6">Kort: ${kortNo}</span>`;
-            
-            // Silme formunun hedefini dinamik olarak ayarlıyoruz
             document.getElementById('silmeFormu').action = `/rezervasyon/sil/${rezId}/`;
-            
             var myModal = new bootstrap.Modal(document.getElementById('detayModal'));
             myModal.show();
         }
 
-        // Silme İşlemi İçin SweetAlert Onayı
         function rezervasyonSilOnay() {
             Swal.fire({
                 title: 'Emin misiniz?',
