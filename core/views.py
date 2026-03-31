@@ -25,7 +25,7 @@ def turnuvalar(request):
 # KORT REZERVASYON SİSTEMİ (SADECE PERSONEL)
 # ==========================================
 # Giriş yapmamış hocaları Django'nun admin girişine yönlendirir
-@login_required(login_url='/admin/login/')
+@login_required(login_url='/giris/')
 def rezervasyon_paneli(request):
     # GÜVENLİK: Sadece yetkili personel (Hocalar ve Yöneticiler) girebilir
     if not request.user.is_staff:
@@ -110,7 +110,7 @@ def rezervasyon_paneli(request):
 # ==========================================
 # REZERVASYON SİLME FONKSİYONU
 # ==========================================
-@login_required(login_url='/admin/login/')
+@login_required(login_url='/giris/')
 def rezervasyon_sil(request, rez_id):
     if not request.user.is_staff:
         return redirect('index')
@@ -153,7 +153,7 @@ def cikis_yap(request):
     return redirect('index')
 
 # ŞİFRE DEĞİŞTİRME
-@login_required(login_url='/admin/login/')
+@login_required(login_url='/giris/')
 def sifre_degistir(request):
     if request.method == 'POST':
         form = PasswordChangeForm(request.user, request.POST)
