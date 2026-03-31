@@ -71,8 +71,8 @@ WSGI_APPLICATION = 'ahalteke.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-# Neon.tech'ten aldığın linki buraya yapıştır
-VERITABANI_LINKI = "postgresql://neondb_owner:npg_mlT9hHRMZzO8@ep-falling-queen-abk9iqv8-pooler.eu-west-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require"
+# Kasa bağlantısı: Vercel'deki DATABASE_URL'i otomatik çeker
+VERITABANI_LINKI = os.environ.get('DATABASE_URL')
 
 DATABASES = {
     'default': dj_database_url.config(default=VERITABANI_LINKI, conn_max_age=600)
