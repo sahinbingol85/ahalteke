@@ -149,8 +149,8 @@ def manifest_view(request):
 # ÇIKIŞ YAPMA
 def cikis_yap(request):
     logout(request)
-    messages.success(request, "Başarıyla çıkış yapıldı.")
-    return redirect('index')
+    messages.info(request, "Güvenli bir şekilde çıkış yaptınız.")
+    return redirect('giris')  # <-- Ana sayfa yerine giriş ekranına yönlendiriyoruz
 
 # ŞİFRE DEĞİŞTİRME
 @login_required(login_url='/giris/')
