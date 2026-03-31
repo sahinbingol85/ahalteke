@@ -125,7 +125,8 @@ def manifest_view(request):
     data = {
         "name": "Ahal Teke Rezervasyon",
         "short_name": "AT Rezervasyon",
-        "start_url": "/rezervasyon/",
+        "start_url": "/giris/",  # DEĞİŞEN KISIM: Uygulama giriş sayfasından başlayacak
+        "scope": "/",            # DEĞİŞEN KISIM: Tüm siteyi kapsayacak
         "display": "standalone",
         "background_color": "#f4f6f9",
         "theme_color": "#0a2342",
