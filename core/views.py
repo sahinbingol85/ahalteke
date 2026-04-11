@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from django.contrib.auth import logout, update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
 from django.http import JsonResponse
-from django.db.models import Count, Q  # İstatistik hesabı için eklendi
+from django.db.models import Count, Q
 
 from .models import Rezervasyon, KapaliDurum
 
@@ -26,17 +26,26 @@ def rezervasyon_paneli(request):
     istatistikler = None
     if request.user.is_superuser:
         bugun = timezone.now().date()
-        ay_basi = bugun.replace(day=1)
-        hafta_basi = bugun - timedelta(days=bugun.weekday())
         
-        # YENİ KISIM: rezerve_eden__is_superuser=False ekledik
-        # Ayrıca username yerine first_name (Adı) kısmını da çekiyoruz
+        # Ay sınırlarını kesin belirliyoruz (Muhasebe için önemli)
+        ay_basi = bugun.replace(day=1)
+        if bugun.month == 12:
+            ay_sonu = bugun.replace(year=bugun.year+1, month=1, day=1) - timedelta(days=1)
+        else:
+            ay_sonu = bugun.replace(month=bugun.month+1, day=1) - timedelta(days=1)
+            
+        # Hafta sınırlarını kesin belirliyoruz (Pazartesi - Pazar)
+        hafta_basi = bugun - timedelta(days=bugun.weekday())
+        hafta_sonu = hafta_basi + timedelta(days=6)
+        
+        # Tam doğru tarih aralıklarında filtreleme yapıyoruz
         istatistikler = Rezervasyon.objects.filter(
-            tarih__gte=ay_basi,
+            tarih__range=[ay_basi, ay_sonu],
             rezerve_eden__is_superuser=False 
         ).values('rezerve_eden__username', 'rezerve_eden__first_name').annotate(
-            toplam_ay=Count('id'),
-            toplam_hafta=Count('id', filter=Q(tarih__gte=hafta_basi))
+            toplam_bugun=Count('id', filter=Q(tarih=bugun)),
+            toplam_hafta=Count('id', filter=Q(tarih__range=[hafta_basi, hafta_sonu])),
+            toplam_ay=Count('id')
         ).order_by('-toplam_ay')
     # ---------------------------------------------------------
 
@@ -53,22 +62,18 @@ def rezervasyon_paneli(request):
         aciklama = request.POST.get('aciklama')
         tekrar_hafta = int(request.POST.get('tekrar', 1))
 
-        # --- HOCA İÇİN OTOMATİK NOT KISITLAMASI ---
         if not request.user.is_superuser:
-            # Hoca not yazamaz, sistem otomatik kendi adıyla "Özel Ders" etiketi basar
             hoca_adi = request.user.first_name if request.user.first_name else request.user.username
             aciklama = f"Özel Ders: {hoca_adi}"
-        # ------------------------------------------
 
         basarili_kayit_sayisi = 0
         
         for hafta in range(tekrar_hafta):
             hedef_tarih = secili_tarih + timedelta(days=7 * hafta)
             
-            # GÜVENLİK: Seçilen gün ve kort kapalıysa o haftayı atla!
             hedef_gun_kapali = KapaliDurum.objects.filter(tarih=hedef_tarih)
             if hedef_gun_kapali.filter(kort='Hepsi').exists() or hedef_gun_kapali.filter(kort=kort_no).exists():
-                continue # Kapalı, kayıt yapma diğer haftaya geç
+                continue 
 
             dolu_mu = Rezervasyon.objects.filter(kort=kort_no, tarih=hedef_tarih, saat=saat).exists()
             
@@ -93,14 +98,12 @@ def rezervasyon_paneli(request):
             
         return redirect(f'/rezervasyon/?tarih={secili_tarih.strftime("%Y-%m-%d")}')
 
-    # MATRIX (IZGARA) EKRANINI HAZIRLAMA
     gunun_rezervasyonlari = Rezervasyon.objects.filter(tarih=secili_tarih)
     rez_dict = {(r.kort, r.saat): r for r in gunun_rezervasyonlari}
 
-    # O gün için kapalı olan durumları çekiyoruz
     kapali_durumlar = KapaliDurum.objects.filter(tarih=secili_tarih)
     kapali_kortlar = {k.kort: k.sebep for k in kapali_durumlar}
-    genel_kapanis = kapali_kortlar.get('Hepsi') # Tüm kulüp kapalıysa
+    genel_kapanis = kapali_kortlar.get('Hepsi') 
 
     saat_dilimleri = [f"{s:02d}:00" for s in range(8, 24)]
     kortlar = ['1', '2', '3', '4']
@@ -115,7 +118,6 @@ def rezervasyon_paneli(request):
             rez = rez_dict.get((kort, saat))
             sebep = genel_kapanis or kapali_kortlar.get(kort)
             
-            # Kortun o anki durumunu belirliyoruz
             if sebep:
                 durum = 'kapali'
                 gosterilecek_sebep = sebep
@@ -142,17 +144,15 @@ def rezervasyon_paneli(request):
         'onceki_gun': onceki_gun.strftime('%Y-%m-%d'),
         'sonraki_gun': sonraki_gun.strftime('%Y-%m-%d'),
         'matrix': matrix,
-        'istatistikler': istatistikler, # HTML'e istatistiği gönderiyoruz
+        'istatistikler': istatistikler, 
     }
     return render(request, 'core/rezervasyon.html', context)
 
 @login_required(login_url='/giris/')
 def rezervasyon_sil(request, rez_id):
-    # --- YENİ KISIM: SİLME YETKİSİ KONTROLÜ ---
     if not request.user.is_superuser:
-        messages.error(request, "İptal işlemi için lütfen yöneticiye (Şahin Hoca) danışın.")
+        messages.error(request, "İptal işlemi için lütfen yönetim ile iletişime geçin.")
         return redirect('rezervasyon_paneli')
-    # ------------------------------------------
         
     rez = get_object_or_404(Rezervasyon, id=rez_id)
     donulecek_tarih = rez.tarih.strftime('%Y-%m-%d')
