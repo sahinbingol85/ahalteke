@@ -29,8 +29,12 @@ def rezervasyon_paneli(request):
         ay_basi = bugun.replace(day=1)
         hafta_basi = bugun - timedelta(days=bugun.weekday())
         
-        # Hocalara göre bu haftaki ve bu ayki ders sayılarını çıkarıyoruz
-        istatistikler = Rezervasyon.objects.filter(tarih__gte=ay_basi).values('rezerve_eden__username').annotate(
+        # YENİ KISIM: rezerve_eden__is_superuser=False ekledik
+        # Ayrıca username yerine first_name (Adı) kısmını da çekiyoruz
+        istatistikler = Rezervasyon.objects.filter(
+            tarih__gte=ay_basi,
+            rezerve_eden__is_superuser=False 
+        ).values('rezerve_eden__username', 'rezerve_eden__first_name').annotate(
             toplam_ay=Count('id'),
             toplam_hafta=Count('id', filter=Q(tarih__gte=hafta_basi))
         ).order_by('-toplam_ay')
