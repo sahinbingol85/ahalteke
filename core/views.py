@@ -151,45 +151,59 @@ def rezervasyon_paneli(request):
     return render(request, 'core/rezervasyon.html', context)
 
 # ==========================================
-# MUHASEBE VE İSTATİSTİK SAYFASI (YENİ)
+# MUHASEBE VE İSTATİSTİK SAYFASI (GÜNCELLENDİ)
 # ==========================================
 @login_required(login_url='/giris/')
 def muhasebe_paneli(request):
-    # Sadece yönetim erişebilir
     if not request.user.is_superuser:
         messages.error(request, "Bu sayfaya erişim yetkiniz yok.")
         return redirect('rezervasyon_paneli')
 
-    bugun = timezone.now().date()
+    # YENİ: URL'den gelen tarihi okuyoruz (Yoksa bugünü alıyoruz)
+    tarih_str = request.GET.get('tarih')
+    if tarih_str:
+        secili_tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date()
+    else:
+        secili_tarih = timezone.now().date()
+
+    # Bütün hesaplamalar artık bu "secili_tarih" üzerinden yapılacak
+    ay_basi = secili_tarih.replace(day=1)
+    if secili_tarih.month == 12:
+        ay_sonu = secili_tarih.replace(year=secili_tarih.year+1, month=1, day=1) - timedelta(days=1)
+    else:
+        ay_sonu = secili_tarih.replace(month=secili_tarih.month+1, day=1) - timedelta(days=1)
+        
+    hafta_basi = secili_tarih - timedelta(days=secili_tarih.weekday())
+    hafta_sonu = hafta_basi + timedelta(days=6)
     
-    # Ay sınırlarını kesin belirliyoruz (Muhasebe için ayın 1'inden sonuna kadar)
-    ay_basi = bugun.replace(day=1)
-    
-    # Hafta sınırlarını kesin belirliyoruz (Pazartesi - Pazar)
-    hafta_basi = bugun - timedelta(days=bugun.weekday())
-    
-    # Sadece hocaları listele
     hocalar = User.objects.filter(is_staff=True, is_superuser=False)
     rapor = []
 
     for hoca in hocalar:
-        # Hocanın bu aydaki tüm dersleri
-        hoca_dersleri = Rezervasyon.objects.filter(rezerve_eden=hoca, tarih__gte=ay_basi)
+        # Sorguyu o ayın başına ve sonuna kilitledik
+        hoca_dersleri = Rezervasyon.objects.filter(
+            rezerve_eden=hoca, 
+            tarih__range=[ay_basi, ay_sonu]
+        )
         
         rapor.append({
             'isim': hoca.first_name if hoca.first_name else hoca.username,
-            'bugun': hoca_dersleri.filter(tarih=bugun).count(),
-            'bu_hafta': hoca_dersleri.filter(tarih__range=[hafta_basi, hafta_basi+timedelta(days=6)]).count(),
+            'bugun': hoca_dersleri.filter(tarih=secili_tarih).count(),
+            'bu_hafta': hoca_dersleri.filter(tarih__range=[hafta_basi, hafta_sonu]).count(),
             'bu_ay': hoca_dersleri.count(),
-            'ders_listesi': hoca_dersleri.order_by('-tarih', '-saat')[:10] # Tabloda göstermek için son 10 dersi
+            'ders_listesi': hoca_dersleri.order_by('-tarih', '-saat')[:10]
         })
 
-    # Haftanın son gününü hesapla
-    hafta_sonu = hafta_basi + timedelta(days=6)
+    # Muhasebe sayfasında "Dün/Yarın" yerine "Geçen Hafta/Sonraki Hafta" atlamak daha mantıklıdır
+    onceki_hafta = secili_tarih - timedelta(days=7)
+    sonraki_hafta = secili_tarih + timedelta(days=7)
 
     context = {
         'rapor': rapor,
-        'ay_ismi': turkce_tarih_format(bugun).split(' ')[1] + " Ayı Özeti",
+        'secili_tarih': secili_tarih,
+        'onceki_hafta': onceki_hafta.strftime('%Y-%m-%d'),
+        'sonraki_hafta': sonraki_hafta.strftime('%Y-%m-%d'),
+        'ay_ismi': turkce_tarih_format(secili_tarih).split(' ')[1] + " " + str(secili_tarih.year) + " Özeti",
         'hafta_bilgi': f"{turkce_tarih_format(hafta_basi)} - {turkce_tarih_format(hafta_sonu)} Haftası"
     }
     return render(request, 'core/muhasebe.html', context)
