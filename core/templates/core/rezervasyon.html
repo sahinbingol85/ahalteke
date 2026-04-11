@@ -47,7 +47,6 @@
         .rez-name { font-weight: 800; font-size: 0.85rem; color: #856404; display: block; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 3px; }
         .rez-note { font-size: 0.7rem; color: #6c757d; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         
-        /* YENİ: KAPALI HÜCRE TASARIMI */
         .cell-closed { background-color: #e9ecef; color: #6c757d; cursor: not-allowed; position: relative; padding: 10px !important; background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.03) 10px, rgba(0,0,0,0.03) 20px); border-left: 5px solid #6c757d !important; }
         .closed-title { font-weight: 800; font-size: 0.85rem; display: block; line-height: 1.2; text-transform: uppercase; margin-bottom: 3px; }
         .closed-reason { font-size: 0.7rem; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -84,11 +83,20 @@
     <div class="container mt-2">
         <div class="d-flex justify-content-between align-items-center p-2 px-3 bg-white shadow-sm rounded-4 border-start border-4 border-primary">
             <div class="small text-muted">
-                <i class="fa-solid fa-user-tie me-1"></i> <strong>Kullanıcı:</strong> {{ request.user.username }}
+                <i class="fa-solid fa-user-tie me-1"></i> <strong>Hocam:</strong> {{ request.user.username }}
             </div>
-            <a href="{% url 'sifre_degistir' %}" class="btn btn-link btn-sm text-decoration-none text-primary fw-600">
-                <i class="fa-solid fa-key me-1"></i> Şifre Değiştir
-            </a>
+            
+            <div class="d-flex align-items-center">
+                {% if request.user.is_superuser %}
+                <button class="btn btn-sm btn-info text-white fw-bold me-3 rounded-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#statsModal">
+                    <i class="fa-solid fa-chart-pie me-1"></i> İstatistik
+                </button>
+                {% endif %}
+                
+                <a href="{% url 'sifre_degistir' %}" class="btn btn-link btn-sm text-decoration-none text-primary fw-600 p-0">
+                    <i class="fa-solid fa-key me-1"></i> Şifre Değiştir
+                </a>
+            </div>
         </div>
     </div>
 
@@ -143,13 +151,11 @@
                                     <td class="cell-empty" onclick="acRezervasyonModal('{{ kort.kort_no }}', '{{ satir.saat }}', '{{ secili_tarih|date:"d M Y" }}')">
                                         <i class="fa-solid fa-plus"></i>
                                     </td>
-                                
                                 {% elif kort.durum == 'kapali' %}
                                     <td class="cell-closed" onclick="Swal.fire({title: 'Kapalı!', text: '{{ kort.sebep }}', icon: 'info', confirmButtonColor: '#0a2342'})">
                                         <span class="closed-title"><i class="fa-solid fa-lock text-secondary me-1"></i>KAPALI</span>
                                         <span class="closed-reason">{{ kort.sebep }}</span>
                                     </td>
-                                    
                                 {% else %}
                                     <td class="cell-full" onclick="acDetayModal('{{ kort.rezervasyon.id }}', '{{ kort.rezervasyon.kisi_adi|escapejs }}', '{{ kort.rezervasyon.aciklama|escapejs }}', '{{ kort.kort_no }}', '{{ satir.saat }}', '{{ secili_tarih|date:"d M Y" }}')">
                                         <span class="rez-name" title="{{ kort.rezervasyon.kisi_adi }}">{{ kort.rezervasyon.kisi_adi }}</span>
@@ -188,12 +194,14 @@
                             <input type="text" name="kisi_adi" class="form-control form-control-lg bg-light" placeholder="Örn: Ahmet Yılmaz" required>
                         </div>
 
+                        {% if request.user.is_superuser %}
                         <div class="mb-3">
                             <label class="form-label fw-bold text-muted small"><i class="fa-regular fa-comment-dots me-1"></i> Not / Açıklama (Opsiyonel)</label>
                             <input type="text" name="aciklama" class="form-control bg-light" placeholder="Örn: Özel Ders, Takım Antrenmanı, Turnuva Maçı...">
                         </div>
+                        {% endif %}
 
-                        <div class="mb-4">
+                        <div class="mb-4 mt-3">
                             <label class="form-label fw-bold text-primary small"><i class="fa-solid fa-repeat me-1"></i> Tekrarlı Kayıt (Hafta Sayısı)</label>
                             <div class="input-group">
                                 <input type="number" name="tekrar" class="form-control fw-bold border-primary text-center" value="1" min="1" max="52" style="background-color: #e6f2ff;">
@@ -223,14 +231,57 @@
                     <h3 class="fw-bold text-primary mb-1" id="detayKisi"></h3>
                     <p class="text-muted fst-italic mb-4" id="detayAciklama"></p>
                     
-                    <form method="POST" id="silmeFormu" action="">
-                        {% csrf_token %}
-                        <button type="button" class="btn btn-danger w-100 py-2 fw-bold" onclick="rezervasyonSilOnay()"><i class="fa-solid fa-trash-can me-2"></i>BU REZERVASYONU İPTAL ET</button>
-                    </form>
+                    {% if request.user.is_superuser %}
+                        <form method="POST" id="silmeFormu" action="">
+                            {% csrf_token %}
+                            <button type="button" class="btn btn-danger w-100 py-2 fw-bold" onclick="rezervasyonSilOnay()"><i class="fa-solid fa-trash-can me-2"></i>BU REZERVASYONU İPTAL ET</button>
+                        </form>
+                    {% else %}
+                        <div class="alert alert-secondary small fw-bold mb-0">
+                            <i class="fa-solid fa-circle-info me-1"></i> İptal ve düzenleme işlemleri için lütfen Şahin Hoca ile iletişime geçin.
+                        </div>
+                    {% endif %}
                 </div>
             </div>
         </div>
     </div>
+
+    {% if request.user.is_superuser %}
+    <div class="modal fade" id="statsModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content rounded-4 border-0">
+                <div class="modal-header text-white" style="background-color: #0a2342; border-radius: 15px 15px 0 0;">
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-chart-line me-2"></i>Hoca Performans Takibi</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="ps-4">Hoca Kullanıcı Adı</th>
+                                    <th class="text-center">Bu Hafta</th>
+                                    <th class="text-center">Bu Ay Toplam</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for stat in istatistikler %}
+                                <tr>
+                                    <td class="ps-4 fw-bold text-secondary">{{ stat.rezerve_eden__username }}</td>
+                                    <td class="text-center"><span class="badge bg-success fs-6">{{ stat.toplam_hafta }}</span></td>
+                                    <td class="text-center"><span class="badge bg-primary fs-6">{{ stat.toplam_ay }}</span></td>
+                                </tr>
+                                {% empty %}
+                                <tr><td colspan="3" class="text-center text-muted py-4">Bu ay henüz kayıt yapılmamış.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     
@@ -251,9 +302,14 @@
 
         function acDetayModal(rezId, kisiAdi, aciklama, kortNo, saat, tarihMetni) {
             document.getElementById('detayKisi').innerText = kisiAdi;
-            document.getElementById('detayAciklama').innerText = aciklama ? aciklama : "Bu rezervasyon için not eklenmemiş.";
+            document.getElementById('detayAciklama').innerText = aciklama ? aciklama : "Özel Ders";
             document.getElementById('detayOzet').innerHTML = `<span class="badge bg-dark fs-6 me-1">${tarihMetni}</span> <span class="badge bg-primary fs-6 me-1">Saat: ${saat}</span> <span class="badge bg-success fs-6">Kort: ${kortNo}</span>`;
-            document.getElementById('silmeFormu').action = `/rezervasyon/sil/${rezId}/`;
+            
+            var silmeFormu = document.getElementById('silmeFormu');
+            if(silmeFormu) {
+                silmeFormu.action = `/rezervasyon/sil/${rezId}/`;
+            }
+            
             var myModal = new bootstrap.Modal(document.getElementById('detayModal'));
             myModal.show();
         }
