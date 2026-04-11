@@ -12,16 +12,20 @@
         .stat-badge { font-size: 1.1rem; padding: 10px 20px; border-radius: 10px; font-weight: bold; }
         
         /* TARİH SEÇİCİ STİLLERİ */
-        .date-navigator { background: white; padding: 15px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin: 0 auto 30px auto; display: flex; justify-content: space-between; align-items: center; max-width: 600px; }
+        .date-navigator { background: white; padding: 15px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin: 0 auto 20px auto; display: flex; justify-content: space-between; align-items: center; max-width: 600px; }
         .date-btn { background-color: #e9ecef; color: #0a2342; border: none; padding: 10px 20px; border-radius: 10px; font-weight: bold; text-decoration: none; transition: 0.3s; z-index: 2; }
         .date-btn:hover { background-color: #0a2342; color: white; }
         .current-date { font-size: 1.2rem; font-weight: 700; color: #0a2342; margin: 0; transition: 0.3s; }
         .date-form:hover .current-date { color: #28a745; }
+
+        /* YENİ RAPOR BAŞLIĞI STİLİ */
+        .report-period-header { background: #0a2342; color: white; border-radius: 12px; padding: 15px; margin-bottom: 25px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
         
         @media (max-width: 768px) {
             .date-btn { padding: 6px 10px; font-size: 0.75rem; }
             .current-date { font-size: 0.9rem; }
             .stat-badge { font-size: 0.85rem; padding: 6px 10px; margin-bottom: 5px;}
+            .report-period-header h4 { font-size: 1.1rem; }
         }
     </style>
 </head>
@@ -35,7 +39,7 @@
         </div>
 
         <div class="alert alert-light border border-secondary border-opacity-25 text-center small py-2 mb-4 shadow-sm" style="color: #6c757d; max-width: 600px; margin: 0 auto;">
-            <i class="fa-solid fa-circle-info text-info me-1"></i> <strong>Sistem Notu:</strong> Takvimden seçtiğiniz günün bulunduğu <strong>haftanın</strong> ve <strong>ayın</strong> toplam hesaplamaları gösterilmektedir. (Varsayılan olarak <strong>bugün</strong> seçilidir).
+            <i class="fa-solid fa-circle-info text-info me-1"></i> <strong>Sistem Notu:</strong> Seçtiğiniz tarihe göre haftalık ve aylık döküm aşağıda listelenmiştir.
         </div>
 
         <div class="date-navigator">
@@ -47,7 +51,6 @@
                     {{ secili_tarih|date:"d M Y" }}
                     <i class="fa-solid fa-caret-down ms-1" style="font-size: 0.8rem; opacity: 0.5;"></i>
                 </h3>
-                <div class="small text-muted mt-1 fw-bold">{{ ay_ismi }} / {{ hafta_bilgi }}</div>
                 
                 <input type="date" id="gizliTakvim" name="tarih" value="{{ secili_tarih|date:'Y-m-d' }}" 
                        onchange="this.form.submit()" 
@@ -55,6 +58,13 @@
             </form>
 
             <a href="?tarih={{ sonraki_hafta }}" class="date-btn" title="Sonraki Hafta">Hafta <i class="fa-solid fa-chevron-right"></i></a>
+        </div>
+
+        <div class="report-period-header text-center">
+            <h4 class="fw-bold m-0">
+                <i class="fa-solid fa-file-invoice-dollar me-2 text-info"></i>
+                {{ ay_ismi }} / {{ hafta_bilgi }}
+            </h4>
         </div>
 
         {% for h in rapor %}
@@ -70,7 +80,7 @@
                 </div>
             </div>
 
-            <h6 class="fw-bold mb-3 border-bottom pb-2 text-muted"><i class="fa-solid fa-clock-rotate-left me-1"></i> Ay İçindeki Son Dersleri (Max 10)</h6>
+            <h6 class="fw-bold mb-3 border-bottom pb-2 text-muted"><i class="fa-solid fa-clock-rotate-left me-1"></i> Bu Ay İçindeki Son Dersleri (Max 10)</h6>
             <div class="table-responsive">
                 <table class="table table-sm table-hover align-middle">
                     <thead class="table-light">
@@ -88,7 +98,7 @@
                             <td>{{ ders.kisi_adi }}</td>
                         </tr>
                         {% empty %}
-                        <tr><td colspan="3" class="text-muted fst-italic py-3 text-center">Bu ay aralığında henüz ders kaydı bulunmuyor.</td></tr>
+                        <tr><td colspan="3" class="text-muted fst-italic py-3 text-center">Bu dönem aralığında ders kaydı bulunmuyor.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
