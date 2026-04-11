@@ -14,6 +14,7 @@ urlpatterns = [
     path('rezervasyon/sil/<int:rez_id>/', views.rezervasyon_sil, name='rezervasyon_sil'),
     path('cikis/', views.cikis_yap, name='cikis_yap'),
     path('sifre-degistir/', views.sifre_degistir, name='sifre_degistir'),
+    path('muhasebe/', views.muhasebe_paneli, name='muhasebe_paneli'),
     # MANIFEST views.py'den ÇEKİLİYOR
     path('manifest_rezervasyon.json', views.manifest_view, name='manifest_rezervasyon.json'),
     path('sw.js', TemplateView.as_view(template_name='core/sw.js', content_type='application/javascript'), name='sw.js'),
