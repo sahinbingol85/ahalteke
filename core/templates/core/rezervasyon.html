@@ -193,7 +193,7 @@
                         <div class="mb-4 p-3 bg-light rounded-3 border border-secondary border-opacity-25">
                             <label class="form-label fw-bold text-dark small mb-2"><i class="fa-solid fa-list-check me-1"></i> Rezervasyon Türü</label>
                             <select name="hoca_secimi" class="form-select border-secondary fw-bold text-secondary">
-                                <option value="" selected>Genel Rezervasyon (Kulüp/Bakım vs.)</option>
+                                <option value="" selected>Genel Rezervasyon (Grup/Takım/Kira vs.)</option>
                                 <optgroup label="Özel Ders (İlgili Hocaya Ata)">
                                     {% for hoca in hocalar %}
                                         <option value="{{ hoca.id }}">{{ hoca.first_name|default:hoca.username }}</option>
@@ -211,8 +211,8 @@
 
                         {% if request.user.is_superuser %}
                         <div class="mb-3">
-                            <label class="form-label fw-bold text-muted small"><i class="fa-regular fa-comment-dots me-1"></i> Not / Açıklama (Opsiyonel)</label>
-                            <input type="text" name="aciklama" class="form-control bg-light" placeholder="Örn: Takım Antrenmanı, Turnuva Maçı, vs.">
+                            <label class="form-label fw-bold text-muted small"><i class="fa-regular fa-comment-dots me-1"></i> Not / Açıklama</label>
+                            <input type="text" name="aciklama" class="form-control bg-light" placeholder="Örn: Takım Antrenmanı, Kiralama, Grup Dersi vs.">
                         </div>
                         {% endif %}
 
