@@ -7,47 +7,32 @@ from django.contrib.auth import logout, update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
 from django.http import JsonResponse
 from django.db.models import Count, Q
+from django.contrib.auth.models import User
 
 from .models import Rezervasyon, KapaliDurum
 
+# --- YARDIMCI FONKSİYON: Türkçe Ay İsimleri ---
+def turkce_tarih_format(tarih):
+    aylar = ["", "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"]
+    return f"{tarih.day} {aylar[tarih.month]} {tarih.year}"
+
+# ==========================================
+# ANA SAYFA VE TURNUVALAR
+# ==========================================
 def index(request):
     return render(request, 'core/index.html')
 
 def turnuvalar(request):
     return render(request, 'core/turnuvalar.html')
 
+# ==========================================
+# KORT REZERVASYON SİSTEMİ
+# ==========================================
 @login_required(login_url='/giris/')
 def rezervasyon_paneli(request):
     if not request.user.is_staff:
         messages.error(request, 'Bu sayfaya sadece yetkili kulüp personeli erişebilir!')
         return redirect('index')
-
-    # --- İSTATİSTİK HESAPLAMA (Sadece Superuser görebilir) ---
-    istatistikler = None
-    if request.user.is_superuser:
-        bugun = timezone.now().date()
-        
-        # Ay sınırlarını kesin belirliyoruz (Muhasebe için önemli)
-        ay_basi = bugun.replace(day=1)
-        if bugun.month == 12:
-            ay_sonu = bugun.replace(year=bugun.year+1, month=1, day=1) - timedelta(days=1)
-        else:
-            ay_sonu = bugun.replace(month=bugun.month+1, day=1) - timedelta(days=1)
-            
-        # Hafta sınırlarını kesin belirliyoruz (Pazartesi - Pazar)
-        hafta_basi = bugun - timedelta(days=bugun.weekday())
-        hafta_sonu = hafta_basi + timedelta(days=6)
-        
-        # Tam doğru tarih aralıklarında filtreleme yapıyoruz
-        istatistikler = Rezervasyon.objects.filter(
-            tarih__range=[ay_basi, ay_sonu],
-            rezerve_eden__is_superuser=False 
-        ).values('rezerve_eden__username', 'rezerve_eden__first_name').annotate(
-            toplam_bugun=Count('id', filter=Q(tarih=bugun)),
-            toplam_hafta=Count('id', filter=Q(tarih__range=[hafta_basi, hafta_sonu])),
-            toplam_ay=Count('id')
-        ).order_by('-toplam_ay')
-    # ---------------------------------------------------------
 
     tarih_str = request.GET.get('tarih')
     if tarih_str:
@@ -61,8 +46,19 @@ def rezervasyon_paneli(request):
         kisi_adi = request.POST.get('kisi_adi')
         aciklama = request.POST.get('aciklama')
         tekrar_hafta = int(request.POST.get('tekrar', 1))
-
-        if not request.user.is_superuser:
+        
+        # KAYIT EDEN KİŞİ VE NOT BELİRLEME (Muhasebe Tutarlılığı)
+        kayit_sahibi = request.user
+        
+        if request.user.is_superuser:
+            hoca_id = request.POST.get('hoca_secimi')
+            if hoca_id: # Eğer yönetici bir hoca adına (Özel Ders) giriyorsa
+                kayit_sahibi = User.objects.get(id=hoca_id)
+                hoca_adi = kayit_sahibi.first_name if kayit_sahibi.first_name else kayit_sahibi.username
+                aciklama = f"Özel Ders: {hoca_adi} - {aciklama}" if aciklama else f"Özel Ders: {hoca_adi}"
+            # hoca_id yoksa, yani boş bırakıldıysa, yönetici kendi adına (Genel) giriyordur, not aynı kalır.
+        else:
+            # Normal hoca ise sadece kendi adına özel ders girebilir
             hoca_adi = request.user.first_name if request.user.first_name else request.user.username
             aciklama = f"Özel Ders: {hoca_adi}"
 
@@ -71,6 +67,7 @@ def rezervasyon_paneli(request):
         for hafta in range(tekrar_hafta):
             hedef_tarih = secili_tarih + timedelta(days=7 * hafta)
             
+            # GÜVENLİK: Seçilen gün ve kort kapalıysa o haftayı atla!
             hedef_gun_kapali = KapaliDurum.objects.filter(tarih=hedef_tarih)
             if hedef_gun_kapali.filter(kort='Hepsi').exists() or hedef_gun_kapali.filter(kort=kort_no).exists():
                 continue 
@@ -82,7 +79,7 @@ def rezervasyon_paneli(request):
                     kort=kort_no,
                     tarih=hedef_tarih,
                     saat=saat,
-                    rezerve_eden=request.user,
+                    rezerve_eden=kayit_sahibi, # Doğru kişiye atanır
                     kisi_adi=kisi_adi,
                     aciklama=aciklama
                 )
@@ -98,9 +95,11 @@ def rezervasyon_paneli(request):
             
         return redirect(f'/rezervasyon/?tarih={secili_tarih.strftime("%Y-%m-%d")}')
 
+    # MATRIX (IZGARA) EKRANINI HAZIRLAMA
     gunun_rezervasyonlari = Rezervasyon.objects.filter(tarih=secili_tarih)
     rez_dict = {(r.kort, r.saat): r for r in gunun_rezervasyonlari}
 
+    # O gün için kapalı olan durumları çekiyoruz
     kapali_durumlar = KapaliDurum.objects.filter(tarih=secili_tarih)
     kapali_kortlar = {k.kort: k.sebep for k in kapali_durumlar}
     genel_kapanis = kapali_kortlar.get('Hepsi') 
@@ -139,15 +138,65 @@ def rezervasyon_paneli(request):
     onceki_gun = secili_tarih - timedelta(days=1)
     sonraki_gun = secili_tarih + timedelta(days=1)
 
+    # Superuser için aktif hocaların listesini gönderiyoruz (Seçim menüsü için)
+    hocalar = User.objects.filter(is_staff=True, is_superuser=False) if request.user.is_superuser else None
+
     context = {
         'secili_tarih': secili_tarih,
         'onceki_gun': onceki_gun.strftime('%Y-%m-%d'),
         'sonraki_gun': sonraki_gun.strftime('%Y-%m-%d'),
         'matrix': matrix,
-        'istatistikler': istatistikler, 
+        'hocalar': hocalar
     }
     return render(request, 'core/rezervasyon.html', context)
 
+# ==========================================
+# MUHASEBE VE İSTATİSTİK SAYFASI (YENİ)
+# ==========================================
+@login_required(login_url='/giris/')
+def muhasebe_paneli(request):
+    # Sadece yönetim erişebilir
+    if not request.user.is_superuser:
+        messages.error(request, "Bu sayfaya erişim yetkiniz yok.")
+        return redirect('rezervasyon_paneli')
+
+    bugun = timezone.now().date()
+    
+    # Ay sınırlarını kesin belirliyoruz (Muhasebe için ayın 1'inden sonuna kadar)
+    ay_basi = bugun.replace(day=1)
+    
+    # Hafta sınırlarını kesin belirliyoruz (Pazartesi - Pazar)
+    hafta_basi = bugun - timedelta(days=bugun.weekday())
+    
+    # Sadece hocaları listele
+    hocalar = User.objects.filter(is_staff=True, is_superuser=False)
+    rapor = []
+
+    for hoca in hocalar:
+        # Hocanın bu aydaki tüm dersleri
+        hoca_dersleri = Rezervasyon.objects.filter(rezerve_eden=hoca, tarih__gte=ay_basi)
+        
+        rapor.append({
+            'isim': hoca.first_name if hoca.first_name else hoca.username,
+            'bugun': hoca_dersleri.filter(tarih=bugun).count(),
+            'bu_hafta': hoca_dersleri.filter(tarih__range=[hafta_basi, hafta_basi+timedelta(days=6)]).count(),
+            'bu_ay': hoca_dersleri.count(),
+            'ders_listesi': hoca_dersleri.order_by('-tarih', '-saat')[:10] # Tabloda göstermek için son 10 dersi
+        })
+
+    # Haftanın son gününü hesapla
+    hafta_sonu = hafta_basi + timedelta(days=6)
+
+    context = {
+        'rapor': rapor,
+        'ay_ismi': turkce_tarih_format(bugun).split(' ')[1] + " Ayı Özeti",
+        'hafta_bilgi': f"{turkce_tarih_format(hafta_basi)} - {turkce_tarih_format(hafta_sonu)} Haftası"
+    }
+    return render(request, 'core/muhasebe.html', context)
+
+# ==========================================
+# REZERVASYON SİLME 
+# ==========================================
 @login_required(login_url='/giris/')
 def rezervasyon_sil(request, rez_id):
     if not request.user.is_superuser:
@@ -160,6 +209,9 @@ def rezervasyon_sil(request, rez_id):
     messages.success(request, "Rezervasyon başarıyla iptal edildi.")
     return redirect(f'/rezervasyon/?tarih={donulecek_tarih}')
 
+# ==========================================
+# DİĞER FONKSİYONLAR
+# ==========================================
 def manifest_view(request):
     data = {
         "name": "Ahal Teke Rezervasyon",
