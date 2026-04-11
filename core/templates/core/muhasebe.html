@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Muhasebe | Ahal Teke</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f6f9; font-family: sans-serif; }
+        .hoca-card { background: white; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 30px; border-top: 5px solid #0a2342; }
+        .stat-badge { font-size: 1.1rem; padding: 10px 20px; border-radius: 10px; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <div class="container py-5">
+        <div class="d-flex justify-content-between align-items-center mb-5">
+            <div>
+                <h1 class="fw-bold text-navy" style="color: #0a2342;">Muhasebe Paneli</h1>
+                <p class="text-muted"><i class="fa-solid fa-calendar-check me-2"></i>{{ ay_ismi }} / {{ hafta_bilgi }}</p>
+            </div>
+            <a href="{% url 'rezervasyon_paneli' %}" class="btn btn-outline-dark fw-bold"><i class="fa-solid fa-chevron-left me-2"></i>Geri Dön</a>
+        </div>
+
+        {% for h in rapor %}
+        <div class="hoca-card p-4">
+            <div class="row align-items-center mb-4">
+                <div class="col-md-4">
+                    <h2 class="fw-bold text-primary">{{ h.isim }}</h2>
+                </div>
+                <div class="col-md-8 d-flex gap-3 justify-content-md-end">
+                    <div class="stat-badge bg-info text-white">Bugün: {{ h.bugun }}</div>
+                    <div class="stat-badge bg-success text-white">Haftalık: {{ h.bu_hafta }}</div>
+                    <div class="stat-badge bg-primary text-white">Aylık Toplam: {{ h.bu_ay }}</div>
+                </div>
+            </div>
+
+            <h5 class="fw-bold mb-3 border-bottom pb-2">Son Yapılan Dersler</h5>
+            <div class="table-responsive">
+                <table class="table table-sm table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Tarih</th>
+                            <th>Saat</th>
+                            <th>Öğrenci</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for ders in h.ders_listesi %}
+                        <tr>
+                            <td>{{ ders.tarih|date:"d F Y" }}</td>
+                            <td>{{ ders.saat }}</td>
+                            <td>{{ ders.kisi_adi }}</td>
+                        </tr>
+                        {% empty %}
+                        <tr><td colspan="3" class="text-muted italic">Bu ay henüz ders kaydı yok.</td></tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</body>
+</html>
