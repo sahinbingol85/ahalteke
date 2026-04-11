@@ -6,9 +6,9 @@ from datetime import datetime, timedelta
 from django.contrib.auth import logout, update_session_auth_hash
 from django.contrib.auth.forms import PasswordChangeForm
 from django.http import JsonResponse
+from django.db.models import Count, Q  # İstatistik hesabı için eklendi
 
-# KapaliDurum modelini de buraya ekledik!
-from .models import Rezervasyon, KapaliDurum 
+from .models import Rezervasyon, KapaliDurum
 
 def index(request):
     return render(request, 'core/index.html')
@@ -22,6 +22,20 @@ def rezervasyon_paneli(request):
         messages.error(request, 'Bu sayfaya sadece yetkili kulüp personeli erişebilir!')
         return redirect('index')
 
+    # --- İSTATİSTİK HESAPLAMA (Sadece Superuser görebilir) ---
+    istatistikler = None
+    if request.user.is_superuser:
+        bugun = timezone.now().date()
+        ay_basi = bugun.replace(day=1)
+        hafta_basi = bugun - timedelta(days=bugun.weekday())
+        
+        # Hocalara göre bu haftaki ve bu ayki ders sayılarını çıkarıyoruz
+        istatistikler = Rezervasyon.objects.filter(tarih__gte=ay_basi).values('rezerve_eden__username').annotate(
+            toplam_ay=Count('id'),
+            toplam_hafta=Count('id', filter=Q(tarih__gte=hafta_basi))
+        ).order_by('-toplam_ay')
+    # ---------------------------------------------------------
+
     tarih_str = request.GET.get('tarih')
     if tarih_str:
         secili_tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date()
@@ -34,6 +48,13 @@ def rezervasyon_paneli(request):
         kisi_adi = request.POST.get('kisi_adi')
         aciklama = request.POST.get('aciklama')
         tekrar_hafta = int(request.POST.get('tekrar', 1))
+
+        # --- HOCA İÇİN OTOMATİK NOT KISITLAMASI ---
+        if not request.user.is_superuser:
+            # Hoca not yazamaz, sistem otomatik kendi adıyla "Özel Ders" etiketi basar
+            hoca_adi = request.user.first_name if request.user.first_name else request.user.username
+            aciklama = f"Özel Ders: {hoca_adi}"
+        # ------------------------------------------
 
         basarili_kayit_sayisi = 0
         
@@ -105,7 +126,7 @@ def rezervasyon_paneli(request):
                 'kort_no': kort,
                 'durum': durum,
                 'rezervasyon': rez,
-                'sebep': gosterilecek_sebep # HTML'e sebebi gönderiyoruz
+                'sebep': gosterilecek_sebep
             })
         matrix.append(satir)
 
@@ -117,18 +138,22 @@ def rezervasyon_paneli(request):
         'onceki_gun': onceki_gun.strftime('%Y-%m-%d'),
         'sonraki_gun': sonraki_gun.strftime('%Y-%m-%d'),
         'matrix': matrix,
+        'istatistikler': istatistikler, # HTML'e istatistiği gönderiyoruz
     }
     return render(request, 'core/rezervasyon.html', context)
 
 @login_required(login_url='/giris/')
 def rezervasyon_sil(request, rez_id):
-    if not request.user.is_staff:
-        return redirect('index')
+    # --- YENİ KISIM: SİLME YETKİSİ KONTROLÜ ---
+    if not request.user.is_superuser:
+        messages.error(request, "İptal işlemi için lütfen yöneticiye (Şahin Hoca) danışın.")
+        return redirect('rezervasyon_paneli')
+    # ------------------------------------------
         
     rez = get_object_or_404(Rezervasyon, id=rez_id)
     donulecek_tarih = rez.tarih.strftime('%Y-%m-%d')
     rez.delete()
-    messages.success(request, "Rezervasyon iptal edildi.")
+    messages.success(request, "Rezervasyon başarıyla iptal edildi.")
     return redirect(f'/rezervasyon/?tarih={donulecek_tarih}')
 
 def manifest_view(request):
