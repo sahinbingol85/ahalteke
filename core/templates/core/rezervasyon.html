@@ -89,7 +89,7 @@
             <div class="d-flex align-items-center">
                 {% if request.user.is_superuser %}
                 <button class="btn btn-sm btn-info text-white fw-bold me-3 rounded-3 shadow-sm" data-bs-toggle="modal" data-bs-target="#statsModal">
-                    <i class="fa-solid fa-chart-pie me-1"></i> İstatistik
+                    <i class="fa-solid fa-chart-pie me-1"></i> Muhasebe / İstatistik
                 </button>
                 {% endif %}
                 
@@ -157,7 +157,7 @@
                                         <span class="closed-reason">{{ kort.sebep }}</span>
                                     </td>
                                 {% else %}
-                                    <td class="cell-full" onclick="acDetayModal('{{ kort.rezervasyon.id }}', '{{ kort.rezervasyon.kisi_adi|escapejs }}', '{{ kort.rezervasyon.aciklama|escapejs }}', '{{ kort.kort_no }}', '{{ satir.saat }}', '{{ secili_tarih|date:"d M Y" }}')">
+                                    <td class="cell-full" onclick="acDetayModal('{{ kort.rezervasyon.id }}', '{{ kort.rezervasyon.kisi_adi|escapejs }}', '{{ kort.rezervasyon.aciklama|escapejs }}', '{{ kort.kort_no }}', '{{ satir.saat }}', '{{ secili_tarih|date:"d M Y" }}', '{% if kort.rezervasyon.rezerve_eden.first_name %}{{ kort.rezervasyon.rezerve_eden.first_name|escapejs }}{% else %}{{ kort.rezervasyon.rezerve_eden.username|escapejs }}{% endif %}')">
                                         <span class="rez-name" title="{{ kort.rezervasyon.kisi_adi }}">{{ kort.rezervasyon.kisi_adi }}</span>
                                         {% if kort.rezervasyon.aciklama %}
                                             <span class="rez-note" title="{{ kort.rezervasyon.aciklama }}"><i class="fa-solid fa-circle-info me-1"></i>{{ kort.rezervasyon.aciklama }}</span>
@@ -229,7 +229,11 @@
                     <div class="mb-3" id="detayOzet"></div>
                     
                     <h3 class="fw-bold text-primary mb-1" id="detayKisi"></h3>
-                    <p class="text-muted fst-italic mb-4" id="detayAciklama"></p>
+                    <p class="text-muted fst-italic mb-3" id="detayAciklama"></p>
+                    
+                    <div class="text-end mb-4 border-bottom pb-2">
+                        <small class="text-muted fw-bold" style="font-size: 0.75rem;"><i class="fa-solid fa-pen-clip me-1"></i> Oluşturan: <span id="detayOlusturan" class="text-dark"></span></small>
+                    </div>
                     
                     {% if request.user.is_superuser %}
                         <form method="POST" id="silmeFormu" action="">
@@ -238,7 +242,7 @@
                         </form>
                     {% else %}
                         <div class="alert alert-secondary small fw-bold mb-0">
-                            <i class="fa-solid fa-circle-info me-1"></i> İptal ve düzenleme işlemleri için lütfen Şahin Hoca ile iletişime geçin.
+                            <i class="fa-solid fa-circle-info me-1"></i> İptal ve düzenleme işlemleri için lütfen <strong>yönetim</strong> ile iletişime geçin.
                         </div>
                     {% endif %}
                 </div>
@@ -248,10 +252,10 @@
 
     {% if request.user.is_superuser %}
     <div class="modal fade" id="statsModal" tabindex="-1" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content rounded-4 border-0">
                 <div class="modal-header text-white" style="background-color: #0a2342; border-radius: 15px 15px 0 0;">
-                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-chart-line me-2"></i>Hoca Performans Takibi</h5>
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-calculator me-2"></i>Hoca Performans ve Muhasebe Tablosu</h5>
                     <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body p-0">
@@ -259,20 +263,28 @@
                         <table class="table table-hover align-middle mb-0">
                             <thead class="table-light">
                                 <tr>
-                                    <th class="ps-4">Hoca Kullanıcı Adı</th>
-                                    <th class="text-center">Bu Hafta</th>
-                                    <th class="text-center">Bu Ay Toplam</th>
+                                    <th class="ps-4">Hoca Adı</th>
+                                    <th class="text-center"><i class="fa-solid fa-calendar-day me-1"></i> Bugün</th>
+                                    <th class="text-center"><i class="fa-solid fa-calendar-week me-1"></i> Bu Hafta</th>
+                                    <th class="text-center"><i class="fa-solid fa-calendar-days me-1"></i> Bu Ay Toplam</th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {% for stat in istatistikler %}
                                 <tr>
-                                    <td class="ps-4 fw-bold text-secondary">{{ stat.rezerve_eden__username }}</td>
-                                    <td class="text-center"><span class="badge bg-success fs-6">{{ stat.toplam_hafta }}</span></td>
-                                    <td class="text-center"><span class="badge bg-primary fs-6">{{ stat.toplam_ay }}</span></td>
+                                    <td class="ps-4 fw-bold text-secondary">
+                                        {% if stat.rezerve_eden__first_name %}
+                                            {{ stat.rezerve_eden__first_name }}
+                                        {% else %}
+                                            {{ stat.rezerve_eden__username }}
+                                        {% endif %}
+                                    </td>
+                                    <td class="text-center"><span class="badge bg-info text-dark fs-6 shadow-sm">{{ stat.toplam_bugun }}</span></td>
+                                    <td class="text-center"><span class="badge bg-success fs-6 shadow-sm">{{ stat.toplam_hafta }}</span></td>
+                                    <td class="text-center"><span class="badge bg-primary fs-6 shadow-sm">{{ stat.toplam_ay }}</span></td>
                                 </tr>
                                 {% empty %}
-                                <tr><td colspan="3" class="text-center text-muted py-4">Bu ay henüz kayıt yapılmamış.</td></tr>
+                                <tr><td colspan="4" class="text-center text-muted py-4">Bu ay henüz hocalar tarafından bir kayıt yapılmamış.</td></tr>
                                 {% endfor %}
                             </tbody>
                         </table>
@@ -300,10 +312,14 @@
             myModal.show();
         }
 
-        function acDetayModal(rezId, kisiAdi, aciklama, kortNo, saat, tarihMetni) {
+        // YENİ: olusturan parametresi eklendi
+        function acDetayModal(rezId, kisiAdi, aciklama, kortNo, saat, tarihMetni, olusturan) {
             document.getElementById('detayKisi').innerText = kisiAdi;
             document.getElementById('detayAciklama').innerText = aciklama ? aciklama : "Özel Ders";
             document.getElementById('detayOzet').innerHTML = `<span class="badge bg-dark fs-6 me-1">${tarihMetni}</span> <span class="badge bg-primary fs-6 me-1">Saat: ${saat}</span> <span class="badge bg-success fs-6">Kort: ${kortNo}</span>`;
+            
+            // Oluşturan kişiyi ekrana yazdırıyoruz
+            document.getElementById('detayOlusturan').innerText = olusturan;
             
             var silmeFormu = document.getElementById('silmeFormu');
             if(silmeFormu) {
