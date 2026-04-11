@@ -10,34 +10,69 @@
         body { background-color: #f4f6f9; font-family: sans-serif; }
         .hoca-card { background: white; border-radius: 15px; box-shadow: 0 4px 15px rgba(0,0,0,0.05); margin-bottom: 30px; border-top: 5px solid #0a2342; }
         .stat-badge { font-size: 1.1rem; padding: 10px 20px; border-radius: 10px; font-weight: bold; }
+        
+        /* TARİH SEÇİCİ STİLLERİ */
+        .date-navigator { background: white; padding: 15px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin: 0 auto 30px auto; display: flex; justify-content: space-between; align-items: center; max-width: 600px; }
+        .date-btn { background-color: #e9ecef; color: #0a2342; border: none; padding: 10px 20px; border-radius: 10px; font-weight: bold; text-decoration: none; transition: 0.3s; z-index: 2; }
+        .date-btn:hover { background-color: #0a2342; color: white; }
+        .current-date { font-size: 1.2rem; font-weight: 700; color: #0a2342; margin: 0; transition: 0.3s; }
+        .date-form:hover .current-date { color: #28a745; }
+        
+        @media (max-width: 768px) {
+            .date-btn { padding: 6px 10px; font-size: 0.75rem; }
+            .current-date { font-size: 0.9rem; }
+            .stat-badge { font-size: 0.85rem; padding: 6px 10px; margin-bottom: 5px;}
+        }
     </style>
 </head>
 <body>
-    <div class="container py-5">
-        <div class="d-flex justify-content-between align-items-center mb-5">
+    <div class="container py-4">
+        <div class="d-flex justify-content-between align-items-center mb-3">
             <div>
-                <h1 class="fw-bold text-navy" style="color: #0a2342;">Muhasebe Paneli</h1>
-                <p class="text-muted"><i class="fa-solid fa-calendar-check me-2"></i>{{ ay_ismi }} / {{ hafta_bilgi }}</p>
+                <h2 class="fw-bold m-0" style="color: #0a2342;"><i class="fa-solid fa-calculator me-2"></i>Muhasebe Paneli</h2>
             </div>
-            <a href="{% url 'rezervasyon_paneli' %}" class="btn btn-outline-dark fw-bold"><i class="fa-solid fa-chevron-left me-2"></i>Geri Dön</a>
+            <a href="{% url 'rezervasyon_paneli' %}" class="btn btn-outline-dark fw-bold btn-sm"><i class="fa-solid fa-chevron-left me-1"></i>Geri Dön</a>
+        </div>
+
+        <div class="alert alert-light border border-secondary border-opacity-25 text-center small py-2 mb-4 shadow-sm" style="color: #6c757d; max-width: 600px; margin: 0 auto;">
+            <i class="fa-solid fa-circle-info text-info me-1"></i> <strong>Sistem Notu:</strong> Takvimden seçtiğiniz günün bulunduğu <strong>haftanın</strong> ve <strong>ayın</strong> toplam hesaplamaları gösterilmektedir. (Varsayılan olarak <strong>bugün</strong> seçilidir).
+        </div>
+
+        <div class="date-navigator">
+            <a href="?tarih={{ onceki_hafta }}" class="date-btn" title="Geçen Hafta"><i class="fa-solid fa-chevron-left"></i> Hafta</a>
+            
+            <form method="GET" action="" class="date-form" style="position: relative; flex-grow: 1; text-align: center; cursor: pointer;" onclick="document.getElementById('gizliTakvim').showPicker();">
+                <h3 class="current-date">
+                    <i class="fa-regular fa-calendar-days me-1"></i>
+                    {{ secili_tarih|date:"d M Y" }}
+                    <i class="fa-solid fa-caret-down ms-1" style="font-size: 0.8rem; opacity: 0.5;"></i>
+                </h3>
+                <div class="small text-muted mt-1 fw-bold">{{ ay_ismi }} / {{ hafta_bilgi }}</div>
+                
+                <input type="date" id="gizliTakvim" name="tarih" value="{{ secili_tarih|date:'Y-m-d' }}" 
+                       onchange="this.form.submit()" 
+                       style="position: absolute; top: 0; left: 50%; opacity: 0; width: 1px; height: 1px; border: none; padding: 0; pointer-events: none;">
+            </form>
+
+            <a href="?tarih={{ sonraki_hafta }}" class="date-btn" title="Sonraki Hafta">Hafta <i class="fa-solid fa-chevron-right"></i></a>
         </div>
 
         {% for h in rapor %}
         <div class="hoca-card p-4">
             <div class="row align-items-center mb-4">
-                <div class="col-md-4">
-                    <h2 class="fw-bold text-primary">{{ h.isim }}</h2>
+                <div class="col-md-4 mb-3 mb-md-0">
+                    <h3 class="fw-bold text-primary m-0"><i class="fa-solid fa-user-tie me-2"></i>{{ h.isim }}</h3>
                 </div>
-                <div class="col-md-8 d-flex gap-3 justify-content-md-end">
-                    <div class="stat-badge bg-info text-white">Bugün: {{ h.bugun }}</div>
-                    <div class="stat-badge bg-success text-white">Haftalık: {{ h.bu_hafta }}</div>
-                    <div class="stat-badge bg-primary text-white">Aylık Toplam: {{ h.bu_ay }}</div>
+                <div class="col-md-8 d-flex flex-wrap gap-2 justify-content-md-end">
+                    <div class="stat-badge bg-info text-dark shadow-sm">Seçili Gün: {{ h.bugun }}</div>
+                    <div class="stat-badge bg-success text-white shadow-sm">Seçili Hafta: {{ h.bu_hafta }}</div>
+                    <div class="stat-badge bg-primary text-white shadow-sm">Seçili Ay: {{ h.bu_ay }}</div>
                 </div>
             </div>
 
-            <h5 class="fw-bold mb-3 border-bottom pb-2">Son Yapılan Dersler</h5>
+            <h6 class="fw-bold mb-3 border-bottom pb-2 text-muted"><i class="fa-solid fa-clock-rotate-left me-1"></i> Ay İçindeki Son Dersleri (Max 10)</h6>
             <div class="table-responsive">
-                <table class="table table-sm table-hover">
+                <table class="table table-sm table-hover align-middle">
                     <thead class="table-light">
                         <tr>
                             <th>Tarih</th>
@@ -48,12 +83,12 @@
                     <tbody>
                         {% for ders in h.ders_listesi %}
                         <tr>
-                            <td>{{ ders.tarih|date:"d F Y" }}</td>
-                            <td>{{ ders.saat }}</td>
+                            <td class="fw-bold">{{ ders.tarih|date:"d F Y" }}</td>
+                            <td><span class="badge bg-secondary">{{ ders.saat }}</span></td>
                             <td>{{ ders.kisi_adi }}</td>
                         </tr>
                         {% empty %}
-                        <tr><td colspan="3" class="text-muted italic">Bu ay henüz ders kaydı yok.</td></tr>
+                        <tr><td colspan="3" class="text-muted fst-italic py-3 text-center">Bu ay aralığında henüz ders kaydı bulunmuyor.</td></tr>
                         {% endfor %}
                     </tbody>
                 </table>
@@ -61,5 +96,6 @@
         </div>
         {% endfor %}
     </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
