@@ -18,247 +18,211 @@
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
     <style>
-        :root { --main-navy: #0a2342; --accent-green: #28a745; --bg-light: #f8f9fa; }
-        body { font-family: 'Poppins', sans-serif; background-color: #f4f6f9; padding-bottom: 50px; }
-        h1, h2, h3, .navbar-brand { font-family: 'Montserrat', sans-serif; font-weight: 700; }
+        :root { --main-navy: #0a2342; --accent-green: #28a745; --bg-light: #f4f7fa; }
+        body { font-family: 'Poppins', sans-serif; background-color: var(--bg-light); color: var(--main-navy); }
+        .navbar { background-color: var(--main-navy); padding: 15px 0; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .navbar-brand { font-family: 'Montserrat', sans-serif; font-weight: 800; color: white !important; font-size: 1.2rem; }
         
-        .navbar { background-color: var(--main-navy); padding: 15px 0; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-        .date-navigator { background: white; padding: 15px; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin: 20px auto; display: flex; justify-content: space-between; align-items: center; max-width: 600px; }
-        .date-btn { background-color: #e9ecef; color: var(--main-navy); border: none; padding: 10px 20px; border-radius: 10px; font-weight: bold; text-decoration: none; transition: 0.3s; z-index: 2; }
-        .date-btn:hover { background-color: var(--main-navy); color: white; }
+        /* IZGARA TASARIMI */
+        .table-responsive { background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); padding: 10px; margin-top: 20px; }
+        .table { margin-bottom: 0; border-collapse: separate; border-spacing: 4px; }
+        .table th { background: #f8f9fa; border: none; text-align: center; font-size: 0.85rem; text-transform: uppercase; padding: 12px; border-radius: 8px; }
+        .saat-sutunu { width: 80px; font-weight: 700; background: #eee !important; color: #555; vertical-align: middle; text-align: center; border-radius: 8px; font-size: 0.9rem; }
         
-        .current-date { font-size: 1.2rem; font-weight: 700; color: var(--main-navy); margin: 0; transition: 0.3s; }
-        .date-form:hover .current-date { color: var(--accent-green); }
+        .kort-hucre { height: 75px; min-width: 90px; border-radius: 10px; border: 2px solid transparent !important; vertical-align: middle; text-align: center; position: relative; cursor: pointer; transition: 0.2s; padding: 5px !important; }
+        
+        /* DOLU KORT: HEM HOCA HEM ÖĞRENCİ GÖRÜNÜR */
+        .dolu { background-color: #e8f5e9 !important; border-color: #28a745 !important; }
+        .rez-icerik { display: flex; flex-direction: column; justify-content: center; height: 100%; }
+        .kisi-adi { font-weight: 700; font-size: 0.8rem; color: #1b5e20; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+        
+        /* MOBİLDE DE GÖRÜNÜR HALE GETİRİLDİ */
+        .hoca-adi { font-size: 0.65rem; opacity: 0.85; font-weight: 600; color: #2e7d32; margin-top: 2px; }
+        
+        .bos { background-color: #fff !important; border: 2px dashed #ddd !important; }
+        .bos-artı { font-size: 1.5rem; color: #ccc; font-weight: 300; }
+        .kapali { background-color: #ffebee !important; border-color: #dc3545 !important; cursor: not-allowed; }
+        .kapali-metin { font-size: 0.7rem; color: #c62828; font-weight: 700; }
 
-        .table-container { background: white; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); overflow: hidden; }
-        .table-matrix { width: 100%; margin-bottom: 0; table-layout: fixed; }
-        .table-matrix th { background-color: var(--main-navy); color: white; text-align: center; padding: 15px 5px; border: 1px solid rgba(255,255,255,0.1); font-size: 0.9rem; }
-        .table-matrix td { border: 1px solid #dee2e6; height: 75px; vertical-align: middle; text-align: center; padding: 5px; transition: 0.2s; }
-        
-        .time-cell { background-color: #f8f9fa; font-weight: 700; color: var(--main-navy); font-size: 0.9rem; }
-        
-        .cell-empty { background-color: rgba(40, 167, 69, 0.05); cursor: pointer; position: relative; }
-        .cell-empty:hover { background-color: rgba(40, 167, 69, 0.2); }
-        .cell-empty i { color: var(--accent-green); opacity: 0.3; font-size: 1.5rem; transition: 0.3s; }
-        .cell-empty:hover i { opacity: 1; transform: scale(1.2); }
-        
-        .cell-full { background-color: #fff3cd; border-left: 5px solid #ffc107 !important; cursor: pointer; padding: 10px !important; transition: 0.2s; }
-        .cell-full:hover { background-color: #ffe8a1; }
-        .rez-name { font-weight: 800; font-size: 0.85rem; color: #856404; display: block; line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-bottom: 3px; }
-        .rez-note { font-size: 0.7rem; color: #6c757d; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        
-        .cell-closed { background-color: #e9ecef; color: #6c757d; cursor: not-allowed; position: relative; padding: 10px !important; background-image: repeating-linear-gradient(45deg, transparent, transparent 10px, rgba(0,0,0,0.03) 10px, rgba(0,0,0,0.03) 20px); border-left: 5px solid #6c757d !important; }
-        .closed-title { font-weight: 800; font-size: 0.85rem; display: block; line-height: 1.2; text-transform: uppercase; margin-bottom: 3px; }
-        .closed-reason { font-size: 0.7rem; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-        @media (max-width: 768px) {
-            .table-matrix th { font-size: 0.6rem; padding: 8px 1px; }
-            .time-cell { font-size: 0.65rem; width: 14% !important; padding: 2px;}
-            .rez-name, .closed-title { font-size: 0.65rem; white-space: normal; overflow: visible; word-wrap: break-word; }
-            .rez-note, .closed-reason { display: none; } 
-            .date-btn { padding: 6px 10px; font-size: 0.75rem; }
-            .current-date { font-size: 0.9rem; }
-            .table-container { overflow-x: hidden; } 
-            .table-matrix { min-width: 100%; } 
-            .cell-full, .cell-closed { padding: 4px !important; }
+        @media (min-width: 768px) {
+            .kisi-adi { font-size: 0.9rem; }
+            .hoca-adi { font-size: 0.75rem; }
+            .kort-hucre { height: 85px; }
         }
+
+        /* DİĞER STİLLER */
+        .tarih-nav { display: flex; align-items: center; justify-content: space-between; background: white; padding: 10px 20px; border-radius: 50px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        .btn-nav { width: 40px; height: 40px; border-radius: 50%; border: none; background: #f0f2f5; color: var(--main-navy); display: flex; align-items: center; justify-content: center; transition: 0.3s; }
+        .btn-nav:hover { background: var(--main-navy); color: white; }
     </style>
 </head>
 <body>
 
     <nav class="navbar navbar-dark">
         <div class="container d-flex justify-content-between align-items-center">
-            <div class="navbar-brand m-0">
-                <i class="fa-solid fa-calendar-check text-success me-2"></i> KORT REZERVASYON
-            </div>
-            
-            <div class="d-flex align-items-center">
-                <a href="{% url 'cikis_yap' %}" class="btn btn-outline-danger btn-sm fw-bold border-2">
-                    <i class="fa-solid fa-power-off"></i> <span class="d-none d-md-inline">Çıkış</span>
-                </a>
+            <a class="navbar-brand" href="{% url 'index' %}">
+                <img src="https://i.ibb.co/HTPhptVQ/logo.png" width="35" class="me-2" style="background:white; border-radius:5px; padding:2px;">
+                AHAL TEKE YÖNETİM
+            </a>
+            <div class="dropdown">
+                <button class="btn btn-outline-light btn-sm dropdown-toggle fw-bold" type="button" data-bs-toggle="dropdown">
+                    <i class="fa-solid fa-user-tie me-1"></i> {{ user.first_name|default:user.username }}
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2">
+                    {% if user.is_superuser %}
+                        <li><a class="dropdown-item fw-bold py-2" href="{% url 'muhasebe_paneli' %}"><i class="fa-solid fa-chart-line me-2 text-primary"></i>Muhasebe</a></li>
+                        <li><hr class="dropdown-divider"></li>
+                    {% endif %}
+                    <li><a class="dropdown-item fw-bold py-2" href="{% url 'sifre_degistir' %}"><i class="fa-solid fa-key me-2 text-warning"></i>Şifre Değiştir</a></li>
+                    <li>
+                        <form action="{% url 'cikis_yap' %}" method="post">
+                            {% csrf_token %}
+                            <button type="submit" class="dropdown-item fw-bold py-2 text-danger"><i class="fa-solid fa-right-from-bracket me-2"></i>Çıkış Yap</button>
+                        </form>
+                    </li>
+                </ul>
             </div>
         </div>
     </nav>
-    
-    <div class="container mt-2">
-        <div class="d-flex justify-content-between align-items-center p-2 px-3 bg-white shadow-sm rounded-4 border-start border-4 border-primary">
-            <div class="small text-muted">
-                <i class="fa-solid fa-user-tie me-1"></i> <strong>Yönetim/Hoca:</strong> {{ request.user.username }}
-            </div>
-            
-            <div class="d-flex align-items-center">
-                {% if request.user.is_superuser %}
-                <a href="{% url 'muhasebe_paneli' %}" class="btn btn-sm btn-info text-white fw-bold me-3 rounded-3 shadow-sm">
-                    <i class="fa-solid fa-chart-pie me-1"></i> Muhasebe / İstatistik
-                </a>
-                {% endif %}
-                
-                <a href="{% url 'sifre_degistir' %}" class="btn btn-link btn-sm text-decoration-none text-primary fw-600 p-0">
-                    <i class="fa-solid fa-key me-1"></i> Şifre Değiştir
-                </a>
-            </div>
-        </div>
-    </div>
 
-    <div class="container mt-3">
-        
-        {% if messages %}
-            <div>
-                {% for message in messages %}
-                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show shadow-sm text-center fw-bold rounded-4" role="alert">
-                        {{ message }}
-                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-                    </div>
-                {% endfor %}
+    <div class="container mt-4">
+        <div class="tarih-nav">
+            <a href="?tarih={{ onceki_gun }}" class="btn-nav"><i class="fa-solid fa-chevron-left"></i></a>
+            <div class="text-center">
+                <h6 class="mb-0 fw-bold">{{ secili_tarih|date:"d F Y" }}</h6>
+                <small class="text-muted">{{ secili_tarih|date:"l" }}</small>
             </div>
+            <a href="?tarih={{ sonraki_gun }}" class="btn-nav"><i class="fa-solid fa-chevron-right"></i></a>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show fw-bold mb-3 shadow-sm" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
         {% endif %}
 
-        <div class="date-navigator">
-            <a href="?tarih={{ onceki_gun }}" class="date-btn"><i class="fa-solid fa-chevron-left"></i> Dün</a>
-            
-            <form method="GET" action="" class="date-form" style="position: relative; flex-grow: 1; text-align: center; cursor: pointer;" onclick="document.getElementById('gizliTakvim').showPicker();">
-                <h3 class="current-date">
-                    <i class="fa-regular fa-calendar-days me-1"></i>
-                    {{ secili_tarih|date:"d M Y, l" }}
-                    <i class="fa-solid fa-caret-down ms-1" style="font-size: 0.8rem; opacity: 0.5;"></i>
-                </h3>
-                <input type="date" id="gizliTakvim" name="tarih" value="{{ secili_tarih|date:'Y-m-d' }}" 
-                       onchange="this.form.submit()" 
-                       style="position: absolute; top: 0; left: 50%; opacity: 0; width: 1px; height: 1px; border: none; padding: 0; pointer-events: none;">
-            </form>
-
-            <a href="?tarih={{ sonraki_gun }}" class="date-btn">Yarın <i class="fa-solid fa-chevron-right"></i></a>
-        </div>
-
-        <div class="table-container mb-5">
-            <table class="table-matrix">
+        <div class="table-responsive">
+            <table class="table">
                 <thead>
                     <tr>
-                        <th style="width: 16%;"><i class="fa-regular fa-clock"></i> SAAT</th>
-                        <th style="width: 21%;">KORT 1</th>
-                        <th style="width: 21%;">KORT 2</th>
-                        <th style="width: 21%;">KORT 3</th>
-                        <th style="width: 21%;">KORT 4</th>
+                        <th style="width: 80px;">Saat</th>
+                        <th>Kort 1</th>
+                        <th>Kort 2</th>
+                        <th>Kort 3</th>
+                        <th>Kort 4</th>
                     </tr>
                 </thead>
                 <tbody>
                     {% for satir in matrix %}
-                        <tr>
-                            <td class="time-cell">{{ satir.saat }}</td>
+                    <tr>
+                        <td class="saat-sutunu">{{ satir.saat }}</td>
+                        {% for k in satir.kortlar %}
+                        <td class="kort-hucre {{ k.durum }}" 
+                            {% if k.durum == 'dolu' %}
+                            onclick="detayGoster('{{ k.rezervasyon.kisi_adi }}', '{{ k.rezervasyon.tarih|date:'d.m.Y' }}', '{{ k.rezervasyon.saat }}', '{{ k.kort_no }}', '{{ k.rezervasyon.aciklama|default:'' }}', '{{ k.rezervasyon.id }}', '{{ k.rezervasyon.rezerve_eden.get_full_name|default:k.rezervasyon.rezerve_eden.username }}')"
+                            {% endif %}>
                             
-                            {% for kort in satir.kortlar %}
-                                {% if kort.durum == 'bos' %}
-                                    <td class="cell-empty" onclick="acRezervasyonModal('{{ kort.kort_no }}', '{{ satir.saat }}', '{{ secili_tarih|date:"d M Y" }}')">
-                                        <i class="fa-solid fa-plus"></i>
-                                    </td>
-                                {% elif kort.durum == 'kapali' %}
-                                    <td class="cell-closed" onclick="Swal.fire({title: 'Kapalı!', text: '{{ kort.sebep }}', icon: 'info', confirmButtonColor: '#0a2342'})">
-                                        <span class="closed-title"><i class="fa-solid fa-lock text-secondary me-1"></i>KAPALI</span>
-                                        <span class="closed-reason">{{ kort.sebep }}</span>
-                                    </td>
-                                {% else %}
-                                    <td class="cell-full" onclick="acDetayModal('{{ kort.rezervasyon.id }}', '{{ kort.rezervasyon.kisi_adi|escapejs }}', '{{ kort.rezervasyon.aciklama|escapejs }}', '{{ kort.kort_no }}', '{{ satir.saat }}', '{{ secili_tarih|date:"d M Y" }}', '{% if kort.rezervasyon.rezerve_eden.first_name %}{{ kort.rezervasyon.rezerve_eden.first_name|escapejs }}{% else %}{{ kort.rezervasyon.rezerve_eden.username|escapejs }}{% endif %}')">
-                                        <span class="rez-name" title="{{ kort.rezervasyon.kisi_adi }}">{{ kort.rezervasyon.kisi_adi }}</span>
-                                        {% if kort.rezervasyon.aciklama %}
-                                            <span class="rez-note" title="{{ kort.rezervasyon.aciklama }}"><i class="fa-solid fa-circle-info me-1"></i>{{ kort.rezervasyon.aciklama }}</span>
-                                        {% endif %}
-                                    </td>
-                                {% endif %}
-                            {% endfor %}
-                        </tr>
+                            {% if k.durum == 'dolu' %}
+                                <div class="rez-icerik">
+                                    <div class="kisi-adi">{{ k.rezervasyon.kisi_adi }}</div>
+                                    <div class="hoca-adi">{{ k.rezervasyon.rezerve_eden.get_full_name|default:k.rezervasyon.rezerve_eden.username }}</div>
+                                </div>
+                            {% elif k.durum == 'kapali' %}
+                                <div class="kapali-metin"><i class="fa-solid fa-lock me-1"></i> {{ k.sebep }}</div>
+                            {% else %}
+                                <div class="bos-artı" onclick="rezervasyonYap('{{ satir.saat }}', '{{ k.kort_no }}')">+</div>
+                            {% endif %}
+                        </td>
+                        {% endfor %}
+                    </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
     </div>
 
-    <div class="modal fade" id="rezModal" tabindex="-1" aria-labelledby="rezModalLabel" aria-hidden="true">
+    <div class="modal fade" id="ekleModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content rounded-4 border-0 shadow-lg">
-                <div class="modal-header" style="background-color: var(--main-navy); color: white; border-radius: 15px 15px 0 0;">
-                    <h5 class="modal-title fw-bold" id="rezModalLabel"><i class="fa-solid fa-calendar-plus text-success me-2"></i>Yeni Rezervasyon</h5>
-                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                
-                <form method="POST" action="{% url 'rezervasyon_paneli' %}?tarih={{ secili_tarih|date:'Y-m-d' }}">
+            <div class="modal-content border-0 shadow" style="border-radius: 20px;">
+                <form method="POST">
                     {% csrf_token %}
-                    <div class="modal-body p-4">
-                        
-                        <div class="alert alert-success py-3 mb-4 text-center fs-5" id="modalOzetMetni" style="border-left: 5px solid var(--accent-green);"></div>
-
-                        <input type="hidden" name="kort" id="modalKortInput">
-                        <input type="hidden" name="saat" id="modalSaatInput">
-
-                        {% if request.user.is_superuser %}
-                        <div class="mb-4 p-3 bg-light rounded-3 border border-secondary border-opacity-25">
-                            <label class="form-label fw-bold text-dark small mb-2"><i class="fa-solid fa-list-check me-1"></i> Rezervasyon Türü</label>
-                            <select name="hoca_secimi" class="form-select border-secondary fw-bold text-secondary">
-                                <option value="" selected>Genel Rezervasyon (Grup/Takım/Kira vs.)</option>
-                                <optgroup label="Özel Ders (İlgili Hocaya Ata)">
-                                    {% for hoca in hocalar %}
-                                        <option value="{{ hoca.id }}">{{ hoca.first_name|default:hoca.username }}</option>
-                                    {% endfor %}
-                                </optgroup>
-                            </select>
-                            <div class="form-text small mt-2"><i class="fa-solid fa-circle-info me-1"></i>Özel ders değilse seçili bırakın. Hoca seçerseniz muhasebesine eklenir.</div>
-                        </div>
-                        {% endif %}
-
-                        <div class="mb-3">
-                            <label class="form-label fw-bold text-muted small"><i class="fa-solid fa-user me-1"></i> Kimin Adına / Öğrenci Adı</label>
-                            <input type="text" name="kisi_adi" class="form-control form-control-lg bg-light" placeholder="Örn: Ahmet Yılmaz" required>
-                        </div>
-
-                        {% if request.user.is_superuser %}
-                        <div class="mb-3">
-                            <label class="form-label fw-bold text-muted small"><i class="fa-regular fa-comment-dots me-1"></i> Not / Açıklama</label>
-                            <input type="text" name="aciklama" class="form-control bg-light" placeholder="Örn: Takım Antrenmanı, Kiralama, Grup Dersi vs.">
-                        </div>
-                        {% endif %}
-
-                        <div class="mb-4 mt-3">
-                            <label class="form-label fw-bold text-primary small"><i class="fa-solid fa-repeat me-1"></i> Tekrarlı Kayıt (Hafta Sayısı)</label>
-                            <div class="input-group">
-                                <input type="number" name="tekrar" class="form-control fw-bold border-primary text-center" value="1" min="1" max="52" style="background-color: #e6f2ff;">
-                                <span class="input-group-text bg-primary text-white fw-bold">Hafta boyunca rezerve et</span>
+                    <div class="modal-header border-0 pb-0">
+                        <h5 class="modal-title fw-bold text-success"><i class="fa-solid fa-plus-circle me-2"></i>Yeni Rezervasyon</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="row g-3">
+                            <input type="hidden" name="kort" id="formKort">
+                            <input type="hidden" name="saat" id="formSaat">
+                            
+                            <div class="col-12">
+                                <label class="form-label small fw-bold text-muted">Öğrenci / Oyuncu Adı</label>
+                                <input type="text" name="kisi_adi" class="form-control bg-light border-0 py-3" placeholder="Örn: Ahmet Yılmaz" required>
                             </div>
-                            <div class="form-text small">Sadece bu gün için 1, dört hafta için 4 yazın. Boş haftalara eklenir, dolu/kapalı olanlar atlanır.</div>
+
+                            {% if hocalar %}
+                            <div class="col-12">
+                                <label class="form-label small fw-bold text-muted">İşlemi Yapan Hoca Seçimi</label>
+                                <select name="hoca_secimi" class="form-select bg-light border-0 py-3">
+                                    <option value="">Benim Adıma (Genel)</option>
+                                    {% for h in hocalar %}
+                                        <option value="{{ h.id }}">{{ h.first_name }} {{ h.last_name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            {% endif %}
+
+                            <div class="col-12">
+                                <label class="form-label small fw-bold text-muted">Not / Açıklama</label>
+                                <input type="text" name="aciklama" class="form-control bg-light border-0 py-3" placeholder="Opsiyonel">
+                            </div>
+                            
+                            <div class="col-12">
+                                <label class="form-label small fw-bold text-muted">Tekrar Et (Periyodik)</label>
+                                <select name="tekrar" class="form-select bg-light border-0 py-3">
+                                    <option value="1">Sadece Bu Haftalık</option>
+                                    <option value="4">4 Hafta Boyunca (Aylık)</option>
+                                    <option value="12">12 Hafta Boyunca (3 Aylık)</option>
+                                </select>
+                            </div>
                         </div>
-                        
-                        <button type="submit" class="btn btn-success w-100 py-3 fw-bold fs-5 rounded-3 shadow-sm"><i class="fa-solid fa-check-double me-2"></i> REZERVASYONU KAYDET</button>
+                    </div>
+                    <div class="modal-footer border-0">
+                        <button type="submit" class="btn btn-success w-100 py-3 fw-bold" style="border-radius: 15px;">REZERVASYONU KAYDET</button>
                     </div>
                 </form>
             </div>
         </div>
     </div>
 
-    <div class="modal fade" id="detayModal" tabindex="-1" aria-hidden="true">
+    <div class="modal fade" id="detayModal" tabindex="-1">
         <div class="modal-dialog modal-dialog-centered">
-            <div class="modal-content rounded-4 border-0 shadow-lg">
-                <div class="modal-header bg-warning border-0" style="border-radius: 15px 15px 0 0;">
-                    <h5 class="modal-title fw-bold text-dark"><i class="fa-solid fa-address-card me-2"></i>Rezervasyon Detayı</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            <div class="modal-content border-0 shadow" style="border-radius: 20px;">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold"><i class="fa-solid fa-circle-info me-2 text-primary"></i>Rezervasyon Detayı</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body p-4 text-center">
+                <div class="modal-body text-center">
+                    <h2 id="detayKisi" class="fw-bold mb-1"></h2>
+                    <p id="detayAciklama" class="text-muted mb-4"></p>
                     
-                    <div class="mb-3" id="detayOzet"></div>
+                    <div id="detayOzet" class="mb-4"></div>
                     
-                    <h3 class="fw-bold text-primary mb-1" id="detayKisi"></h3>
-                    <p class="text-muted fst-italic mb-3" id="detayAciklama"></p>
-                    
-                    <div class="text-end mb-4 border-bottom pb-2">
-                        <small class="text-muted fw-bold" style="font-size: 0.75rem;"><i class="fa-solid fa-pen-clip me-1"></i> Oluşturan: <span id="detayOlusturan" class="text-dark"></span></small>
+                    <div class="p-3 bg-light rounded-4 text-start mb-4">
+                        <p class="mb-1 text-muted small fw-bold">Kaydı Oluşturan</p>
+                        <p id="detayOlusturan" class="fw-bold text-dark mb-0"></p>
                     </div>
-                    
-                    {% if request.user.is_superuser %}
-                        <form method="POST" id="silmeFormu" action="">
+
+                    {% if user.is_superuser %}
+                        <form id="silmeFormu" action="" method="post" onsubmit="return false;">
                             {% csrf_token %}
-                            <button type="button" class="btn btn-danger w-100 py-2 fw-bold" onclick="rezervasyonSilOnay()"><i class="fa-solid fa-trash-can me-2"></i>BU REZERVASYONU İPTAL ET</button>
+                            <button onclick="rezervasyonSilOnay()" class="btn btn-outline-danger w-100 py-2 fw-bold" style="border-radius: 12px;">
+                                <i class="fa-solid fa-trash-can me-2"></i>REZERVASYONU İPTAL ET
+                            </button>
                         </form>
-                    {% else %}
-                        <div class="alert alert-secondary small fw-bold mb-0">
-                            <i class="fa-solid fa-circle-info me-1"></i> İptal ve düzenleme işlemleri için lütfen <strong>yönetim</strong> ile iletişime geçin.
-                        </div>
                     {% endif %}
                 </div>
             </div>
@@ -266,26 +230,24 @@
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    
     <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register("{% url 'sw.js' %}");
-            });
-        }
-
-        function acRezervasyonModal(kortNo, saat, tarihMetni) {
-            document.getElementById('modalKortInput').value = kortNo;
-            document.getElementById('modalSaatInput').value = saat;
-            document.getElementById('modalOzetMetni').innerHTML = `<div class="fw-bold mb-1"><i class="fa-regular fa-calendar-check me-1"></i> ${tarihMetni}</div> <span class="badge bg-primary fs-6 me-2">Saat: ${saat}</span> <span class="badge bg-dark fs-6">Kort: ${kortNo}</span>`;
-            var myModal = new bootstrap.Modal(document.getElementById('rezModal'));
+        function rezervasyonYap(saat, kort) {
+            document.getElementById('formSaat').value = saat;
+            document.getElementById('formKort').value = kort;
+            var myModal = new bootstrap.Modal(document.getElementById('ekleModal'));
             myModal.show();
         }
 
-        function acDetayModal(rezId, kisiAdi, aciklama, kortNo, saat, tarihMetni, olusturan) {
-            document.getElementById('detayKisi').innerText = kisiAdi;
+        function detayGoster(kisi, tarih, saat, kortNo, aciklama, rezId, olusturan) {
+            document.getElementById('detayKisi').innerText = kisi;
             document.getElementById('detayAciklama').innerText = aciklama ? aciklama : "Genel Rezervasyon";
-            document.getElementById('detayOzet').innerHTML = `<span class="badge bg-dark fs-6 me-1">${tarihMetni}</span> <span class="badge bg-primary fs-6 me-1">Saat: ${saat}</span> <span class="badge bg-success fs-6">Kort: ${kortNo}</span>`;
+            
+            var tarihMetni = tarih;
+            document.getElementById('detayOzet').innerHTML = `
+                <span class="badge bg-dark fs-6 p-2 me-1">${tarihMetni}</span>
+                <span class="badge bg-primary fs-6 p-2 me-1">Saat: ${saat}</span>
+                <span class="badge bg-success fs-6 p-2">Kort: ${kortNo}</span>
+            `;
             
             document.getElementById('detayOlusturan').innerText = olusturan;
             
@@ -301,19 +263,20 @@
         function rezervasyonSilOnay() {
             Swal.fire({
                 title: 'Emin misiniz?',
-                text: "Bu rezervasyon kalıcı olarak iptal edilecektir!",
+                text: "Bu rezervasyon kalıcı olarak silinecektir!",
                 icon: 'warning',
                 showCancelButton: true,
                 confirmButtonColor: '#dc3545',
                 cancelButtonColor: '#6c757d',
-                confirmButtonText: '<i class="fa-solid fa-trash-can me-1"></i> Evet, İptal Et',
+                confirmButtonText: 'Evet, Sil',
                 cancelButtonText: 'Vazgeç',
                 reverseButtons: true
             }).then((result) => {
                 if (result.isConfirmed) {
-                    document.getElementById('silmeFormu').submit(); 
+                    document.getElementById('silmeFormu').onsubmit = null;
+                    document.getElementById('silmeFormu').submit();
                 }
-            });
+            })
         }
     </script>
 </body>
