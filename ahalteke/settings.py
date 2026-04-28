@@ -130,3 +130,12 @@ STATICFILES_DIRS = [
 # https://docs.djangoproject.com/en/5.0/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+CSRF_TRUSTED_ORIGINS = [
+    'https://*.vercel.app',  # Vercel'in oluşturduğu tüm linklere izin verir
+    'https://www.ahalteketeniskulubu.com', # Varsa kendi domainini ekle
+    'https://ahalteketeniskulubu.com',
+]
+
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
