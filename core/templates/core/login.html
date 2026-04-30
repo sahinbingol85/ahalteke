@@ -52,11 +52,22 @@
     </div>
 
     <script>
+        // 1. Service Worker Kaydı
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
                 navigator.serviceWorker.register('/sw.js');
             });
         }
+
+        // 2. YENİ EKLENEN KISIM: CSRF Hatasını Önlemek İçin Sayfa Yenileme
+        // Kullanıcı uygulamaya (sekme) geri döndüğünde veya geri tuşuna bastığında tetiklenir
+        window.addEventListener('pageshow', function(event) {
+            // event.persisted true ise, sayfa tarayıcının önbelleğinden (BFCache) yüklenmiş demektir.
+            // Bu durumda eski (bayat) CSRF token ile karşılaşmamak için sayfayı zorla yeniliyoruz.
+            if (event.persisted) {
+                window.location.reload();
+            }
+        });
     </script>
 </body>
 </html>
