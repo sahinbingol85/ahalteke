@@ -35,19 +35,23 @@
             <p class="text-muted mb-4">Sisteme girmek için bilgilerinizi yazın.</p>
         {% endif %}
         
-        <form method="POST">
+        <!-- YENİ EKLENEN KISIM: Form gönderildiği an buton kilitlenir -->
+        <form method="POST" action="" onsubmit="document.getElementById('loginBtn').disabled = true; document.getElementById('loginBtn').innerHTML = '<i class=\'fa-solid fa-spinner fa-spin me-2\'></i>GİRİŞ YAPILIYOR...';">
             {% csrf_token %}
             <div class="mb-3 text-start">
                 <label class="form-label fw-bold text-muted small">Kullanıcı Adı</label>
-                <input type="text" name="username" class="form-control" required>
+                <!-- YENİ EKLENEN KISIM: autocomplete="username" -->
+                <input type="text" name="username" class="form-control" autocomplete="username" required>
             </div>
             <div class="mb-4 text-start">
                 <label class="form-label fw-bold text-muted small">Şifre</label>
-                <input type="password" name="password" class="form-control" required>
+                <!-- YENİ EKLENEN KISIM: autocomplete="current-password" -->
+                <input type="password" name="password" class="form-control" autocomplete="current-password" required>
             </div>
             
             <input type="hidden" name="next" value="/rezervasyon/">
-            <button type="submit" class="btn btn-custom w-100"><i class="fa-solid fa-right-to-bracket me-2"></i>GİRİŞ YAP</button>
+            <!-- YENİ EKLENEN KISIM: Butona id="loginBtn" eklendi -->
+            <button type="submit" id="loginBtn" class="btn btn-custom w-100"><i class="fa-solid fa-right-to-bracket me-2"></i>GİRİŞ YAP</button>
         </form>
     </div>
 
@@ -59,7 +63,7 @@
             });
         }
 
-        // 2. YENİ EKLENEN KISIM: CSRF Hatasını Önlemek İçin Sayfa Yenileme
+        // 2. CSRF Hatasını Önlemek İçin Sayfa Yenileme
         // Kullanıcı uygulamaya (sekme) geri döndüğünde veya geri tuşuna bastığında tetiklenir
         window.addEventListener('pageshow', function(event) {
             // event.persisted true ise, sayfa tarayıcının önbelleğinden (BFCache) yüklenmiş demektir.
