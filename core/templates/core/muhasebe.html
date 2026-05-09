@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -26,6 +27,8 @@
             .current-date { font-size: 0.9rem; }
             .stat-badge { font-size: 0.85rem; padding: 6px 10px; margin-bottom: 5px;}
             .report-period-header h4 { font-size: 1.1rem; }
+            .hoca-isim-alani { flex-direction: column; align-items: flex-start !important; }
+            .hoca-isim-alani button { margin-top: 10px; margin-left: 0 !important; }
         }
     </style>
 </head>
@@ -70,19 +73,22 @@
         {% for h in rapor %}
         <div class="hoca-card p-4">
             <div class="row align-items-center mb-4">
-                <div class="col-md-4 mb-3 mb-md-0">
+                <div class="col-md-5 mb-3 mb-md-0 d-flex align-items-center hoca-isim-alani">
                     <h3 class="fw-bold text-primary m-0"><i class="fa-solid fa-user-tie me-2"></i>{{ h.isim }}</h3>
+                    <button onclick="excelIndir('tablo-{{ forloop.counter }}', '{{ h.isim }}')" class="btn btn-sm btn-success ms-3 shadow-sm fw-bold">
+                        <i class="fa-solid fa-file-excel me-1"></i> Excel'e Aktar
+                    </button>
                 </div>
-                <div class="col-md-8 d-flex flex-wrap gap-2 justify-content-md-end">
+                <div class="col-md-7 d-flex flex-wrap gap-2 justify-content-md-end">
                     <div class="stat-badge bg-info text-dark shadow-sm">Seçili Gün: {{ h.bugun }}</div>
                     <div class="stat-badge bg-success text-white shadow-sm">Seçili Hafta: {{ h.bu_hafta }}</div>
                     <div class="stat-badge bg-primary text-white shadow-sm">Seçili Ay: {{ h.bu_ay }}</div>
                 </div>
             </div>
 
-            <h6 class="fw-bold mb-3 border-bottom pb-2 text-muted"><i class="fa-solid fa-clock-rotate-left me-1"></i> Bu Ay İçindeki Son Dersleri (Max 10)</h6>
+            <h6 class="fw-bold mb-3 border-bottom pb-2 text-muted"><i class="fa-solid fa-clock-rotate-left me-1"></i> Bu Ay İçindeki Ders Geçmişi</h6>
             <div class="table-responsive">
-                <table class="table table-sm table-hover align-middle">
+                <table id="tablo-{{ forloop.counter }}" class="table table-sm table-hover align-middle">
                     <thead class="table-light">
                         <tr>
                             <th>Tarih</th>
@@ -106,6 +112,32 @@
         </div>
         {% endfor %}
     </div>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    
+    <script>
+        function excelIndir(tabloId, hocaAdi) {
+            // Tabloyu bul
+            var table = document.getElementById(tabloId);
+            
+            // Eğer tablo boş mesajı içeriyorsa indirme yapmaya gerek yok
+            if(table.rows.length <= 2 && table.innerText.includes("bulunmuyor")) {
+                alert("İndirilecek ders kaydı bulunmuyor.");
+                return;
+            }
+            
+            // Tabloyu Excel formatına dönüştür
+            var wb = XLSX.utils.table_to_book(table, {sheet: "Ders Kayıtları"});
+            
+            // Dosya ismini temizle ve oluştur (Örn: Ahmet_Yilmaz_Muhasebe_Raporu.xlsx)
+            var temizIsim = hocaAdi.replace(/\s+/g, '_');
+            var dosyaAdi = temizIsim + "_Muhasebe_Raporu.xlsx";
+            
+            // Dosyayı indir
+            XLSX.writeFile(wb, dosyaAdi);
+        }
+    </script>
 </body>
 </html>
