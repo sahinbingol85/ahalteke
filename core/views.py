@@ -159,7 +159,7 @@ def muhasebe_paneli(request):
         messages.error(request, "Bu sayfaya erişim yetkiniz yok.")
         return redirect('rezervasyon_paneli')
 
-    # YENİ: URL'den gelen tarihi okuyoruz (Yoksa bugünü alıyoruz)
+    # URL'den gelen tarihi okuyoruz (Yoksa bugünü alıyoruz)
     tarih_str = request.GET.get('tarih')
     if tarih_str:
         secili_tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date()
@@ -191,7 +191,8 @@ def muhasebe_paneli(request):
             'bugun': hoca_dersleri.filter(tarih=secili_tarih).count(),
             'bu_hafta': hoca_dersleri.filter(tarih__range=[hafta_basi, hafta_sonu]).count(),
             'bu_ay': hoca_dersleri.count(),
-            'ders_listesi': hoca_dersleri.order_by('-tarih', '-saat')[:10]
+            # EKLENEN YENİLİK: [:10] kısıtlaması kaldırıldı, artık limitsiz listeliyor!
+            'ders_listesi': hoca_dersleri.order_by('-tarih', '-saat')
         })
 
     # Muhasebe sayfasında "Dün/Yarın" yerine "Geçen Hafta/Sonraki Hafta" atlamak daha mantıklıdır
