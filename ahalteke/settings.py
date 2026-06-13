@@ -156,7 +156,7 @@ EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'ahalteke2026@gmail.com' 
-EMAIL_HOST_PASSWORD = 'jiwt kfkf rlae isaz'
+
 DEFAULT_FROM_EMAIL = 'Ahal Teke Tenis Kulübü <ahalteke2026@gmail.com>'
 
 # Giriş yapıldığında nereye gitsin (Fikstür kapalı olduğu için Profil'e gidiyor)
