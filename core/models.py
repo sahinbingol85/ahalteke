@@ -1,8 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-# Create your models here.
-
 # ==========================================
 # KORT REZERVASYON SİSTEMİ (SADECE PERSONEL)
 # ==========================================
@@ -57,3 +55,53 @@ class KapaliDurum(models.Model):
 
     def __str__(self):
         return f"{self.tarih.strftime('%d.%m.%Y')} | {self.get_kort_display()} | {self.sebep}"
+
+
+# ==========================================
+# TURNUVA KAYIT SİSTEMİ 
+# ==========================================
+class Turnuva(models.Model):
+    isim = models.CharField(max_length=100, verbose_name="Turnuva Adı")
+    baslangic_tarihi = models.DateField(verbose_name="Başlangıç Tarihi")
+    kayit_acik_mi = models.BooleanField(default=True, verbose_name="Kayıtlar Açık mı?")
+
+    def __str__(self):
+        return self.isim
+    
+    class Meta:
+        verbose_name = "Turnuva"
+        verbose_name_plural = "Turnuvalar"
+
+class Kategori(models.Model):
+    isim = models.CharField(max_length=50, verbose_name="Kategori Adı")
+    
+    def __str__(self):
+        return self.isim
+
+    class Meta:
+        verbose_name = "Kategori"
+        verbose_name_plural = "Kategoriler"
+
+class Kayit(models.Model):
+    ODEME_DURUMU = (
+        ('bekliyor', 'Ödeme Bekliyor'),
+        ('onaylandi', 'Onaylandı (Kesin Kayıt)'),
+    )
+
+    turnuva = models.ForeignKey(Turnuva, on_delete=models.CASCADE, verbose_name="Turnuva")
+    kategori = models.ForeignKey(Kategori, on_delete=models.CASCADE, verbose_name="Kategori")
+    ad = models.CharField(max_length=50, verbose_name="Ad")
+    soyad = models.CharField(max_length=50, verbose_name="Soyad")
+    telefon = models.CharField(max_length=15, verbose_name="Telefon Numarası")
+    
+    # Partner ve Email alanları buradan tamamen kaldırıldı
+    
+    odeme_durumu = models.CharField(max_length=20, choices=ODEME_DURUMU, default='bekliyor', verbose_name="Ödeme Durumu")
+    kayit_tarihi = models.DateTimeField(auto_now_add=True, verbose_name="Kayıt Tarihi")
+
+    def __str__(self):
+        return f"{self.ad} {self.soyad} - {self.kategori}"
+
+    class Meta:
+        verbose_name = "Oyuncu Kaydı"
+        verbose_name_plural = "Oyuncu Kayıtları"

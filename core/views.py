@@ -8,8 +8,16 @@ from django.contrib.auth.forms import PasswordChangeForm
 from django.http import JsonResponse
 from django.db.models import Count, Q
 from django.contrib.auth.models import User
+from django.utils.safestring import mark_safe
+from django.utils.html import escape
 
-from .models import Rezervasyon, KapaliDurum
+# YENİ EKLENEN İMPORTLAR (Turnuva kayıt ve otomatik mail sistemi için)
+from django.core.mail import send_mail
+from django.conf import settings
+from django.utils.crypto import get_random_string
+
+from .models import Rezervasyon, KapaliDurum, Turnuva, Kategori, Kayit
+from .forms import KayitForm
 
 # --- YARDIMCI FONKSİYON: Türkçe Ay İsimleri ---
 def turkce_tarih_format(tarih):
@@ -17,16 +25,130 @@ def turkce_tarih_format(tarih):
     return f"{tarih.day} {aylar[tarih.month]} {tarih.year}"
 
 # ==========================================
-# ANA SAYFA VE TURNUVALAR
+# ANA SAYFA 
 # ==========================================
 def index(request):
     return render(request, 'core/index.html')
 
-def turnuvalar(request):
-    return render(request, 'core/turnuvalar.html')
 
 # ==========================================
-# KORT REZERVASYON SİSTEMİ
+# YENİ EKLENEN: TURNUVALAR VE KAYIT SİSTEMİ
+# ==========================================
+def turnuvalar(request):
+    aktif_turnuvalar = Turnuva.objects.filter(kayit_acik_mi=True)
+    aktif_turnuva = aktif_turnuvalar.first() 
+    
+    if request.method == 'POST':
+        form = KayitForm(request.POST)
+        if form.is_valid() and aktif_turnuva:
+            kayit = form.save(commit=False)
+            
+            # ==========================================
+            # 1. TELEFON NUMARASINDAKİ TÜM BOŞLUKLARI SİL
+            # ==========================================
+            # Kullanıcı "0531 365 24 19" yazsa bile arkada "05313652419" yapar.
+            if kayit.telefon:
+                kayit.telefon = kayit.telefon.replace(" ", "").strip()
+            
+            # ==========================================
+            # 2. İSİMLERİ STANDARTLAŞTIR VE BOŞLUKLARI SİL
+            # ==========================================
+            if kayit.ad:
+                kayit.ad = kayit.ad.strip().title()
+            if kayit.soyad:
+                kayit.soyad = kayit.soyad.strip().title()
+            
+            # ==========================================
+            # 3. KUSURSUZ ÇİFT KAYIT KONTROLÜ
+            # ==========================================
+            # Verileri zaten .title() ve temizlenmiş yaptığımız için direkt düz eşleştirme (ad=kayit.ad) 
+            # kullanıyoruz. Böylece SQLite veritabanındaki Türkçe karakter hatası tamamen çözülür.
+            ayni_kayit_var_mi = Kayit.objects.filter(
+                turnuva=aktif_turnuva,
+                ad=kayit.ad,
+                soyad=kayit.soyad,
+                telefon=kayit.telefon
+            ).exists()
+            
+            if ayni_kayit_var_mi:
+                # Eğer aynı ad, soyad ve telefonla kayıt varsa formu durdur ve hata ver
+                hata_mesajı = f"Sayın {kayit.ad} {kayit.soyad}, bu bilgiler ile daha önce zaten bir ön kayıt oluşturulmuş! Lütfen ödeme işlemlerinizi tamamlayınız veya yönetimle iletişime geçiniz."
+                messages.error(request, hata_mesajı)
+                return render(request, 'core/turnuvalar.html', {'form': form, 'aktif_turnuvalar': aktif_turnuvalar})
+            
+            # Eğer kayıt yoksa işlemlere normal şekilde devam et
+            kayit.turnuva = aktif_turnuva 
+            kayit.save() 
+            
+            ad = escape(kayit.ad)
+            soyad = escape(kayit.soyad)
+
+            basari_mesaji = f"""
+            <div style="line-height: 1.6; text-align: center;">
+                <span style="font-size: 1.25rem;">Harika! Sayın <strong>{ad} {soyad}</strong>, ön kaydınız başarıyla alındı.</span>
+                
+                <hr style="margin: 15px auto; width: 60%; border-color: rgba(0,0,0,0.1);">
+                
+                Kaydınızın kesinleşmesi ogre fikstüre dahil edilebilmeniz için <strong>4.000 TL</strong>'lik turnuva katılım ücretini en geç <strong>24 Haziran</strong>'a kadar aşağıdaki hesaba yatırmanız gerekmektedir:
+                
+                <div style="background-color: #ffffff; color: #0a2342; padding: 15px; border-radius: 10px; margin: 20px 0; border: 2px dashed #28a745; font-family: monospace; font-size: 1.15rem;">
+                    <strong>Hesap Sahibi:</strong> Rezan Sertkan<br>
+                    <strong>IBAN:</strong> TR75 0006 7010 0000 0020 0047 47
+                </div>
+                
+                <span style="font-size: 0.95rem; color: #6c757d;">
+                    <i class="fa-solid fa-circle-info text-warning me-1"></i> Lütfen ödeme açıklamasına <strong>adınızı ve soyadınızı</strong> yazmayı unutmayın.
+                </span><br><br>
+                
+                <strong>Kortlarda görüşmek üzere, başarılar dileriz! 🎾</strong>
+            </div>
+            """
+            
+            messages.success(request, mark_safe(basari_mesaji))
+            return redirect('turnuvalar')
+    else:
+        form = KayitForm()
+
+    context = {
+        'form': form,
+        'aktif_turnuvalar': aktif_turnuvalar
+    }
+    return render(request, 'core/turnuvalar.html', context)
+
+# ==========================================
+# YENİ EKLENEN: OYUNCU PROFİLİ
+# ==========================================
+@login_required(login_url='/giris/')
+def profil(request):
+    # Oyuncunun e-postasına bağlı turnuva kaydını çekiyoruz
+    kayit_bilgileri = Kayit.objects.filter(email=request.user.email)
+    kayit_bilgisi = kayit_bilgileri.last() 
+
+    # Oyuncunun kendi şifresini değiştirebilmesi için
+    if request.method == 'POST':
+        form = PasswordChangeForm(request.user, request.POST)
+        if form.is_valid():
+            user = form.save()
+            update_session_auth_hash(request, user)
+            messages.success(request, 'Şifreniz başarıyla güncellendi!')
+            return redirect('profil')
+        else:
+            messages.error(request, 'Lütfen aşağıdaki hataları düzeltin.')
+    else:
+        form = PasswordChangeForm(request.user)
+
+    context = {
+        'form': form,
+        'kayit': kayit_bilgisi,
+        # Fikstür/Maç sistemi şimdilik kapalı olduğu için buraları boş listeler olarak gönderiyoruz
+        'gecmis_maclar': [],
+        'gelecek_maclar': []
+    }
+    return render(request, 'core/profil.html', context)
+
+
+# ==========================================
+# KORT REZERVASYON SİSTEMİ (Mevcut, Dokunulmadı)
 # ==========================================
 @login_required(login_url='/giris/')
 def rezervasyon_paneli(request):
@@ -151,7 +273,7 @@ def rezervasyon_paneli(request):
     return render(request, 'core/rezervasyon.html', context)
 
 # ==========================================
-# MUHASEBE VE İSTATİSTİK SAYFASI (GÜNCELLENDİ)
+# MUHASEBE VE İSTATİSTİK SAYFASI (Mevcut, Dokunulmadı)
 # ==========================================
 @login_required(login_url='/giris/')
 def muhasebe_paneli(request):
@@ -159,14 +281,12 @@ def muhasebe_paneli(request):
         messages.error(request, "Bu sayfaya erişim yetkiniz yok.")
         return redirect('rezervasyon_paneli')
 
-    # URL'den gelen tarihi okuyoruz (Yoksa bugünü alıyoruz)
     tarih_str = request.GET.get('tarih')
     if tarih_str:
         secili_tarih = datetime.strptime(tarih_str, '%Y-%m-%d').date()
     else:
         secili_tarih = timezone.now().date()
 
-    # Bütün hesaplamalar artık bu "secili_tarih" üzerinden yapılacak
     ay_basi = secili_tarih.replace(day=1)
     if secili_tarih.month == 12:
         ay_sonu = secili_tarih.replace(year=secili_tarih.year+1, month=1, day=1) - timedelta(days=1)
@@ -180,7 +300,6 @@ def muhasebe_paneli(request):
     rapor = []
 
     for hoca in hocalar:
-        # Sorguyu o ayın başına ve sonuna kilitledik
         hoca_dersleri = Rezervasyon.objects.filter(
             rezerve_eden=hoca, 
             tarih__range=[ay_basi, ay_sonu]
@@ -191,11 +310,9 @@ def muhasebe_paneli(request):
             'bugun': hoca_dersleri.filter(tarih=secili_tarih).count(),
             'bu_hafta': hoca_dersleri.filter(tarih__range=[hafta_basi, hafta_sonu]).count(),
             'bu_ay': hoca_dersleri.count(),
-            # EKLENEN YENİLİK: [:10] kısıtlaması kaldırıldı, artık limitsiz listeliyor!
             'ders_listesi': hoca_dersleri.order_by('-tarih', '-saat')
         })
 
-    # Muhasebe sayfasında "Dün/Yarın" yerine "Geçen Hafta/Sonraki Hafta" atlamak daha mantıklıdır
     onceki_hafta = secili_tarih - timedelta(days=7)
     sonraki_hafta = secili_tarih + timedelta(days=7)
 
@@ -225,7 +342,7 @@ def rezervasyon_sil(request, rez_id):
     return redirect(f'/rezervasyon/?tarih={donulecek_tarih}')
 
 # ==========================================
-# DİĞER FONKSİYONLAR
+# DİĞER FONKSİYONLAR (PWA, Çıkış, Şifre)
 # ==========================================
 def manifest_view(request):
     data = {

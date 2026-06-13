@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import Rezervasyon, KapaliDurum
+from .models import Rezervasyon, KapaliDurum, Turnuva, Kategori, Kayit
 
 # ==========================================
 # KORT REZERVASYON ADMİN PANELİ
@@ -28,3 +28,28 @@ class KapaliDurumAdmin(admin.ModelAdmin):
     
     # Yukarıdaki arama çubuğunun nerelerde arama yapacağı
     search_fields = ('sebep',)
+
+# ==========================================
+# TURNUVA VE KAYIT ADMİN PANELİ
+# ==========================================
+@admin.register(Turnuva)
+class TurnuvaAdmin(admin.ModelAdmin):
+    list_display = ('isim', 'baslangic_tarihi', 'kayit_acik_mi')
+    list_filter = ('kayit_acik_mi',)
+    search_fields = ('isim',)
+
+admin.site.register(Kategori)
+
+@admin.register(Kayit)
+class KayitAdmin(admin.ModelAdmin):
+    # Admin listesinde görünecek sütunlar
+    list_display = ('ad', 'soyad', 'turnuva', 'kategori', 'telefon', 'odeme_durumu', 'kayit_tarihi')
+    
+    # İŞTE SİHİRLİ KOD: Listeden çıkmadan doğrudan değiştirilebilir alanlar!
+    list_editable = ('odeme_durumu',)
+    
+    # Sağ tarafta çıkacak filtreleme seçenekleri
+    list_filter = ('turnuva', 'kategori', 'odeme_durumu')
+    
+    # Yukarıdaki arama çubuğunun nerelerde arama yapacağı (email çıkarıldı)
+    search_fields = ('ad', 'soyad', 'telefon')
