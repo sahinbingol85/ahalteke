@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="tr">
 <head>
@@ -24,7 +25,6 @@
         }
         h1, h2, h3, .navbar-brand, .btn { font-family: 'Montserrat', sans-serif; font-weight: 700; }
 
-        /* Navbar Still */
         .navbar { background-color: var(--main-navy); padding: 0.5rem 0; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
 
         .navbar-brand {
@@ -49,17 +49,8 @@
         }
 
         @media (max-width: 768px) {
-            .navbar-brand {
-                font-size: 1rem;
-                white-space: normal;
-                line-height: 1.2;
-                max-width: 80%;
-            }
-            .brand-logo {
-                width: 40px;
-                height: 40px;
-                margin-right: 8px;
-            }
+            .navbar-brand { font-size: 1rem; white-space: normal; line-height: 1.2; max-width: 80%; }
+            .brand-logo { width: 40px; height: 40px; margin-right: 8px; }
         }
 
         .nav-link { color: rgba(255,255,255,0.8) !important; margin-left: 20px; font-size: 0.95rem; font-weight: 600; transition: all 0.3s; }
@@ -67,7 +58,6 @@
         .instagram-btn { background-color: rgba(40, 167, 69, 0.15); padding: 8px 20px; border-radius: 30px; color: var(--accent-green) !important; font-weight: bold; display: flex; align-items: center; gap: 8px; transition: all 0.3s; border: 1px solid var(--accent-green); }
         .instagram-btn:hover { background-color: var(--accent-green); color: white !important; }
 
-        /* Turnuva Sayfası Özel Stiller */
         .tournament-hero {
             background-color: var(--main-navy);
             color: white;
@@ -86,10 +76,9 @@
             border-top: 6px solid var(--accent-green);
             margin-top: -50px;
         }
-        .btn-accent { background-color: var(--accent-green); color: white; padding: 15px 45px; border-radius: 50px; text-transform: uppercase; letter-spacing: 1px; border: none; transition: all 0.3s; text-decoration: none; display: inline-block; box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3); }
+        .btn-accent { background-color: var(--accent-green); color: white; padding: 15px 45px; border-radius: 50px; text-transform: uppercase; letter-spacing: 1px; border: none; transition: all 0.3s; text-decoration: none; display: inline-block; box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3); font-weight: bold;}
         .btn-accent:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4); background-color: #218838; color: white; }
 
-        /* Footer */
         footer { background-color: var(--main-navy); color: var(--text-light); padding: 60px 0 30px; text-align: center; }
         .footer-link { color: rgba(255,255,255,0.7); text-decoration: none; transition: color 0.3s; }
         .footer-link:hover { color: var(--accent-green); }
@@ -112,6 +101,7 @@
                     <li class="nav-item"><a class="nav-link" href="{% url 'index' %}#galeri">Kortlar</a></li>
                     <li class="nav-item"><a class="nav-link active" href="{% url 'turnuvalar' %}">Turnuvalar</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'index' %}#iletisim">İletişim</a></li>
+
                     <li class="nav-item ms-lg-3 mt-3 mt-lg-0">
                         <a class="nav-link instagram-btn" href="https://instagram.com/ahalteketeniskulubu" target="_blank">
                             <i class="fa-brands fa-instagram fa-lg"></i> Takip Et
@@ -133,16 +123,78 @@
         <div class="container">
             <div class="row justify-content-center">
                 <div class="col-lg-8">
+                    
+                    <!-- YENİ VE DAHA GENİŞ MESAJ SİSTEMİ -->
+                    {% if messages %}
+                        {% for message in messages %}
+                            <div class="alert alert-success alert-dismissible fade show text-center mb-5 shadow-lg" role="alert" style="margin-top: -40px; position: relative; z-index: 10; padding: 30px 20px 20px; border-radius: 15px; border-top: 5px solid var(--accent-green);">
+                                <i class="fa-solid fa-circle-check fa-3x mb-3 text-success"></i><br>
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+
+                    {% if aktif_turnuvalar %}
+                    <div class="coming-soon-box">
+                        <span class="badge bg-accent-green mb-2" style="background-color: var(--accent-green); font-size: 1rem; padding: 10px 20px; border-radius: 30px;">KAYITLAR BAŞLADI (10 - 24 HAZİRAN)</span>
+                        <h2 style="color: var(--main-navy); font-size: 2.5rem; margin-bottom: 20px;">YAZ TURNUVASI ÖN KAYIT FORMU</h2>
+                        
+                        <div class="alert alert-info py-2 mb-4" style="border-radius: 10px; font-size: 0.95rem;">
+                            <i class="fa-solid fa-calendar-days me-2"></i> <strong>Turnuva Tarihi:</strong> 27 Haziran - 2 Ağustos
+                        </div>
+
+                        <p class="lead text-muted mb-3" style="font-size: 1rem;">
+                            Aşağıdaki formu doldurarak sistem üzerinden ön kaydınızı oluşturabilir <strong>VEYA</strong> doğrudan bize mesaj atarak kaydınızı yazdırabilirsiniz.
+                        </p>
+
+                        <div class="text-center mb-4">
+                            <a href="https://instagram.com/ahalteketeniskulubu" target="_blank" class="btn btn-outline-dark rounded-pill px-4 py-2" style="border-color: #E1306C; color: #E1306C; font-weight: bold;">
+                                <i class="fa-brands fa-instagram fa-lg me-2"></i> DM'den Kayıt Ol
+                            </a>
+                        </div>
+                        
+                        <hr class="mb-4" style="border-color: rgba(0,0,0,0.1);">
+
+                        <form method="POST" action="" class="text-start">
+                            {% csrf_token %}
+                            <div class="row g-4">
+                                <!-- Kategori Seçimi Tam Genişlik -->
+                                <div class="col-12">
+                                    <label class="form-label fw-bold text-muted">{{ form.kategori.label }}</label>
+                                    {{ form.kategori }}
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold text-muted">{{ form.ad.label }}</label>
+                                    {{ form.ad }}
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold text-muted">{{ form.soyad.label }}</label>
+                                    {{ form.soyad }}
+                                </div>
+                                <!-- Telefon Kutucuğu Tam Genişlik -->
+                                <div class="col-12">
+                                    <label class="form-label fw-bold text-muted">{{ form.telefon.label }}</label>
+                                    {{ form.telefon }}
+                                </div>
+
+                                <div class="col-12 text-center mt-4">
+                                    <button type="submit" class="btn btn-accent w-100 py-3" style="font-size: 1.2rem;">ÖN KAYDI TAMAMLA <i class="fa-solid fa-arrow-right ms-2"></i></button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    {% else %}
                     <div class="coming-soon-box">
                         <span class="badge bg-accent-green mb-3" style="background-color: var(--accent-green); font-size: 1rem; padding: 10px 20px; border-radius: 30px;">ÇOK YAKINDA</span>
                         
-                        <!-- GÜNCELLENEN BAŞLIK VE METİNLER -->
-                        <h2 style="color: var(--main-navy); font-size: 2.5rem; margin-bottom: 25px;">YAZ KUPASI GELİYOR!</h2>
+                        <h2 style="color: var(--main-navy); font-size: 2.5rem; margin-bottom: 25px;">YAZ TURNUVASI BAŞLIYOR!</h2>
                         <p class="lead text-muted mb-4">
-                            Kortlarda heyecan fırtınası estirmeye hazır mısınız? Ahal Teke Tenis Kulübü Geleneksel Yaz Turnuvası için geri sayım başladı.
+                            Kortlarda heyecan fırtınası estirmeye hazır mısınız? Ahal Teke Tenis Kulübü Yaz Turnuvası için geri sayım başladı.
                         </p>
                         <p class="mb-5" style="font-size: 1.1rem;">
-                            Kayıtlar <strong>Haziran ayı içerisinde</strong> sitemiz üzerinden <strong>online</strong> olarak alınacaktır. Kategoriler ve detaylı turnuva kuralları çok yakında duyurulacaktır. Gelişmeler için lütfen takipte kalın ve raketinizi hazırlayın!
+                            Kayıtlar <strong>10 - 24 Haziran</strong> tarihleri arasında sitemiz üzerinden ve <strong>Instagram DM</strong> yoluyla alınacaktır. Turnuvamız <strong>27 Haziran - 2 Ağustos</strong> tarihlerinde gerçekleşecektir. Raketinizi hazırlayın!
                         </p>
 
                         <div class="d-flex justify-content-center gap-3 flex-wrap">
@@ -151,6 +203,8 @@
                             </a>
                         </div>
                     </div>
+                    {% endif %}
+
                 </div>
             </div>
         </div>
