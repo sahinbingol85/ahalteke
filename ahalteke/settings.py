@@ -162,3 +162,9 @@ DEFAULT_FROM_EMAIL = 'Ahal Teke Tenis Kulübü <ahalteke2026@gmail.com>'
 # Giriş yapıldığında nereye gitsin (Fikstür kapalı olduğu için Profil'e gidiyor)
 LOGIN_REDIRECT_URL = 'profil'
 LOGOUT_REDIRECT_URL = 'index'
+
+STATIC_URL = '/static/'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# WhiteNoise ayarı (CSS'lerin görünmesi için hayati önem taşır)
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
