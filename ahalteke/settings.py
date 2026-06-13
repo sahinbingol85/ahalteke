@@ -71,12 +71,20 @@ WSGI_APPLICATION = 'ahalteke.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.0/ref/settings/#databases
 
-# Kasa bağlantısı: Vercel'deki DATABASE_URL'i otomatik çeker
-VERITABANI_LINKI = os.environ.get('DATABASE_URL')
-
-DATABASES = {
-    'default': dj_database_url.config(default=VERITABANI_LINKI, conn_max_age=600)
-}
+# --- KRİTİK DÜZELTME BURADA ---
+# Eğer sistemde DATABASE_URL varsa (yani Vercel/Canlı Sunucudaysa) Neon/Vercel veritabanını kullan
+if 'DATABASE_URL' in os.environ:
+    DATABASES = {
+        'default': dj_database_url.config(conn_max_age=600)
+    }
+# Eğer yoksa (yani senin bilgisayarındaysa) yerel SQLite veritabanını kullan
+else:
+    DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.sqlite3',
+            'NAME': BASE_DIR / 'db.sqlite3',
+        }
+    }
 
 
 # Password validation
@@ -139,3 +147,18 @@ CSRF_TRUSTED_ORIGINS = [
 
 CSRF_COOKIE_SECURE = True
 SESSION_COOKIE_SECURE = True
+
+# ==========================================
+# E-POSTA GÖNDERME AYARLARI (SMTP)
+# ==========================================
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'ahalteke2026@gmail.com' 
+EMAIL_HOST_PASSWORD = 'jiwt kfkf rlae isaz'
+DEFAULT_FROM_EMAIL = 'Ahal Teke Tenis Kulübü <ahalteke2026@gmail.com>'
+
+# Giriş yapıldığında nereye gitsin (Fikstür kapalı olduğu için Profil'e gidiyor)
+LOGIN_REDIRECT_URL = 'profil'
+LOGOUT_REDIRECT_URL = 'index'
