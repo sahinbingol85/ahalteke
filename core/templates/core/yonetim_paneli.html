@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Yönetim Paneli | Ahal Teke</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f6f9; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        .navbar-custom { background-color: #0a2342; }
+        .card { border: none; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+        .stat-card { border-left: 5px solid; }
+        .stat-total { border-color: #0d6efd; }
+        .stat-paid { border-color: #198754; }
+        .stat-wait { border-color: #ffc107; }
+        .filter-bar { background-color: #e9ecef; border-radius: 8px; padding: 10px 15px; }
+    </style>
+</head>
+<body>
+
+    <!-- Üst Menü -->
+    <nav class="navbar navbar-dark navbar-custom mb-4 py-3">
+        <div class="container-fluid px-4">
+            <span class="navbar-brand mb-0 h1"><i class="fa-solid fa-chart-pie me-2"></i>Turnuva Yönetim Paneli</span>
+            <span class="text-white">Hoş geldin, <strong>{{ request.user.username|upper }}</strong></span>
+        </div>
+    </nav>
+
+    <div class="container-fluid px-4">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-success alert-dismissible fade show shadow-sm" role="alert">
+                    <i class="fa-solid fa-circle-check me-2"></i> {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        {% if aktif_turnuva %}
+        <div class="row mb-4">
+            <!-- Sol Taraf: İstatistikler ve Kayıt Formu -->
+            <div class="col-lg-3 mb-4 mb-lg-0">
+                <!-- İstatistik Kartları -->
+                <div class="row g-3 mb-4">
+                    <div class="col-12">
+                        <div class="card stat-card stat-total">
+                            <div class="card-body">
+                                <h6 class="text-muted mb-1">Toplam Kayıt</h6>
+                                <h2 class="mb-0 text-primary">{{ toplam_kayit }}</h2>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="card stat-card stat-paid">
+                            <div class="card-body px-2">
+                                <h6 class="text-muted mb-1" style="font-size: 0.8rem;">Onaylanan</h6>
+                                <h4 class="mb-0 text-success">{{ onaylananlar }}</h4>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="card stat-card stat-wait">
+                            <div class="card-body px-2">
+                                <h6 class="text-muted mb-1" style="font-size: 0.8rem;">Bekleyen</h6>
+                                <h4 class="mb-0 text-warning">{{ bekleyenler }}</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kategori Dağılımı -->
+                <div class="card mb-4">
+                    <div class="card-header bg-white fw-bold">Genel Kategori Dağılımı</div>
+                    <ul class="list-group list-group-flush">
+                        {% for stat in kategori_istatistikleri %}
+                        <li class="list-group-item d-flex justify-content-between align-items-center py-2">
+                            {{ stat.kategori__isim }}
+                            <span class="badge bg-secondary rounded-pill">{{ stat.toplam }}</span>
+                        </li>
+                        {% endfor %}
+                    </ul>
+                </div>
+
+                <!-- Manuel Kayıt Ekleme Formu -->
+                <div class="card">
+                    <div class="card-header bg-dark text-white fw-bold">
+                        <i class="fa-solid fa-user-plus me-2"></i>Hızlı Kayıt Ekle
+                    </div>
+                    <div class="card-body">
+                        <form method="POST" action="">
+                            {% csrf_token %}
+                            <input type="hidden" name="manuel_kayit" value="1">
+                            <div class="mb-2">
+                                <label class="form-label small fw-bold">Kategori</label>
+                                {{ form.kategori }}
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small fw-bold">Ad</label>
+                                {{ form.ad }}
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small fw-bold">Soyad</label>
+                                {{ form.soyad }}
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Telefon</label>
+                                {{ form.telefon }}
+                            </div>
+                            <button type="submit" class="btn btn-success w-100 fw-bold">KAYDET</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Sağ Taraf: Oyuncu Listesi -->
+            <div class="col-lg-9">
+                <div class="card h-100">
+                    <div class="card-header bg-white py-3">
+                        <h5 class="mb-3 fw-bold"><i class="fa-solid fa-list me-2"></i>{{ aktif_turnuva.isim }} - Oyuncu Listesi</h5>
+                        
+                        <!-- YENİ: FİLTRELEME ÇUBUĞU -->
+                        <div class="filter-bar d-flex flex-wrap align-items-center gap-2">
+                            <span class="fw-bold small text-muted me-2"><i class="fa-solid fa-filter me-1"></i>Kategoriye Göre:</span>
+                            <form method="GET" action="" class="d-flex flex-wrap align-items-center gap-2 m-0 w-100">
+                                
+                                {% for kat in tum_kategoriler %}
+                                <div class="form-check form-check-inline mb-0">
+                                    <input class="form-check-input shadow-none cursor-pointer" type="checkbox" name="kategori_filtre" id="kat_{{ kat.id }}" value="{{ kat.id }}" {% if kat.id in secilen_kategoriler %}checked{% endif %}>
+                                    <label class="form-check-label fw-bold small cursor-pointer" for="kat_{{ kat.id }}">{{ kat.isim }}</label>
+                                </div>
+                                {% endfor %}
+                                
+                                <div class="ms-auto d-flex gap-2">
+                                    <button type="submit" class="btn btn-sm btn-dark px-3 fw-bold">Uygula</button>
+                                    {% if secilen_kategoriler %}
+                                        <a href="{% url 'yonetim_paneli' %}" class="btn btn-sm btn-outline-danger px-3">Tümünü Göster</a>
+                                    {% endif %}
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                    
+                    <div class="card-body p-0">
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0" style="min-width: 600px;">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="ps-3">Sıra</th>
+                                        <th>Ad Soyad</th>
+                                        <th>Telefon</th>
+                                        <th>Kategori</th>
+                                        <th>Kayıt Tarihi</th>
+                                        <th class="text-center pe-3">Ödeme Durumu (Değiştir)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for kayit in kayitlar %}
+                                    <tr>
+                                        <td class="text-muted fw-bold ps-3">{{ forloop.counter }}</td>
+                                        <td class="fw-bold">{{ kayit.ad }} {{ kayit.soyad }}</td>
+                                        <td>{{ kayit.telefon }}</td>
+                                        <td><span class="badge bg-info text-dark">{{ kayit.kategori.isim }}</span></td>
+                                        <td class="small">{{ kayit.kayit_tarihi|date:"d M H:i" }}</td>
+                                        <td class="text-center pe-3">
+                                            <!-- OTOMATİK KAYDEDEN ÖDEME SEÇİCİ -->
+                                            <form method="POST" action="">
+                                                {% csrf_token %}
+                                                <input type="hidden" name="odeme_guncelle" value="1">
+                                                <input type="hidden" name="kayit_id" value="{{ kayit.id }}">
+                                                <select name="odeme_durumu" class="form-select form-select-sm fw-bold w-100 mx-auto {% if kayit.odeme_durumu == 'onaylandi' %}bg-success text-white{% else %}bg-warning text-dark{% endif %}" onchange="this.form.submit()">
+                                                    <option value="bekliyor" {% if kayit.odeme_durumu == 'bekliyor' %}selected{% endif %}>⏳ Bekliyor</option>
+                                                    <option value="onaylandi" {% if kayit.odeme_durumu == 'onaylandi' %}selected{% endif %}>✅ Onaylandı</option>
+                                                </select>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="6" class="text-center py-5 text-muted">
+                                            <i class="fa-solid fa-folder-open fs-1 mb-2 text-secondary"></i><br>
+                                            Bu kategoride veya turnuvada henüz kayıt bulunmuyor.
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="alert alert-danger">Şu anda aktif bir turnuva bulunmuyor. Lütfen admin panelinden bir turnuva oluşturun ve kayıtları açın.</div>
+        {% endif %}
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
