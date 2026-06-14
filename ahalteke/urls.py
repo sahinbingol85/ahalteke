@@ -25,6 +25,9 @@ urlpatterns = [
     path('turnuvalar/', views.turnuvalar, name='turnuvalar'),
     path('profil/', views.profil, name='profil'),
     
+    # YENİ EKLENEN: EMRE HOCA YÖNETİM PANELİ
+    path('yonetim_paneli/', views.yonetim_paneli, name='yonetim_paneli'),
+    
     # HTML tasarımlarındaki {% url 'fikstur' %} linkleri Django'yu çökertmesin diye
     # geçici olarak şimdilik ana sayfaya yönlendiren hayalet bir 'fikstur' yolu ekliyoruz.
     path('fikstur/', views.index, name='fikstur'), 
