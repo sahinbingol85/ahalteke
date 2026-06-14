@@ -11,7 +11,6 @@ from django.contrib.auth.models import User
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
 
-# YENİ EKLENEN İMPORTLAR (Turnuva kayıt ve otomatik mail sistemi için)
 from django.core.mail import send_mail
 from django.conf import settings
 from django.utils.crypto import get_random_string
@@ -32,7 +31,7 @@ def index(request):
 
 
 # ==========================================
-# YENİ EKLENEN: TURNUVALAR VE KAYIT SİSTEMİ
+# TURNUVALAR VE KAYIT SİSTEMİ
 # ==========================================
 def turnuvalar(request):
     aktif_turnuvalar = Turnuva.objects.filter(kayit_acik_mi=True)
@@ -43,26 +42,17 @@ def turnuvalar(request):
         if form.is_valid() and aktif_turnuva:
             kayit = form.save(commit=False)
             
-            # ==========================================
             # 1. TELEFON NUMARASINDAKİ TÜM BOŞLUKLARI SİL
-            # ==========================================
-            # Kullanıcı "0531 365 24 19" yazsa bile arkada "05313652419" yapar.
             if kayit.telefon:
                 kayit.telefon = kayit.telefon.replace(" ", "").strip()
             
-            # ==========================================
             # 2. İSİMLERİ STANDARTLAŞTIR VE BOŞLUKLARI SİL
-            # ==========================================
             if kayit.ad:
                 kayit.ad = kayit.ad.strip().title()
             if kayit.soyad:
                 kayit.soyad = kayit.soyad.strip().title()
             
-            # ==========================================
             # 3. KUSURSUZ ÇİFT KAYIT KONTROLÜ
-            # ==========================================
-            # Verileri zaten .title() ve temizlenmiş yaptığımız için direkt düz eşleştirme (ad=kayit.ad) 
-            # kullanıyoruz. Böylece SQLite veritabanındaki Türkçe karakter hatası tamamen çözülür.
             ayni_kayit_var_mi = Kayit.objects.filter(
                 turnuva=aktif_turnuva,
                 ad=kayit.ad,
@@ -71,12 +61,10 @@ def turnuvalar(request):
             ).exists()
             
             if ayni_kayit_var_mi:
-                # Eğer aynı ad, soyad ve telefonla kayıt varsa formu durdur ve hata ver
                 hata_mesajı = f"Sayın {kayit.ad} {kayit.soyad}, bu bilgiler ile daha önce zaten bir ön kayıt oluşturulmuş! Lütfen ödeme işlemlerinizi tamamlayınız veya yönetimle iletişime geçiniz."
                 messages.error(request, hata_mesajı)
                 return render(request, 'core/turnuvalar.html', {'form': form, 'aktif_turnuvalar': aktif_turnuvalar})
             
-            # Eğer kayıt yoksa işlemlere normal şekilde devam et
             kayit.turnuva = aktif_turnuva 
             kayit.save() 
             
@@ -86,20 +74,15 @@ def turnuvalar(request):
             basari_mesaji = f"""
             <div style="line-height: 1.6; text-align: center;">
                 <span style="font-size: 1.25rem;">Harika! Sayın <strong>{ad} {soyad}</strong>, ön kaydınız başarıyla alındı.</span>
-                
                 <hr style="margin: 15px auto; width: 60%; border-color: rgba(0,0,0,0.1);">
-                
-                Kaydınızın kesinleşmesi ogre fikstüre dahil edilebilmeniz için <strong>4.000 TL</strong>'lik turnuva katılım ücretini en geç <strong>24 Haziran</strong>'a kadar aşağıdaki hesaba yatırmanız gerekmektedir:
-                
+                Kaydınızın kesinleşmesi ve fikstüre dahil edilebilmeniz için <strong>4.000 TL</strong>'lik turnuva katılım ücretini en geç <strong>24 Haziran</strong>'a kadar aşağıdaki hesaba yatırmanız gerekmektedir:
                 <div style="background-color: #ffffff; color: #0a2342; padding: 15px; border-radius: 10px; margin: 20px 0; border: 2px dashed #28a745; font-family: monospace; font-size: 1.15rem;">
                     <strong>Hesap Sahibi:</strong> Rezan Sertkan<br>
                     <strong>IBAN:</strong> TR75 0006 7010 0000 0020 0047 47
                 </div>
-                
                 <span style="font-size: 0.95rem; color: #6c757d;">
                     <i class="fa-solid fa-circle-info text-warning me-1"></i> Lütfen ödeme açıklamasına <strong>adınızı ve soyadınızı</strong> yazmayı unutmayın.
                 </span><br><br>
-                
                 <strong>Kortlarda görüşmek üzere, başarılar dileriz! 🎾</strong>
             </div>
             """
@@ -115,16 +98,99 @@ def turnuvalar(request):
     }
     return render(request, 'core/turnuvalar.html', context)
 
+
 # ==========================================
-# YENİ EKLENEN: OYUNCU PROFİLİ
+# EMRE HOCA YÖNETİM PANELİ
+# ==========================================
+@login_required(login_url='/giris/')
+def yonetim_paneli(request):
+    # KAPI GÜVENLİĞİ: Sadece is_staff (Yönetici/Hoca) olanlar girebilir!
+    if not request.user.is_staff:
+        messages.error(request, 'Erişim Engellendi: Bu sayfaya sadece yetkili kulüp personeli erişebilir!')
+        return redirect('profil')
+        
+    aktif_turnuva = Turnuva.objects.filter(kayit_acik_mi=True).first()
+    
+    if request.method == 'POST':
+        # MANUEL KAYIT EKLEME
+        if 'manuel_kayit' in request.POST:
+            form = KayitForm(request.POST)
+            if form.is_valid() and aktif_turnuva:
+                kayit = form.save(commit=False)
+                kayit.turnuva = aktif_turnuva
+                
+                if kayit.telefon:
+                    kayit.telefon = kayit.telefon.replace(" ", "").strip()
+                if kayit.ad:
+                    kayit.ad = kayit.ad.strip().title()
+                if kayit.soyad:
+                    kayit.soyad = kayit.soyad.strip().title()
+                
+                kayit.save()
+                messages.success(request, f"Başarılı: {kayit.ad} {kayit.soyad} sisteme manuel olarak eklendi.")
+                return redirect('yonetim_paneli')
+
+        # ÖDEME DURUMU GÜNCELLEME
+        elif 'odeme_guncelle' in request.POST:
+            kayit_id = request.POST.get('kayit_id')
+            yeni_durum = request.POST.get('odeme_durumu')
+            if kayit_id and yeni_durum:
+                kayit = get_object_or_404(Kayit, id=kayit_id)
+                kayit.odeme_durumu = yeni_durum
+                kayit.save()
+                messages.success(request, f"Güncellendi: {kayit.ad} {kayit.soyad} ödeme durumu '{kayit.get_odeme_durumu_display()}' yapıldı.")
+                # GET parametreleri (filtreler) kaybolmasın diye geldiği sayfaya geri döndürüyoruz
+                donus_url = request.META.get('HTTP_REFERER', '/yonetim-paneli/')
+                return redirect(donus_url)
+
+    form = KayitForm()
+    
+    # ----------------------------------------------------
+    # ÇOKLU KATEGORİ FİLTRELEME SİSTEMİ
+    # ----------------------------------------------------
+    tum_kategoriler = Kategori.objects.all()
+    secilen_kategoriler = request.GET.getlist('kategori_filtre') # Seçilenlerin ID listesini alır
+    
+    # İstatistiklerin filtrelemeden etkilenmemesi için (sol taraf hep genel durumu göstersin diye)
+    genel_kayitlar = Kayit.objects.filter(turnuva=aktif_turnuva) if aktif_turnuva else []
+    
+    # Sağ taraftaki tablo için verileri hazırlama
+    kayitlar = genel_kayitlar.order_by('-kayit_tarihi')
+    
+    if secilen_kategoriler:
+        # Eğer filtre seçildiyse, sadece o kategoridekileri tabloya gönder
+        kayitlar = kayitlar.filter(kategori__id__in=secilen_kategoriler)
+        
+    # Sol Taraf İstatistikleri (Hep Tümünü Gösterir)
+    toplam_kayit = genel_kayitlar.count() if aktif_turnuva else 0
+    onaylananlar = genel_kayitlar.filter(odeme_durumu='onaylandi').count() if aktif_turnuva else 0
+    bekleyenler = genel_kayitlar.filter(odeme_durumu='bekliyor').count() if aktif_turnuva else 0
+    
+    kategori_istatistikleri = []
+    if aktif_turnuva:
+        kategori_istatistikleri = genel_kayitlar.values('kategori__isim').annotate(toplam=Count('id')).order_by('-toplam')
+
+    context = {
+        'aktif_turnuva': aktif_turnuva,
+        'form': form,
+        'kayitlar': kayitlar, # Filtrelenmiş tablo listesi
+        'toplam_kayit': toplam_kayit,
+        'onaylananlar': onaylananlar,
+        'bekleyenler': bekleyenler,
+        'kategori_istatistikleri': kategori_istatistikleri,
+        'tum_kategoriler': tum_kategoriler, # Filtre çubuğu için
+        'secilen_kategoriler': [int(i) for i in secilen_kategoriler if i.isdigit()], # Tikli kalması için
+    }
+    return render(request, 'core/yonetim_paneli.html', context)
+# ==========================================
+# OYUNCU PROFİLİ
 # ==========================================
 @login_required(login_url='/giris/')
 def profil(request):
-    # Oyuncunun e-postasına bağlı turnuva kaydını çekiyoruz
-    kayit_bilgileri = Kayit.objects.filter(email=request.user.email)
-    kayit_bilgisi = kayit_bilgileri.last() 
+    # NOT: Modellerden email alanını sildiğimiz için filtreleme iptal edildi.
+    # Aksi takdirde site çökerdi.
+    kayit_bilgisi = None 
 
-    # Oyuncunun kendi şifresini değiştirebilmesi için
     if request.method == 'POST':
         form = PasswordChangeForm(request.user, request.POST)
         if form.is_valid():
@@ -140,7 +206,6 @@ def profil(request):
     context = {
         'form': form,
         'kayit': kayit_bilgisi,
-        # Fikstür/Maç sistemi şimdilik kapalı olduğu için buraları boş listeler olarak gönderiyoruz
         'gecmis_maclar': [],
         'gelecek_maclar': []
     }
@@ -148,7 +213,7 @@ def profil(request):
 
 
 # ==========================================
-# KORT REZERVASYON SİSTEMİ (Mevcut, Dokunulmadı)
+# KORT REZERVASYON SİSTEMİ 
 # ==========================================
 @login_required(login_url='/giris/')
 def rezervasyon_paneli(request):
@@ -169,18 +234,15 @@ def rezervasyon_paneli(request):
         aciklama = request.POST.get('aciklama')
         tekrar_hafta = int(request.POST.get('tekrar', 1))
         
-        # KAYIT EDEN KİŞİ VE NOT BELİRLEME (Muhasebe Tutarlılığı)
         kayit_sahibi = request.user
         
         if request.user.is_superuser:
             hoca_id = request.POST.get('hoca_secimi')
-            if hoca_id: # Eğer yönetici bir hoca adına (Özel Ders) giriyorsa
+            if hoca_id: 
                 kayit_sahibi = User.objects.get(id=hoca_id)
                 hoca_adi = kayit_sahibi.first_name if kayit_sahibi.first_name else kayit_sahibi.username
                 aciklama = f"Özel Ders: {hoca_adi} - {aciklama}" if aciklama else f"Özel Ders: {hoca_adi}"
-            # hoca_id yoksa, yani boş bırakıldıysa, yönetici kendi adına (Genel) giriyordur, not aynı kalır.
         else:
-            # Normal hoca ise sadece kendi adına özel ders girebilir
             hoca_adi = request.user.first_name if request.user.first_name else request.user.username
             aciklama = f"Özel Ders: {hoca_adi}"
 
@@ -189,7 +251,6 @@ def rezervasyon_paneli(request):
         for hafta in range(tekrar_hafta):
             hedef_tarih = secili_tarih + timedelta(days=7 * hafta)
             
-            # GÜVENLİK: Seçilen gün ve kort kapalıysa o haftayı atla!
             hedef_gun_kapali = KapaliDurum.objects.filter(tarih=hedef_tarih)
             if hedef_gun_kapali.filter(kort='Hepsi').exists() or hedef_gun_kapali.filter(kort=kort_no).exists():
                 continue 
@@ -201,7 +262,7 @@ def rezervasyon_paneli(request):
                     kort=kort_no,
                     tarih=hedef_tarih,
                     saat=saat,
-                    rezerve_eden=kayit_sahibi, # Doğru kişiye atanır
+                    rezerve_eden=kayit_sahibi,
                     kisi_adi=kisi_adi,
                     aciklama=aciklama
                 )
@@ -217,11 +278,9 @@ def rezervasyon_paneli(request):
             
         return redirect(f'/rezervasyon/?tarih={secili_tarih.strftime("%Y-%m-%d")}')
 
-    # MATRIX (IZGARA) EKRANINI HAZIRLAMA
     gunun_rezervasyonlari = Rezervasyon.objects.filter(tarih=secili_tarih)
     rez_dict = {(r.kort, r.saat): r for r in gunun_rezervasyonlari}
 
-    # O gün için kapalı olan durumları çekiyoruz
     kapali_durumlar = KapaliDurum.objects.filter(tarih=secili_tarih)
     kapali_kortlar = {k.kort: k.sebep for k in kapali_durumlar}
     genel_kapanis = kapali_kortlar.get('Hepsi') 
@@ -260,7 +319,6 @@ def rezervasyon_paneli(request):
     onceki_gun = secili_tarih - timedelta(days=1)
     sonraki_gun = secili_tarih + timedelta(days=1)
 
-    # Superuser için aktif hocaların listesini gönderiyoruz (Seçim menüsü için)
     hocalar = User.objects.filter(is_staff=True, is_superuser=False) if request.user.is_superuser else None
 
     context = {
@@ -273,7 +331,7 @@ def rezervasyon_paneli(request):
     return render(request, 'core/rezervasyon.html', context)
 
 # ==========================================
-# MUHASEBE VE İSTATİSTİK SAYFASI (Mevcut, Dokunulmadı)
+# MUHASEBE VE İSTATİSTİK SAYFASI 
 # ==========================================
 @login_required(login_url='/giris/')
 def muhasebe_paneli(request):
