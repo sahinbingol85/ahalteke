@@ -24,8 +24,8 @@ urlpatterns = [
     path('profil/', views.profil, name='profil'),
     
     # EMRE HOCA YÖNETİM PANELİ Yolları
-    path('yonetim-paneli/', views.yonetim_paneli, name='yonetim_paneli'),
-    path('yonetim-paneli/sil/<int:kayit_id>/', views.kayit_sil, name='kayit_sil'), # Yeni eklendi
+    path('yonetim_paneli/', views.yonetim_paneli, name='yonetim_paneli'),
+    path('yonetim_paneli/sil/<int:kayit_id>/', views.kayit_sil, name='kayit_sil'), # Yeni eklendi
     
     path('fikstur/', views.index, name='fikstur'), 
 
