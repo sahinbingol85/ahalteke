@@ -11,8 +11,6 @@ urlpatterns = [
     # ==========================================
     # GİRİŞ / ÇIKIŞ İŞLEMLERİ
     # ==========================================
-    # Hem senin eski views.py yönlendirmelerin (giris/cikis_yap) çalışsın, 
-    # hem de yeni HTML'lerdeki {% url 'login' %} etiketleri hata vermesin diye çift isimlendirme (köprü) yaptık.
     path('giris/', auth_views.LoginView.as_view(template_name='core/login.html'), name='giris'), 
     path('login/', auth_views.LoginView.as_view(template_name='core/login.html'), name='login'),
     
@@ -25,11 +23,10 @@ urlpatterns = [
     path('turnuvalar/', views.turnuvalar, name='turnuvalar'),
     path('profil/', views.profil, name='profil'),
     
-    # YENİ EKLENEN: EMRE HOCA YÖNETİM PANELİ
-    path('yonetim_paneli/', views.yonetim_paneli, name='yonetim_paneli'),
+    # EMRE HOCA YÖNETİM PANELİ Yolları
+    path('yonetim-paneli/', views.yonetim_paneli, name='yonetim_paneli'),
+    path('yonetim-paneli/sil/<int:kayit_id>/', views.kayit_sil, name='kayit_sil'), # Yeni eklendi
     
-    # HTML tasarımlarındaki {% url 'fikstur' %} linkleri Django'yu çökertmesin diye
-    # geçici olarak şimdilik ana sayfaya yönlendiren hayalet bir 'fikstur' yolu ekliyoruz.
     path('fikstur/', views.index, name='fikstur'), 
 
     # ==========================================
