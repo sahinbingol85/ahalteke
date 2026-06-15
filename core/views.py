@@ -42,17 +42,14 @@ def turnuvalar(request):
         if form.is_valid() and aktif_turnuva:
             kayit = form.save(commit=False)
             
-            # 1. TELEFON NUMARASINDAKİ TÜM BOŞLUKLARI SİL
             if kayit.telefon:
                 kayit.telefon = kayit.telefon.replace(" ", "").strip()
             
-            # 2. İSİMLERİ STANDARTLAŞTIR VE BOŞLUKLARI SİL
             if kayit.ad:
                 kayit.ad = kayit.ad.strip().title()
             if kayit.soyad:
                 kayit.soyad = kayit.soyad.strip().title()
             
-            # 3. KUSURSUZ ÇİFT KAYIT KONTROLÜ
             ayni_kayit_var_mi = Kayit.objects.filter(
                 turnuva=aktif_turnuva,
                 ad=kayit.ad,
@@ -104,7 +101,6 @@ def turnuvalar(request):
 # ==========================================
 @login_required(login_url='/giris/')
 def yonetim_paneli(request):
-    # KAPI GÜVENLİĞİ: Sadece is_staff (Yönetici/Hoca) olanlar girebilir!
     if not request.user.is_staff:
         messages.error(request, 'Erişim Engellendi: Bu sayfaya sadece yetkili kulüp personeli erişebilir!')
         return redirect('profil')
@@ -112,7 +108,6 @@ def yonetim_paneli(request):
     aktif_turnuva = Turnuva.objects.filter(kayit_acik_mi=True).first()
     
     if request.method == 'POST':
-        # MANUEL KAYIT EKLEME
         if 'manuel_kayit' in request.POST:
             form = KayitForm(request.POST)
             if form.is_valid() and aktif_turnuva:
@@ -130,7 +125,6 @@ def yonetim_paneli(request):
                 messages.success(request, f"Başarılı: {kayit.ad} {kayit.soyad} sisteme manuel olarak eklendi.")
                 return redirect('yonetim_paneli')
 
-        # ÖDEME DURUMU GÜNCELLEME
         elif 'odeme_guncelle' in request.POST:
             kayit_id = request.POST.get('kayit_id')
             yeni_durum = request.POST.get('odeme_durumu')
@@ -139,29 +133,19 @@ def yonetim_paneli(request):
                 kayit.odeme_durumu = yeni_durum
                 kayit.save()
                 messages.success(request, f"Güncellendi: {kayit.ad} {kayit.soyad} ödeme durumu '{kayit.get_odeme_durumu_display()}' yapıldı.")
-                # GET parametreleri (filtreler) kaybolmasın diye geldiği sayfaya geri döndürüyoruz
                 donus_url = request.META.get('HTTP_REFERER', '/yonetim-paneli/')
                 return redirect(donus_url)
 
     form = KayitForm()
-    
-    # ----------------------------------------------------
-    # ÇOKLU KATEGORİ FİLTRELEME SİSTEMİ
-    # ----------------------------------------------------
     tum_kategoriler = Kategori.objects.all()
-    secilen_kategoriler = request.GET.getlist('kategori_filtre') # Seçilenlerin ID listesini alır
+    secilen_kategoriler = request.GET.getlist('kategori_filtre')
     
-    # İstatistiklerin filtrelemeden etkilenmemesi için (sol taraf hep genel durumu göstersin diye)
     genel_kayitlar = Kayit.objects.filter(turnuva=aktif_turnuva) if aktif_turnuva else []
-    
-    # Sağ taraftaki tablo için verileri hazırlama
     kayitlar = genel_kayitlar.order_by('-kayit_tarihi')
     
     if secilen_kategoriler:
-        # Eğer filtre seçildiyse, sadece o kategoridekileri tabloya gönder
         kayitlar = kayitlar.filter(kategori__id__in=secilen_kategoriler)
         
-    # Sol Taraf İstatistikleri (Hep Tümünü Gösterir)
     toplam_kayit = genel_kayitlar.count() if aktif_turnuva else 0
     onaylananlar = genel_kayitlar.filter(odeme_durumu='onaylandi').count() if aktif_turnuva else 0
     bekleyenler = genel_kayitlar.filter(odeme_durumu='bekliyor').count() if aktif_turnuva else 0
@@ -173,22 +157,40 @@ def yonetim_paneli(request):
     context = {
         'aktif_turnuva': aktif_turnuva,
         'form': form,
-        'kayitlar': kayitlar, # Filtrelenmiş tablo listesi
+        'kayitlar': kayitlar,
         'toplam_kayit': toplam_kayit,
         'onaylananlar': onaylananlar,
         'bekleyenler': bekleyenler,
         'kategori_istatistikleri': kategori_istatistikleri,
-        'tum_kategoriler': tum_kategoriler, # Filtre çubuğu için
-        'secilen_kategoriler': [int(i) for i in secilen_kategoriler if i.isdigit()], # Tikli kalması için
+        'tum_kategoriler': tum_kategoriler,
+        'secilen_kategoriler': [int(i) for i in secilen_kategoriler if i.isdigit()],
     }
     return render(request, 'core/yonetim_paneli.html', context)
+
+
+# ==========================================
+# YENİ EKLENEN: PANEL OYUNCU SİLME AKSİYONU
+# ==========================================
+@login_required(login_url='/giris/')
+def kayit_sil(request, kayit_id):
+    if not request.user.is_staff:
+        messages.error(request, 'Bu işlem için yetkiniz yok.')
+        return redirect('profil')
+        
+    kayit = get_object_or_404(Kayit, id=kayit_id)
+    oyuncu_adi = f"{kayit.ad} {kayit.soyad}"
+    kayit.delete()
+    
+    messages.success(request, f"Sistem Notu: {oyuncu_adi} isimli oyuncunun kaydı listeden tamamen silindi.")
+    donus_url = request.META.get('HTTP_REFERER', '/yonetim-paneli/')
+    return redirect(donus_url)
+
+
 # ==========================================
 # OYUNCU PROFİLİ
 # ==========================================
 @login_required(login_url='/giris/')
 def profil(request):
-    # NOT: Modellerden email alanını sildiğimiz için filtreleme iptal edildi.
-    # Aksi takdirde site çökerdi.
     kayit_bilgisi = None 
 
     if request.method == 'POST':
