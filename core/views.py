@@ -75,7 +75,7 @@ def turnuvalar(request):
                 Kaydınızın kesinleşmesi ve fikstüre dahil edilebilmeniz için <strong>4.000 TL</strong>'lik turnuva katılım ücretini en geç <strong>24 Haziran</strong>'a kadar aşağıdaki hesaba yatırmanız gerekmektedir:
                 <div style="background-color: #ffffff; color: #0a2342; padding: 15px; border-radius: 10px; margin: 20px 0; border: 2px dashed #28a745; font-family: monospace; font-size: 1.15rem;">
                     <strong>Hesap Sahibi:</strong> Rezan Sertkan<br>
-                    <strong>IBAN:</strong> TR75 0006 7010 0000 0020 0047 47
+                    <strong>IBAN:</strong> TR75 0006 7010 0000 0200 0474 74
                 </div>
                 <span style="font-size: 0.95rem; color: #6c757d;">
                     <i class="fa-solid fa-circle-info text-warning me-1"></i> Lütfen ödeme açıklamasına <strong>adınızı ve soyadınızı</strong> yazmayı unutmayın.
