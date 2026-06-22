@@ -1,3 +1,6 @@
+import json
+import random
+from itertools import combinations
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
@@ -15,7 +18,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.utils.crypto import get_random_string
 
-from .models import Rezervasyon, KapaliDurum, Turnuva, Kategori, Kayit
+from .models import Rezervasyon, KapaliDurum, Turnuva, Kategori, Kayit, Mac
 from .forms import KayitForm
 
 # --- YARDIMCI FONKSİYON: Türkçe Ay İsimleri ---
@@ -169,7 +172,7 @@ def yonetim_paneli(request):
 
 
 # ==========================================
-# YENİ EKLENEN: PANEL OYUNCU SİLME AKSİYONU
+# PANEL OYUNCU SİLME AKSİYONU
 # ==========================================
 @login_required(login_url='/giris/')
 def kayit_sil(request, kayit_id):
@@ -184,6 +187,274 @@ def kayit_sil(request, kayit_id):
     messages.success(request, f"Sistem Notu: {oyuncu_adi} isimli oyuncunun kaydı listeden tamamen silindi.")
     donus_url = request.META.get('HTTP_REFERER', '/yonetim-paneli/')
     return redirect(donus_url)
+
+
+# ==========================================
+# CANLI YAYIN: KURA ÇEKİM MODÜLÜ
+# ==========================================
+@login_required(login_url='/giris/')
+def kura_cekimi(request):
+    if not request.user.is_staff:
+        messages.error(request, 'Yetkisiz erişim.')
+        return redirect('profil')
+        
+    aktif_turnuva = Turnuva.objects.filter(kayit_acik_mi=True).first()
+    
+    # SADECE "ONAYLANDI" olan oyuncuları kuraya sokuyoruz
+    onayli_kayitlar = Kayit.objects.filter(turnuva=aktif_turnuva, odeme_durumu='onaylandi')
+    
+    # JS tarafında kullanmak üzere verileri JSON formatına çeviriyoruz
+    kategori_oyunculari = {}
+    kategoriler = Kategori.objects.all()
+    
+    for k in kategoriler:
+        oyuncular = list(onayli_kayitlar.filter(kategori=k).values('id', 'ad', 'soyad', 'grup'))
+        if oyuncular:
+            kategori_oyunculari[k.id] = {
+                'kategori_isim': k.isim,
+                'oyuncular': oyuncular
+            }
+            
+    context = {
+        'aktif_turnuva': aktif_turnuva,
+        'kategori_oyunculari_json': json.dumps(kategori_oyunculari),
+        'kategoriler': kategoriler
+    }
+    return render(request, 'core/kura_cekimi.html', context)
+
+@login_required(login_url='/giris/')
+def kura_kaydet(request):
+    # JavaScript'ten gelen kura sonuçlarını veritabanına yazar
+    if request.method == 'POST' and request.user.is_staff:
+        try:
+            data = json.loads(request.body)
+            for item in data:
+                kayit = Kayit.objects.get(id=item['id'])
+                kayit.grup = item['grup']
+                kayit.save()
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+    return JsonResponse({'status': 'invalid'})
+
+
+# ==========================================
+# FİKSTÜR OLUŞTURMA (OTOMATİK EŞLEŞTİRME)
+# ==========================================
+@login_required(login_url='/giris/')
+def fikstur_olustur(request):
+    if not request.user.is_staff:
+        return redirect('profil')
+        
+    aktif_turnuva = Turnuva.objects.filter(kayit_acik_mi=True).first()
+    if not aktif_turnuva:
+        messages.error(request, "Aktif turnuva bulunamadı.")
+        return redirect('yonetim_paneli')
+
+    kategoriler = Kategori.objects.all()
+    olusturulan_mac_sayisi = 0
+
+    for kat in kategoriler:
+        # Bu kategorideki, onaylı ve grubu belli olan oyuncuları al
+        oyuncular = Kayit.objects.filter(turnuva=aktif_turnuva, kategori=kat, odeme_durumu='onaylandi').exclude(grup__isnull=True).exclude(grup='')
+        
+        # Oyuncuları gruplarına göre sözlüğe (dictionary) ayır
+        gruplar_dict = {}
+        for o in oyuncular:
+            if o.grup not in gruplar_dict:
+                gruplar_dict[o.grup] = []
+            gruplar_dict[o.grup].append(o)
+            
+        # Her grup için eşleşmeleri yap
+        for grup_adi, grup_oyunculari in gruplar_dict.items():
+            # Eğer bu grup için zaten maç oluşturulmuşsa atla (çifte kaydı önler)
+            varsa_mac = Mac.objects.filter(turnuva=aktif_turnuva, kategori=kat, grup=grup_adi).exists()
+            if varsa_mac:
+                continue
+                
+            # Kombinasyonları al
+            eslesmeler = list(combinations(grup_oyunculari, 2))
+            
+            # Aynı kişinin maçlarının peş peşe gelmesini önleyen sıralama algoritması
+            if len(grup_oyunculari) == 4:
+                # 4 Kişilik grup için kusursuz sıralama: Maç 1-2, Maç 3-4, Maç 1-3, Maç 2-4, Maç 1-4, Maç 2-3
+                eslesmeler = [eslesmeler[0], eslesmeler[5], eslesmeler[1], eslesmeler[4], eslesmeler[2], eslesmeler[3]]
+            elif len(grup_oyunculari) == 3:
+                # 3 Kişilik grup için dağılım
+                eslesmeler = [eslesmeler[0], eslesmeler[2], eslesmeler[1]]
+            else:
+                # Eğer grupta 5 veya daha fazla kişi varsa sadece rastgele karıştır
+                random.shuffle(eslesmeler)
+            
+            # Dağıtılmış sıraya göre maçları veritabanına kaydet
+            for oyuncu1, oyuncu2 in eslesmeler:
+                Mac.objects.create(
+                    turnuva=aktif_turnuva,
+                    kategori=kat,
+                    grup=grup_adi,
+                    oyuncu1=oyuncu1,
+                    oyuncu2=oyuncu2
+                )
+                olusturulan_mac_sayisi += 1
+
+    if olusturulan_mac_sayisi > 0:
+        messages.success(request, f"Harika! {olusturulan_mac_sayisi} adet maç eşleşmesi mükemmel dağılımla oluşturuldu.")
+    else:
+        messages.warning(request, "Yeni eşleşme oluşturulmadı. (Tüm kuralar zaten eşleştirilmiş olabilir).")
+        
+    return redirect('fikstur_yonetimi')
+
+
+# ==========================================
+# FİKSTÜR YÖNETİM PANELİ (TARİH/SAAT GİRİŞİ)
+# ==========================================
+@login_required(login_url='/giris/')
+def fikstur_yonetimi(request):
+    if not request.user.is_staff:
+        return redirect('profil')
+        
+    aktif_turnuva = Turnuva.objects.filter(kayit_acik_mi=True).first()
+    
+    # AJAX ile (Arka planda sayfa yenilenmeden) tarih, saat ve kort kaydetme işlemi
+    if request.method == 'POST' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        try:
+            data = json.loads(request.body)
+            mac_id = data.get('mac_id')
+            tarih = data.get('tarih')
+            saat = data.get('saat')
+            kort = data.get('kort')
+            
+            mac = Mac.objects.get(id=mac_id)
+            if tarih: mac.tarih = tarih
+            else: mac.tarih = None
+                
+            if saat: mac.saat = saat
+            else: mac.saat = None
+                
+            if kort: mac.kort = kort
+            else: mac.kort = None
+            
+            # Eğer tarih ve saat girildiyse durumu "bekliyor" (planlandı) yap. 
+            if mac.tarih and mac.saat:
+                mac.durum = 'bekliyor'
+            else:
+                mac.durum = 'planlaniyor'
+                
+            mac.save()
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+
+    # Ekrana basılacak maçlar listesi
+    maclar = Mac.objects.filter(turnuva=aktif_turnuva).order_by('kategori', 'grup', 'id')
+    kategoriler = Kategori.objects.all()
+    
+    # Kategoriye göre filtreleme
+    secilen_kat = request.GET.get('kategori_filtre')
+    if secilen_kat:
+        maclar = maclar.filter(kategori__id=secilen_kat)
+        
+    # MAÇLARI İKİYE BÖL (Planlanmamışlar ve Planlanmışlar)
+    planlanmamis_maclar = maclar.filter(durum='planlaniyor')
+    planlanmis_maclar = maclar.filter(durum__in=['bekliyor', 'oynandi'])
+        
+    context = {
+        'aktif_turnuva': aktif_turnuva,
+        'planlanmamis_maclar': planlanmamis_maclar,
+        'planlanmis_maclar': planlanmis_maclar,
+        'kategoriler': kategoriler,
+        'secilen_kat': int(secilen_kat) if secilen_kat else ''
+    }
+    return render(request, 'core/fikstur_yonetimi.html', context)
+
+
+# ==========================================
+# FİKSTÜRÜ KOMPLE SIFIRLAMA
+# ==========================================
+@login_required(login_url='/giris/')
+def fikstur_sifirla(request):
+    if not request.user.is_staff:
+        return redirect('profil')
+        
+    if request.method == 'POST':
+        aktif_turnuva = Turnuva.objects.filter(kayit_acik_mi=True).first()
+        if aktif_turnuva:
+            silinen_sayi, _ = Mac.objects.filter(turnuva=aktif_turnuva).delete()
+            messages.success(request, f"Tüm fikstür başarıyla sıfırlandı! (Silinen eşleşme: {silinen_sayi})")
+            
+    return redirect('fikstur_yonetimi')
+
+
+# ==========================================
+# HAKEM SİSTEMİ: CANLI SKOR GİRİŞİ
+# ==========================================
+@login_required(login_url='/giris/')
+def hakem_canli_skor(request):
+    if not request.user.is_staff:
+        messages.error(request, 'Bu sayfaya erişim yetkiniz yok.')
+        return redirect('profil')
+        
+    aktif_turnuva = Turnuva.objects.filter(kayit_acik_mi=True).first()
+    
+    if request.method == 'POST':
+        mac_id = request.POST.get('mac_id')
+        if mac_id:
+            mac = get_object_or_404(Mac, id=mac_id)
+            
+            # Formdan skorları al
+            set1_o1 = request.POST.get('set1_o1')
+            set1_o2 = request.POST.get('set1_o2')
+            set1_tb1 = request.POST.get('set1_tb1')
+            set1_tb2 = request.POST.get('set1_tb2')
+            
+            set2_o1 = request.POST.get('set2_o1')
+            set2_o2 = request.POST.get('set2_o2')
+            set2_tb1 = request.POST.get('set2_tb1')
+            set2_tb2 = request.POST.get('set2_tb2')
+            
+            set3_o1 = request.POST.get('set3_o1')
+            set3_o2 = request.POST.get('set3_o2')
+
+            # Skor formatlama
+            skor1_str = ""
+            skor2_str = ""
+            
+            # 1. Set
+            if set1_o1 and set1_o2:
+                skor1_str += f"{set1_o1}"
+                skor2_str += f"{set1_o2}"
+                if set1_tb1 or set1_tb2:
+                    skor1_str += f"({set1_tb1 or 0})"
+                    skor2_str += f"({set1_tb2 or 0})"
+            
+            # 2. Set
+            if set2_o1 and set2_o2:
+                skor1_str += f", {set2_o1}"
+                skor2_str += f", {set2_o2}"
+                if set2_tb1 or set2_tb2:
+                    skor1_str += f"({set2_tb1 or 0})"
+                    skor2_str += f"({set2_tb2 or 0})"
+                    
+            # 3. Set (Süper Tie-Break)
+            if set3_o1 and set3_o2:
+                skor1_str += f", [{set3_o1}]"
+                skor2_str += f", [{set3_o2}]"
+
+            mac.skor1 = skor1_str
+            mac.skor2 = skor2_str
+            mac.durum = 'oynandi'
+            
+            mac.save()
+            messages.success(request, f"Skor başarıyla kaydedildi: {mac.oyuncu1.ad} vs {mac.oyuncu2.ad}")
+            return redirect('hakem')
+
+    # Hakem sadece planlanmış ("bekliyor" durumundaki) maçları görsün
+    bekleyen_maclar = Mac.objects.filter(turnuva=aktif_turnuva, durum='bekliyor').order_by('tarih', 'saat', 'kategori')
+
+    context = {
+        'bekleyen_maclar': bekleyen_maclar
+    }
+    return render(request, 'core/hakem.html', context)
 
 
 # ==========================================

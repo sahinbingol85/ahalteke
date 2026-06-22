@@ -93,8 +93,7 @@ class Kayit(models.Model):
     ad = models.CharField(max_length=50, verbose_name="Ad")
     soyad = models.CharField(max_length=50, verbose_name="Soyad")
     telefon = models.CharField(max_length=15, verbose_name="Telefon Numarası")
-    
-    # Partner ve Email alanları buradan tamamen kaldırıldı
+    grup = models.CharField(max_length=10, blank=True, null=True, verbose_name="Grup")
     
     odeme_durumu = models.CharField(max_length=20, choices=ODEME_DURUMU, default='bekliyor', verbose_name="Ödeme Durumu")
     kayit_tarihi = models.DateTimeField(auto_now_add=True, verbose_name="Kayıt Tarihi")
@@ -105,3 +104,40 @@ class Kayit(models.Model):
     class Meta:
         verbose_name = "Oyuncu Kaydı"
         verbose_name_plural = "Oyuncu Kayıtları"
+
+
+# ==========================================
+# OTOMATİK FİKSTÜR VE MAÇ SİSTEMİ (YENİ)
+# ==========================================
+class Mac(models.Model):
+    DURUM_SECENEKLERI = (
+        ('planlaniyor', 'Planlanıyor (Tarih/Saat Bekliyor)'),
+        ('bekliyor', 'Oynanmayı Bekliyor'),
+        ('oynandi', 'Oynandı'),
+        ('iptal', 'İptal Edildi')
+    )
+
+    turnuva = models.ForeignKey(Turnuva, on_delete=models.CASCADE, verbose_name="Turnuva")
+    kategori = models.ForeignKey(Kategori, on_delete=models.CASCADE, verbose_name="Kategori")
+    grup = models.CharField(max_length=10, verbose_name="Grup")
+    
+    oyuncu1 = models.ForeignKey(Kayit, related_name='mac_oyuncu1', on_delete=models.CASCADE, verbose_name="1. Oyuncu")
+    oyuncu2 = models.ForeignKey(Kayit, related_name='mac_oyuncu2', on_delete=models.CASCADE, verbose_name="2. Oyuncu")
+    
+    tarih = models.DateField(blank=True, null=True, verbose_name="Maç Tarihi")
+    saat = models.TimeField(blank=True, null=True, verbose_name="Maç Saati")
+    kort = models.CharField(max_length=20, blank=True, null=True, verbose_name="Kort Seçimi")
+    
+    durum = models.CharField(max_length=20, choices=DURUM_SECENEKLERI, default='planlaniyor', verbose_name="Maç Durumu")
+    
+    skor1 = models.CharField(max_length=10, blank=True, null=True, verbose_name="1. Oyuncu Skoru (Setler)")
+    skor2 = models.CharField(max_length=10, blank=True, null=True, verbose_name="2. Oyuncu Skoru (Setler)")
+    
+    olusturulma_tarihi = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.grup}: {self.oyuncu1.ad} vs {self.oyuncu2.ad}"
+
+    class Meta:
+        verbose_name = "Maç"
+        verbose_name_plural = "Maçlar"
