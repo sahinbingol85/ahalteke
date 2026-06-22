@@ -42,14 +42,14 @@ admin.site.register(Kategori)
 
 @admin.register(Kayit)
 class KayitAdmin(admin.ModelAdmin):
-    # Admin listesinde görünecek sütunlar
-    list_display = ('ad', 'soyad', 'turnuva', 'kategori', 'telefon', 'odeme_durumu', 'kayit_tarihi')
+    # Admin listesinde görünecek sütunlar (Grup sütunu tam ortaya eklendi!)
+    list_display = ('ad', 'soyad', 'turnuva', 'kategori', 'grup', 'telefon', 'odeme_durumu', 'kayit_tarihi')
     
     # İŞTE SİHİRLİ KOD: Listeden çıkmadan doğrudan değiştirilebilir alanlar!
     list_editable = ('odeme_durumu',)
     
-    # Sağ tarafta çıkacak filtreleme seçenekleri
-    list_filter = ('turnuva', 'kategori', 'odeme_durumu')
+    # Sağ tarafta çıkacak filtreleme seçenekleri (Grup filtreleme kutusu eklendi!)
+    list_filter = ('turnuva', 'kategori', 'grup', 'odeme_durumu')
     
-    # Yukarıdaki arama çubuğunun nerelerde arama yapacağı (email çıkarıldı)
+    # Yukarıdaki arama çubuğunun nerelerde arama yapacağı
     search_fields = ('ad', 'soyad', 'telefon')
