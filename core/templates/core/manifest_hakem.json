@@ -1,0 +1,24 @@
+{
+  "id": "/hakem-asistani/",
+  "name": "Ahal Teke Hakem & Canlı Skor",
+  "short_name": "AT Hakem",
+  "start_url": "/hakem/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#e9ecef",
+  "theme_color": "#0a2342",
+  "description": "Ahal Teke Tenis Kulübü canlı skor ve fikstür yönetim sistemi.",
+  "icons": [
+    {
+      "src": "https://i.ibb.co/HTPhptVQ/logo.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://i.ibb.co/HTPhptVQ/logo.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

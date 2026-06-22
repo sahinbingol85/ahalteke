@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canlı Kura Çekimi | Ahal Teke</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;900&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <style>
+        body { 
+            background: linear-gradient(135deg, #05101f 0%, #0a2342 100%); 
+            color: white; 
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+        }
+        h1, h2, h3, h4, h5, .drawn-name { font-family: 'Montserrat', sans-serif; }
+        .draw-header {
+            border-bottom: 2px solid #28a745;
+            box-shadow: 0 4px 20px rgba(40, 167, 69, 0.2);
+            background-color: rgba(0,0,0,0.3);
+        }
+        
+        .pot-container {
+            background-color: rgba(255,255,255,0.05);
+            border-radius: 15px;
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 20px;
+            height: 320px;
+            overflow-y: auto;
+        }
+        .player-chip {
+            background-color: rgba(40, 167, 69, 0.15);
+            border: 1px solid rgba(40, 167, 69, 0.4);
+            padding: 6px 14px;
+            border-radius: 20px;
+            display: inline-block;
+            margin: 5px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+        .stage-container {
+            height: 260px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: radial-gradient(circle, rgba(40,167,69,0.25) 0%, rgba(0,0,0,0) 70%);
+            border-radius: 20px;
+            border: 2px dashed rgba(255,255,255,0.15);
+            position: relative;
+        }
+        .drawn-name {
+            font-size: 3.2rem;
+            font-weight: 900;
+            text-transform: uppercase;
+            text-shadow: 0 0 25px rgba(40, 167, 69, 0.8);
+            letter-spacing: 1px;
+            text-align: center;
+        }
+        
+        .slot-machine-active {
+            animation: slotEffect 0.08s infinite;
+            color: #ffc107;
+            text-shadow: 0 0 15px rgba(255, 193, 7, 0.8);
+        }
+        @keyframes slotEffect {
+            0% { opacity: 0.7; transform: scale(0.97); }
+            50% { opacity: 1; transform: scale(1.03); }
+            100% { opacity: 0.7; transform: scale(0.97); }
+        }
+
+        .group-card {
+            background-color: rgba(255,255,255,0.06);
+            border-radius: 12px;
+            border-top: 5px solid #28a745;
+            min-height: 220px;
+            margin-bottom: 20px;
+            transition: all 0.3s;
+        }
+        .group-card:hover { transform: translateY(-5px); background-color: rgba(255,255,255,0.09); }
+        .group-title {
+            background-color: rgba(0,0,0,0.3);
+            padding: 12px;
+            text-align: center;
+            font-weight: 800;
+            font-size: 1.2rem;
+            color: #ffc107;
+            border-top-left-radius: 8px;
+            border-top-right-radius: 8px;
+            letter-spacing: 1px;
+        }
+        .group-list { list-style: none; padding: 0; margin: 0; }
+        .group-list li {
+            padding: 12px 15px;
+            border-bottom: 1px solid rgba(255,255,255,0.04);
+            font-weight: 600;
+            font-size: 0.95rem;
+            display: flex;
+            align-items: center;
+            transition: background-color 0.5s;
+        }
+        .group-list li:before {
+            content: "🎾";
+            margin-right: 12px;
+            font-size: 0.8rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="draw-header py-3 px-4 d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0 fw-bold"><i class="fa-solid fa-trophy text-warning me-2"></i>Ahal Teke Yaz Turnuvası - Kura Çekimi</h4>
+        <div>
+            <a href="{% url 'yonetim_paneli' %}" class="btn btn-outline-light btn-sm fw-bold"><i class="fa-solid fa-arrow-left me-2"></i>Panele Dön</a>
+        </div>
+    </div>
+
+    <div class="container-fluid px-4">
+        
+        <div class="row mb-4 bg-dark py-3 rounded mx-0 border border-secondary shadow align-items-center">
+            <div class="col-md-4">
+                <label class="form-label small text-muted fw-bold">Kategori</label>
+                <select id="kategoriSecim" class="form-select bg-dark text-white border-secondary fw-bold" onchange="kategoriYukle()">
+                    <option value="">-- Kategori Seçin --</option>
+                    {% for kat in kategoriler %}
+                        <option value="{{ kat.id }}">{{ kat.isim }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label small text-muted fw-bold">Grup Dağılımı</label>
+                <div class="pt-1">
+                    <span id="grupMimarisiGosterge" class="badge bg-info text-dark fs-6 py-2 px-3 fw-bold">Seçim Bekleniyor...</span>
+                </div>
+            </div>
+            <div class="col-md-5 d-flex justify-content-end gap-2 pt-3 pt-md-0">
+                <button onclick="kuraCek()" id="btnKura" class="btn btn-warning fw-bold px-4 shadow" disabled>
+                    <i class="fa-solid fa-dice me-2"></i>KURA ÇEK
+                </button>
+                <button onclick="otomatikCek()" id="btnOto" class="btn btn-success fw-bold px-4 shadow" disabled>
+                    <i class="fa-solid fa-forward-fast me-2"></i>OTOMATİK ÇEKİM
+                </button>
+                <button onclick="kuralariKaydet()" id="btnKaydet" class="btn btn-primary btn-lg fw-bold px-4 shadow animate-bounce" style="display:none;">
+                    <i class="fa-solid fa-check-to-slot me-2"></i>GRUPLARI ONAYLA VE KAYDET
+                </button>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-3 mb-4 mb-lg-0">
+                <h5 class="fw-bold text-muted mb-3"><i class="fa-solid fa-box-open me-2"></i>Kura Torbası (<span id="kalanSayisi">0</span>)</h5>
+                <div class="pot-container" id="torbaContainer">
+                    <div class="text-center text-muted mt-5">Lütfen yukarıdan bir kategori seçin.</div>
+                </div>
+            </div>
+
+            <div class="col-lg-9">
+                <div class="stage-container mb-4">
+                    <div id="sahneIsim" class="drawn-name text-muted" style="font-size: 1.6rem; font-weight:normal;">ŞANSLI İSİM BEKLENİYOR...</div>
+                </div>
+
+                <div class="row row-cols-1 row-cols-md-2 row-cols-xl-4 g-3" id="gruplarAlani"></div>
+            </div>
+        </div>
+    </div>
+
+    <input type="hidden" id="csrf_token" value="{{ csrf_token }}">
+
+    <script>
+        const hamVeri = {{ kategori_oyunculari_json|safe }};
+        
+        let torba = [];
+        let grupHarfleri = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+        let mevcutGrupIndex = 0; 
+        let cekimDevamEdiyor = false;
+        let finalSonuclar = []; 
+        let toplamGrupSayisi = 0;
+
+        function kategoriYukle() {
+            let secilenId = document.getElementById("kategoriSecim").value;
+            let container = document.getElementById("torbaContainer");
+            let btnKura = document.getElementById("btnKura");
+            let btnOto = document.getElementById("btnOto");
+            let mimariEtiket = document.getElementById("grupMimarisiGosterge");
+            
+            document.getElementById("btnKaydet").style.display = "none";
+            document.getElementById("sahneIsim").innerText = "ŞANSLI İSİM BEKLENİYOR...";
+            document.getElementById("sahneIsim").className = "drawn-name text-muted";
+            document.getElementById("sahneIsim").style.fontSize = "1.6rem";
+            mevcutGrupIndex = 0;
+            finalSonuclar = [];
+
+            if(!secilenId || !hamVeri[secilenId]) {
+                container.innerHTML = "<div class='text-center text-muted mt-5'>Kura çekimine hazır oyuncu bulunmuyor.</div>";
+                document.getElementById("kalanSayisi").innerText = 0;
+                mimariEtiket.innerText = "Seçim Bekleniyor...";
+                mimariEtiket.className = "badge bg-info text-dark fs-6 py-2 px-3 fw-bold";
+                btnKura.disabled = true;
+                btnOto.disabled = true;
+                document.getElementById("gruplarAlani").innerHTML = "";
+                return;
+            }
+
+            torba = [...hamVeri[secilenId].oyuncular];
+            let n = torba.length;
+
+            toplamGrupSayisi = Math.ceil(n / 4);
+            
+            mimariEtiket.innerText = `${toplamGrupSayisi} Grup (4'lü / 3'lü Dağılım)`;
+            mimariEtiket.className = "badge bg-success text-white fs-6 py-2 px-3 fw-bold";
+
+            btnKura.disabled = false;
+            btnOto.disabled = false;
+            gruplariOlustur();
+            torbaCiz();
+        }
+
+        function gruplariOlustur() {
+            let alan = document.getElementById("gruplarAlani");
+            alan.innerHTML = "";
+            
+            for(let i=0; i < toplamGrupSayisi; i++) {
+                alan.innerHTML += `
+                    <div class="col">
+                        <div class="group-card shadow">
+                            <div class="group-title">GRUP ${grupHarfleri[i]}</div>
+                            <ul class="group-list" id="grup_listesi_${i}"></ul>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        function torbaCiz() {
+            let container = document.getElementById("torbaContainer");
+            container.innerHTML = "";
+            document.getElementById("kalanSayisi").innerText = torba.length;
+
+            torba.forEach(oyuncu => {
+                container.innerHTML += `<div class="player-chip">${oyuncu.ad} ${oyuncu.soyad}</div>`;
+            });
+
+            if(torba.length === 0 && finalSonuclar.length > 0) {
+                document.getElementById("btnKura").disabled = true;
+                document.getElementById("btnOto").disabled = true;
+                document.getElementById("btnKaydet").style.display = "inline-block";
+                
+                document.getElementById("sahneIsim").innerHTML = "<span class='text-success' style='font-size:2.4rem;'><i class='fa-solid fa-square-check me-2'></i>KURA TAMAMLANDI!</span><br><span style='font-size:1.2rem; color:#ffc107; font-weight:normal;'>Sonuçları onaylayabilirsiniz</span>";
+            }
+        }
+
+        function kuraCek(otomatikMi = false) {
+            if(torba.length === 0 || cekimDevamEdiyor) return;
+            cekimDevamEdiyor = true;
+            
+            let sahne = document.getElementById("sahneIsim");
+            sahne.className = "drawn-name slot-machine-active";
+            sahne.style.fontSize = "3.2rem";
+
+            let turGecis = setInterval(() => {
+                let rastgele = torba[Math.floor(Math.random() * torba.length)];
+                sahne.innerText = `${rastgele.ad} ${rastgele.soyad}`;
+            }, 60); 
+
+            setTimeout(() => {
+                clearInterval(turGecis);
+                
+                let secilenIndex = Math.floor(Math.random() * torba.length);
+                let kazanan = torba.splice(secilenIndex, 1)[0];
+                
+                sahne.className = "drawn-name text-white";
+                sahne.innerText = `${kazanan.ad} ${kazanan.soyad}`;
+                
+                let hedefGrupUl = document.getElementById(`grup_listesi_${mevcutGrupIndex}`);
+                let li = document.createElement("li");
+                li.innerHTML = `${kazanan.ad} ${kazanan.soyad}`;
+                li.style.backgroundColor = "rgba(255, 193, 7, 0.3)";
+                setTimeout(() => { li.style.backgroundColor = "transparent"; }, 800);
+                
+                hedefGrupUl.appendChild(li);
+
+                finalSonuclar.push({
+                    id: kazanan.id,
+                    grup: `Grup ${grupHarfleri[mevcutGrupIndex]}`
+                });
+
+                mevcutGrupIndex = (mevcutGrupIndex + 1) % toplamGrupSayisi;
+                
+                torbaCiz();
+                cekimDevamEdiyor = false;
+
+                if(otomatikMi && torba.length > 0) {
+                    setTimeout(() => { kuraCek(true); }, 400); 
+                }
+                
+            }, 1200); 
+        }
+
+        function otomatikCek() {
+            kuraCek(true);
+        }
+
+        function kuralariKaydet() {
+            let btn = document.getElementById("btnKaydet");
+            let secimKutusu = document.getElementById("kategoriSecim");
+            let silinecekIndex = secimKutusu.selectedIndex; // İşlemi biten kategorinin sırası
+            
+            btn.innerHTML = "<i class='fa-solid fa-spinner fa-spin me-2'></i>Sonuçlar Onaylanıyor...";
+            btn.disabled = true;
+
+            fetch('{% url "kura_kaydet" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.getElementById('csrf_token').value
+                },
+                body: JSON.stringify(finalSonuclar)
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    btn.className = "btn btn-success btn-lg fw-bold px-4 shadow";
+                    btn.innerHTML = "<i class='fa-solid fa-check-double me-2'></i>SONUÇLAR ONAYLANDI!";
+                    
+                    setTimeout(() => {
+                        // 1. Kategoriyi Listeden Temizle
+                        secimKutusu.remove(silinecekIndex);
+                        
+                        // 2. Ekranı Sıfırla
+                        secimKutusu.value = "";
+                        kategoriYukle();
+                        
+                        // 3. Eğer başka kategori kalmadıysa FİNAL EKRANI göster
+                        if(secimKutusu.options.length <= 1) {
+                            document.getElementById("sahneIsim").innerHTML = "<span class='text-warning' style='font-size:2.8rem;'><i class='fa-solid fa-trophy me-2'></i>TÜM KURALAR TAMAMLANDI!</span>";
+                            document.getElementById("grupMimarisiGosterge").innerText = "Turnuva Başlamaya Hazır";
+                            document.getElementById("grupMimarisiGosterge").className = "badge bg-warning text-dark fs-6 py-2 px-3 fw-bold";
+                            alert("🏆 Tebrikler! Tüm kategorilerin kuraları tamamlandı ve veritabanına işlendi.");
+                        } else {
+                            alert("Kategori kuraları kaydedildi! Sıradaki kategoriye geçebilirsiniz.");
+                        }
+                        
+                        // Butonu sıfırla (Bir sonraki kategori için hazırla)
+                        btn.className = "btn btn-primary btn-lg fw-bold px-4 shadow animate-bounce";
+                        btn.innerHTML = "<i class='fa-solid fa-check-to-slot me-2'></i>GRUPLARI ONAYLA VE KAYDET";
+                        btn.disabled = false;
+                        
+                    }, 1500);
+
+                } else {
+                    alert("Hata: " + data.message);
+                    btn.disabled = false;
+                    btn.innerHTML = "<i class='fa-solid fa-check-to-slot me-2'></i>GRUPLARI ONAYLA VE KAYDET";
+                }
+            });
+        }
+    </script>
+</body>
+</html>

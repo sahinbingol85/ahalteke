@@ -1,0 +1,250 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Canlı Skor Girişi | Ahal Teke Yönetim</title>
+    
+    <link rel="manifest" href="{% static 'manifest_hakem.json' %}">
+    <meta name="theme-color" content="#0a2342">
+    <link rel="apple-touch-icon" href="https://i.ibb.co/HTPhptVQ/logo.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;800&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <style>
+        :root { --main-navy: #0a2342; --accent-green: #28a745; --bg-light: #f8f9fa; }
+        body { font-family: 'Poppins', sans-serif; background-color: #e9ecef; padding-top: 80px; padding-bottom: 90px; }
+        h1, h2, h3, .navbar-brand, .btn, .accordion-button { font-family: 'Montserrat', sans-serif; font-weight: 700; }
+        
+        .navbar { background-color: var(--main-navy); padding: 0.5rem 0; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .navbar-brand { color: white !important; letter-spacing: 1px; font-size: 1.2rem; display: flex; align-items: center; }
+        .brand-logo { width: 40px; height: 40px; object-fit: contain; border-radius: 8px; margin-right: 10px; border: 2px solid var(--accent-green); background-color: white; padding: 2px; }
+        
+        .referee-header { background-color: var(--main-navy); color: white; padding: 30px 0 40px; text-align: center; border-radius: 0 0 30px 30px; margin-top: -20px; box-shadow: 0 10px 20px rgba(0,0,0,0.1); }
+        
+        .match-card { background: white; border-radius: 15px; box-shadow: 0 5px 15px rgba(0,0,0,0.05); margin-bottom: 25px; overflow: hidden; border: 1px solid #dee2e6; }
+        .match-header { background-color: #f8f9fa; padding: 15px; border-bottom: 1px solid #eee; font-size: 0.85rem; }
+        
+        .winner-select .btn-outline-success { color: #495057; border-color: #ced4da; background-color: #f8f9fa; font-weight: 600; padding: 15px 10px; }
+        .winner-select .btn-check:checked + .btn-outline-success { background-color: var(--accent-green); color: white; border-color: var(--accent-green); box-shadow: 0 4px 10px rgba(40,167,69,0.3); }
+        
+        .score-input { width: 60px; height: 50px; text-align: center; font-size: 1.3rem; font-weight: 700; border-radius: 10px; border: 2px solid #ced4da; color: var(--main-navy); }
+        .score-input:focus { border-color: var(--accent-green); outline: none; box-shadow: 0 0 0 0.25rem rgba(40,167,69,0.25); }
+        .tb-input { width: 45px; height: 40px; text-align: center; font-size: 1rem; font-weight: 600; border-radius: 8px; border: 1px solid #adb5bd; background-color: #f8f9fa; }
+        .tb-input:focus { border-color: #ffc107; outline: none; background-color: white; }
+        
+        .btn-save { background-color: var(--main-navy); color: white; padding: 15px; font-size: 1.1rem; border-radius: 0 0 15px 15px; width: 100%; border: none; text-transform: uppercase; letter-spacing: 1px; transition: all 0.3s; }
+        .btn-save:hover { background-color: var(--accent-green); color: white; }
+
+        .accordion-button:not(.collapsed) { background-color: var(--main-navy); color: white; }
+        .accordion-button:not(.collapsed)::after { filter: brightness(0) invert(1); }
+        
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: white; box-shadow: 0 -5px 15px rgba(0,0,0,0.05); display: flex; justify-content: space-around; z-index: 1000; padding: 10px 0; padding-bottom: calc(10px + env(safe-area-inset-bottom)); border-radius: 20px 20px 0 0; }
+        .nav-item { flex: 1; text-align: center; color: #adb5bd; text-decoration: none; font-size: 0.8rem; font-weight: 600; display: flex; flex-direction: column; align-items: center; gap: 4px; transition: 0.3s; }
+        .nav-item.active { color: var(--main-navy); }
+        .nav-item i { font-size: 1.5rem; transition: 0.3s; }
+        .nav-item.active i { color: var(--accent-green); transform: scale(1.1); }
+
+        @media (max-height: 600px) and (orientation: landscape) {
+            body { padding-top: 50px; padding-bottom: 90px; }
+            .navbar { padding: 0.2rem 0; }
+            .brand-logo { width: 30px; height: 30px; }
+            .navbar-brand { font-size: 1rem; }
+            
+            .referee-header { padding: 15px 0 15px; margin-top: -10px; }
+            .referee-header p { display: none; } 
+            
+            .winner-select .btn-outline-success { padding: 8px 5px; font-size: 0.9rem; }
+            .score-input { height: 40px; font-size: 1.1rem; }
+            .tb-input { height: 30px; font-size: 0.9rem; }
+            
+            .match-card .p-3 { padding: 10px !important; }
+            .match-card { margin-bottom: 15px; }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg fixed-top navbar-dark">
+        <div class="container d-flex justify-content-center">
+            <div class="navbar-brand m-0 d-flex align-items-center" style="cursor: default; pointer-events: none;">
+                <img src="https://i.ibb.co/HTPhptVQ/logo.png" alt="Ahal Teke Logo" class="brand-logo">
+                HAKEM ASİSTANI
+            </div>
+        </div>
+    </nav>
+
+    <div class="referee-header mb-4">
+        <div class="container">
+            <h2 class="mb-1"><i class="fa-solid fa-stopwatch text-warning me-2"></i>CANLI SKOR</h2>
+            <p class="mb-0 text-white-50 small">Maç sonuçlarını girin, sistem anında güncellensin.</p>
+        </div>
+    </div>
+
+    <div class="container">
+        
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-success alert-dismissible fade show shadow-sm text-center fw-bold rounded-4" role="alert">
+                    <i class="fa-solid fa-circle-check me-2"></i>{{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        {% if bekleyen_maclar %}
+            {% regroup bekleyen_maclar by kategori.isim as kategori_listesi %}
+            
+            <div class="accordion shadow-sm" id="accordionFikstur" style="border-radius: 15px; overflow: hidden;">
+                {% for kat in kategori_listesi %}
+                    <div class="accordion-item border-0 border-bottom">
+                        <h2 class="accordion-header" id="heading{{ forloop.counter }}">
+                            <button class="accordion-button {% if not forloop.first %}collapsed{% endif %} py-3" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ forloop.counter }}" aria-expanded="{% if forloop.first %}true{% else %}false{% endif %}" aria-controls="collapse{{ forloop.counter }}">
+                                <i class="fa-solid fa-trophy text-warning me-2"></i> {{ kat.grouper }} ({{ kat.list|length }} Maç)
+                            </button>
+                        </h2>
+                        <div id="collapse{{ forloop.counter }}" class="accordion-collapse collapse {% if forloop.first %}show{% endif %}" aria-labelledby="heading{{ forloop.counter }}" data-bs-parent="#accordionFikstur">
+                            <div class="accordion-body p-2 p-md-4" style="background-color: #f8f9fa;">
+                                
+                                {% for mac in kat.list %}
+                                    <div class="match-card">
+                                        <form method="POST" action="{% url 'hakem' %}">
+                                            {% csrf_token %}
+                                            <input type="hidden" name="mac_id" value="{{ mac.id }}">
+                                            
+                                            <div class="match-header d-flex justify-content-between align-items-center text-muted">
+                                                <span><i class="fa-regular fa-calendar-days me-1"></i> {% if mac.tarih %}{{ mac.tarih|date:"d M" }} {{ mac.saat|time:"H:i" }}{% else %}Belirsiz{% endif %}</span>
+                                                <span class="badge bg-secondary">{{ mac.grup }}</span>
+                                                <span><i class="fa-solid fa-location-dot me-1"></i> {% if mac.kort %}{{ mac.kort }}{% else %}Kort Yok{% endif %}</span>
+                                            </div>
+
+                                            <div class="p-3">
+                                                <div class="text-center mb-3 fw-bold text-muted small">1. KAZANANI İŞARETLEYİN</div>
+                                                <div class="row g-2 winner-select mb-4">
+                                                    <div class="col-6">
+                                                        <input type="radio" class="btn-check" name="kazanan_id" id="kazanan_1_{{ mac.id }}" value="{{ mac.oyuncu1.id }}" required>
+                                                        <label class="btn btn-outline-success w-100 d-flex flex-column" for="kazanan_1_{{ mac.id }}">
+                                                            <i class="fa-solid fa-check-circle mb-1 fa-lg"></i>
+                                                            <span>{{ mac.oyuncu1.ad }} {{ mac.oyuncu1.soyad }}</span>
+                                                        </label>
+                                                    </div>
+                                                    <div class="col-6">
+                                                        <input type="radio" class="btn-check" name="kazanan_id" id="kazanan_2_{{ mac.id }}" value="{{ mac.oyuncu2.id }}" required>
+                                                        <label class="btn btn-outline-success w-100 d-flex flex-column" for="kazanan_2_{{ mac.id }}">
+                                                            <i class="fa-solid fa-check-circle mb-1 fa-lg"></i>
+                                                            <span>{{ mac.oyuncu2.ad }} {{ mac.oyuncu2.soyad }}</span>
+                                                        </label>
+                                                    </div>
+                                                </div>
+
+                                                <div class="text-center mb-2 fw-bold text-muted small">2. SET SKORLARINI GİRİN</div>
+                                                <div class="row justify-content-center g-3 mb-2">
+                                                    
+                                                    <div class="col-4 text-center">
+                                                        <div class="badge bg-dark mb-2 w-100">1. SET</div>
+                                                        <div class="d-flex justify-content-center align-items-center gap-1">
+                                                            <input type="number" inputmode="numeric" pattern="[0-9]*" min="0" max="7" class="score-input" name="set1_o1" placeholder="O1" required>
+                                                            <span class="fw-bold">-</span>
+                                                            <input type="number" inputmode="numeric" pattern="[0-9]*" min="0" max="7" class="score-input" name="set1_o2" placeholder="O2" required>
+                                                        </div>
+                                                        <div class="d-flex justify-content-center gap-3 mt-1">
+                                                            <input type="number" inputmode="numeric" class="tb-input" name="set1_tb1" placeholder="TB">
+                                                            <input type="number" inputmode="numeric" class="tb-input" name="set1_tb2" placeholder="TB">
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-4 text-center border-start border-end border-2">
+                                                        <div class="badge bg-dark mb-2 w-100">2. SET</div>
+                                                        <div class="d-flex justify-content-center align-items-center gap-1">
+                                                            <input type="number" inputmode="numeric" pattern="[0-9]*" min="0" max="7" class="score-input" name="set2_o1" placeholder="O1">
+                                                            <span class="fw-bold">-</span>
+                                                            <input type="number" inputmode="numeric" pattern="[0-9]*" min="0" max="7" class="score-input" name="set2_o2" placeholder="O2">
+                                                        </div>
+                                                        <div class="d-flex justify-content-center gap-3 mt-1">
+                                                            <input type="number" inputmode="numeric" class="tb-input" name="set2_tb1" placeholder="TB">
+                                                            <input type="number" inputmode="numeric" class="tb-input" name="set2_tb2" placeholder="TB">
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col-4 text-center">
+                                                        <div class="badge bg-warning text-dark mb-2 w-100">SÜPER TB</div>
+                                                        <div class="d-flex justify-content-center align-items-center gap-1 mt-2">
+                                                            <input type="number" inputmode="numeric" pattern="[0-9]*" min="0" max="30" class="score-input bg-warning bg-opacity-10 border-warning" name="set3_o1" placeholder="O1">
+                                                            <span class="fw-bold text-warning">-</span>
+                                                            <input type="number" inputmode="numeric" pattern="[0-9]*" min="0" max="30" class="score-input bg-warning bg-opacity-10 border-warning" name="set3_o2" placeholder="O2">
+                                                        </div>
+                                                        <small class="text-muted d-block mt-2" style="font-size: 0.65rem;">Gerekliyse</small>
+                                                    </div>
+
+                                                </div>
+                                            </div>
+
+                                            <button type="submit" class="btn-save fw-bold"><i class="fa-solid fa-cloud-arrow-up me-2"></i> SKORU KAYDET VE YAYINLA</button>
+                                        </form>
+                                    </div>
+                                {% endfor %}
+                                
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            
+        {% else %}
+            <div class="text-center bg-white p-5 shadow-sm mt-4" style="border-radius: 20px;">
+                <i class="fa-solid fa-check-double fa-4x text-success mb-3"></i>
+                <h3 class="text-muted">Tüm Maçlar Tamamlandı!</h3>
+                <p class="lead text-muted mb-0">Şu anda girilmesi gereken planlanmış bir maç skoru bulunmuyor. Elinize sağlık hakem bey! 🎾</p>
+            </div>
+        {% endif %}
+
+    </div>
+
+    <div class="bottom-nav">
+        <a href="{% url 'hakem' %}" class="nav-item active">
+            <i class="fa-solid fa-stopwatch"></i>
+            <span>Skor Gir</span>
+        </a>
+        <a href="{% url 'fikstur_yonetimi' %}" class="nav-item">
+            <i class="fa-solid fa-calendar-days"></i>
+            <span>Fikstürü Yönet</span>
+        </a>
+    </div>
+
+    <script>
+        document.querySelectorAll('form').forEach(form => {
+            form.addEventListener('submit', function(e) {
+                e.preventDefault(); 
+                
+                Swal.fire({
+                    title: 'Emin misiniz?',
+                    text: "Bu maçın skoru anında kaydedilecek ve yayına alınacak!",
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#28a745', 
+                    cancelButtonColor: '#0a2342',  
+                    confirmButtonText: '<i class="fa-solid fa-check me-1"></i> Evet, Yayınla!',
+                    cancelButtonText: 'Vazgeç',
+                    reverseButtons: true, 
+                    customClass: {
+                        popup: 'rounded-4'
+                    }
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        form.submit(); 
+                    }
+                })
+            });
+        });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
