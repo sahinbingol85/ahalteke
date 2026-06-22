@@ -25,9 +25,20 @@ urlpatterns = [
     
     # EMRE HOCA YÖNETİM PANELİ Yolları
     path('yonetim_paneli/', views.yonetim_paneli, name='yonetim_paneli'),
-    path('yonetim_paneli/sil/<int:kayit_id>/', views.kayit_sil, name='kayit_sil'), # Yeni eklendi
+    path('yonetim_paneli/sil/<int:kayit_id>/', views.kayit_sil, name='kayit_sil'),
+    
+    # --- YENİ EKLENEN: KURA ÇEKİM MODÜLÜ ---
+    path('yonetim_paneli/kura-cekimi/', views.kura_cekimi, name='kura_cekimi'),
+    path('yonetim_paneli/kura-kaydet/', views.kura_kaydet, name='kura_kaydet'),
     
     path('fikstur/', views.index, name='fikstur'), 
+
+    # FİKSTÜR VE MAÇ YÖNETİMİ
+    path('yonetim_paneli/fikstur-olustur/', views.fikstur_olustur, name='fikstur_olustur'),
+    path('yonetim_paneli/fikstur-yonetimi/', views.fikstur_yonetimi, name='fikstur_yonetimi'),
+    path('yonetim_paneli/fikstur-sifirla/', views.fikstur_sifirla, name='fikstur_sifirla'), # <--- YENİ EKLENEN
+    # HAKEM SİSTEMİ (Canlı Skor ve Manuel Ekleme)
+    path('yonetim_paneli/hakem/', views.hakem_canli_skor, name='hakem'),
 
     # ==========================================
     # KORT REZERVASYON & MUHASEBE
