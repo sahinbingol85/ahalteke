@@ -2,7 +2,7 @@
   "id": "/hakem-asistani/",
   "name": "Ahal Teke Hakem & Canlı Skor",
   "short_name": "AT Hakem",
-  "start_url": "/hakem/",
+  "start_url": "/yonetim_paneli/hakem/",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait",

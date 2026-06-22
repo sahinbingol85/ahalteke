@@ -1,15 +1,15 @@
-const CACHE_NAME = 'ahalteke-v4'; // Hakem güncellemesi için v4 yaptık
+const CACHE_NAME = 'ahalteke-v5'; // Versiyonu v5 yaptık ki cihazlar hemen güncellensin
 
 // Başlangıçta hafızaya alınacak temel yollar
 const urlsToCache = [
-    '/hakem/',
+    '/yonetim_paneli/hakem/',
     '/yonetim_paneli/fikstur-yonetimi/',
     '/rezervasyon/'
 ];
 
 // 1. Kurulum Aşaması
 self.addEventListener('install', (e) => {
-    console.log('[Service Worker] Kuruldu (v4)');
+    console.log('[Service Worker] Kuruldu (v5)');
     e.waitUntil(
         caches.open(CACHE_NAME)
         .then((cache) => {
@@ -49,7 +49,6 @@ self.addEventListener('fetch', (e) => {
         fetch(e.request)
         .then(response => {
             // Eğer internet varsa, sayfayı getirirken bir kopyasını da sessizce güncel hafızaya kaydet
-            // (Böylece internet kesildiğinde en güncel hali gösterilir)
             const resClone = response.clone();
             caches.open(CACHE_NAME).then(cache => {
                 cache.put(e.request, resClone);
