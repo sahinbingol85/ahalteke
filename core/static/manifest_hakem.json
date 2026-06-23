@@ -1,0 +1,24 @@
+{
+  "name": "Ahal Teke Hakem Paneli",
+  "short_name": "AT Hakem",
+  "start_url": "/yonetim_paneli/hakem/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#e9ecef",
+  "theme_color": "#0a2342",
+  "icons": [
+    {
+      "src": "https://i.ibb.co/HTPhptVQ/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://i.ibb.co/HTPhptVQ/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
