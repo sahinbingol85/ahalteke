@@ -36,7 +36,8 @@ urlpatterns = [
     # FİKSTÜR VE MAÇ YÖNETİMİ
     path('yonetim_paneli/fikstur-olustur/', views.fikstur_olustur, name='fikstur_olustur'),
     path('yonetim_paneli/fikstur-yonetimi/', views.fikstur_yonetimi, name='fikstur_yonetimi'),
-    path('yonetim_paneli/fikstur-sifirla/', views.fikstur_sifirla, name='fikstur_sifirla'), # <--- YENİ EKLENEN
+    path('yonetim_paneli/fikstur-sifirla/', views.fikstur_sifirla, name='fikstur_sifirla'),
+    
     # HAKEM SİSTEMİ (Canlı Skor ve Manuel Ekleme)
     path('yonetim_paneli/hakem/', views.hakem_canli_skor, name='hakem'),
 
@@ -53,4 +54,7 @@ urlpatterns = [
     # ==========================================
     path('manifest_rezervasyon.json', views.manifest_view, name='manifest_rezervasyon.json'),
     path('sw.js', TemplateView.as_view(template_name='core/sw.js', content_type='application/javascript'), name='sw.js'),
+    
+    # HAKEM UYGULAMASI MANIFESTOSU
+    path('manifest_hakem.json', TemplateView.as_view(template_name='core/manifest_hakem.json', content_type='application/json'), name='manifest_hakem'),
 ]
