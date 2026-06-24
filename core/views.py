@@ -201,7 +201,7 @@ def yonetim_paneli(request):
     if request.method == 'POST':
         # YENİ EKLENEN: OTOMATİK ŞİFRE OLUŞTURMA İŞLEMİ (Telefon Numarası ile)
         if 'otomatik_sifre_olustur' in request.POST:
-            onayli_oyuncular = Kayit.objects.filter(turnuva=aktif_turnuva, odeme_durumu='onaylandi').exclude(grup__isnull=True).exclude(grup='')
+            onayli_oyuncular = Kayit.objects.filter(turnuva=aktif_turnuva, odeme_durumu='onaylandi')
             olusturulan_hesap_sayisi = 0
             
             for oyuncu in onayli_oyuncular:
