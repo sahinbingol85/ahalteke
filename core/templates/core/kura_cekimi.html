@@ -119,8 +119,17 @@
 
     <div class="container-fluid px-4">
         
-        <div class="row mb-4 bg-dark py-3 rounded mx-0 border border-secondary shadow align-items-center">
-            <div class="col-md-4">
+        <div id="tamamlandiEkrani" style="display: none;" class="text-center mt-5 pt-5">
+            <i class="fa-solid fa-trophy text-warning mb-4" style="font-size: 7rem; text-shadow: 0 0 30px rgba(255, 193, 7, 0.6);"></i>
+            <h1 class="display-4 fw-bolder text-white">KURA ÇEKİMİ TAMAMLANDI</h1>
+            <p class="lead text-white-50 mt-3 mb-5">Tüm kategorilerdeki oyuncuların grup eşleşmeleri başarıyla yapılmıştır. Artık fikstür planlamasına geçebilirsiniz.</p>
+            <a href="{% url 'fikstur_yonetimi' %}" class="btn btn-warning btn-lg fw-bold px-5 rounded-pill shadow-lg">
+                <i class="fa-solid fa-calendar-days me-2"></i> Fikstür Yönetimine Geç
+            </a>
+        </div>
+
+        <div class="row mb-4 bg-dark py-3 rounded mx-0 border border-secondary shadow align-items-center" id="kontrolAlani">
+            <div class="col-md-3">
                 <label class="form-label small text-muted fw-bold">Kategori</label>
                 <select id="kategoriSecim" class="form-select bg-dark text-white border-secondary fw-bold" onchange="kategoriYukle()">
                     <option value="">-- Kategori Seçin --</option>
@@ -135,20 +144,23 @@
                     <span id="grupMimarisiGosterge" class="badge bg-info text-dark fs-6 py-2 px-3 fw-bold">Seçim Bekleniyor...</span>
                 </div>
             </div>
-            <div class="col-md-5 d-flex justify-content-end gap-2 pt-3 pt-md-0">
+            <div class="col-md-6 d-flex justify-content-end gap-2 pt-3 pt-md-0 align-items-end">
                 <button onclick="kuraCek()" id="btnKura" class="btn btn-warning fw-bold px-4 shadow" disabled>
                     <i class="fa-solid fa-dice me-2"></i>KURA ÇEK
                 </button>
                 <button onclick="otomatikCek()" id="btnOto" class="btn btn-success fw-bold px-4 shadow" disabled>
                     <i class="fa-solid fa-forward-fast me-2"></i>OTOMATİK ÇEKİM
                 </button>
+                <button onclick="hizliCekimTest()" id="btnHizli" class="btn btn-outline-secondary btn-sm fw-bold px-3 shadow" disabled title="Animasyonları atlar ve anında doldurur.">
+                    <i class="fa-solid fa-bolt text-warning"></i> Hızlı Çöz
+                </button>
                 <button onclick="kuralariKaydet()" id="btnKaydet" class="btn btn-primary btn-lg fw-bold px-4 shadow animate-bounce" style="display:none;">
-                    <i class="fa-solid fa-check-to-slot me-2"></i>GRUPLARI ONAYLA VE KAYDET
+                    <i class="fa-solid fa-check-to-slot me-2"></i>GRUPLARI ONAYLA
                 </button>
             </div>
         </div>
 
-        <div class="row">
+        <div class="row" id="kuraAlani">
             <div class="col-lg-3 mb-4 mb-lg-0">
                 <h5 class="fw-bold text-muted mb-3"><i class="fa-solid fa-box-open me-2"></i>Kura Torbası (<span id="kalanSayisi">0</span>)</h5>
                 <div class="pot-container" id="torbaContainer">
@@ -177,12 +189,41 @@
         let cekimDevamEdiyor = false;
         let finalSonuclar = []; 
         let toplamGrupSayisi = 0;
+        let grupKapasiteleri = [];
+
+        // EKRAN YÜKLENDİĞİNDE BİTMİŞ KURALARI GİZLE
+        document.addEventListener("DOMContentLoaded", function() {
+            let secimKutusu = document.getElementById("kategoriSecim");
+            
+            // Listeyi sondan başa doğru tarayarak bitenleri çıkartıyoruz
+            for (let i = secimKutusu.options.length - 1; i >= 1; i--) {
+                let catId = secimKutusu.options[i].value;
+                let catData = hamVeri[catId];
+                
+                // Kategori verisi yoksa veya herkes atanmışsa sil
+                if (!catData || catData.oyuncular.length === 0 || catData.oyuncular.every(o => o.grup && o.grup.trim() !== "")) {
+                    secimKutusu.remove(i);
+                }
+            }
+            
+            // Eğer "-- Kategori Seçin --" haricinde hiç kategori kalmadıysa BİTİŞ ekranını göster
+            if (secimKutusu.options.length <= 1) {
+                kuraBitisEkraniniGoster();
+            }
+        });
+
+        function kuraBitisEkraniniGoster() {
+            document.getElementById("kontrolAlani").style.display = "none";
+            document.getElementById("kuraAlani").style.display = "none";
+            document.getElementById("tamamlandiEkrani").style.display = "block";
+        }
 
         function kategoriYukle() {
             let secilenId = document.getElementById("kategoriSecim").value;
             let container = document.getElementById("torbaContainer");
             let btnKura = document.getElementById("btnKura");
             let btnOto = document.getElementById("btnOto");
+            let btnHizli = document.getElementById("btnHizli");
             let mimariEtiket = document.getElementById("grupMimarisiGosterge");
             
             document.getElementById("btnKaydet").style.display = "none";
@@ -191,6 +232,7 @@
             document.getElementById("sahneIsim").style.fontSize = "1.6rem";
             mevcutGrupIndex = 0;
             finalSonuclar = [];
+            grupKapasiteleri = [];
 
             if(!secilenId || !hamVeri[secilenId]) {
                 container.innerHTML = "<div class='text-center text-muted mt-5'>Kura çekimine hazır oyuncu bulunmuyor.</div>";
@@ -199,20 +241,45 @@
                 mimariEtiket.className = "badge bg-info text-dark fs-6 py-2 px-3 fw-bold";
                 btnKura.disabled = true;
                 btnOto.disabled = true;
+                btnHizli.disabled = true;
                 document.getElementById("gruplarAlani").innerHTML = "";
                 return;
             }
 
-            torba = [...hamVeri[secilenId].oyuncular];
+            // Sadece grubu olmayan (atanmamış) kişileri torbaya al (Ekstra Güvenlik)
+            torba = hamVeri[secilenId].oyuncular.filter(o => !o.grup || o.grup.trim() === "");
             let n = torba.length;
 
-            toplamGrupSayisi = Math.ceil(n / 4);
-            
-            mimariEtiket.innerText = `${toplamGrupSayisi} Grup (4'lü / 3'lü Dağılım)`;
+            let besli = n % 4; 
+            let k = Math.floor(n / 4); 
+            let dortlu = k - besli; 
+
+            if (k > 0 && dortlu >= 0) {
+                toplamGrupSayisi = k;
+                
+                for(let i=0; i<dortlu; i++) grupKapasiteleri.push(4);
+                for(let i=0; i<besli; i++) grupKapasiteleri.push(5);
+                
+                let dagilimMetni = besli > 0 
+                    ? `${toplamGrupSayisi} Grup (${dortlu} Adet 4'lü, ${besli} Adet 5'li)` 
+                    : `${toplamGrupSayisi} Grup (Tümü 4'lü)`;
+                mimariEtiket.innerText = dagilimMetni;
+
+            } else {
+                toplamGrupSayisi = Math.ceil(n / 4) || 1;
+                let base = Math.floor(n / toplamGrupSayisi);
+                let rem = n % toplamGrupSayisi;
+                for(let i=0; i<toplamGrupSayisi; i++) {
+                    grupKapasiteleri.push(i < rem ? base + 1 : base);
+                }
+                mimariEtiket.innerText = `${toplamGrupSayisi} Grup (Karma Dağılım)`;
+            }
+
             mimariEtiket.className = "badge bg-success text-white fs-6 py-2 px-3 fw-bold";
 
             btnKura.disabled = false;
             btnOto.disabled = false;
+            btnHizli.disabled = false;
             gruplariOlustur();
             torbaCiz();
         }
@@ -225,7 +292,7 @@
                 alan.innerHTML += `
                     <div class="col">
                         <div class="group-card shadow">
-                            <div class="group-title">GRUP ${grupHarfleri[i]}</div>
+                            <div class="group-title">GRUP ${grupHarfleri[i]} <span style="font-size: 0.8rem; opacity: 0.7;">(Max: ${grupKapasiteleri[i]})</span></div>
                             <ul class="group-list" id="grup_listesi_${i}"></ul>
                         </div>
                     </div>
@@ -245,10 +312,40 @@
             if(torba.length === 0 && finalSonuclar.length > 0) {
                 document.getElementById("btnKura").disabled = true;
                 document.getElementById("btnOto").disabled = true;
+                document.getElementById("btnHizli").disabled = true;
                 document.getElementById("btnKaydet").style.display = "inline-block";
                 
                 document.getElementById("sahneIsim").innerHTML = "<span class='text-success' style='font-size:2.4rem;'><i class='fa-solid fa-square-check me-2'></i>KURA TAMAMLANDI!</span><br><span style='font-size:1.2rem; color:#ffc107; font-weight:normal;'>Sonuçları onaylayabilirsiniz</span>";
             }
+        }
+
+        function hizliCekimTest() {
+            if(torba.length === 0 || cekimDevamEdiyor) return;
+            
+            while(torba.length > 0) {
+                let secilenIndex = Math.floor(Math.random() * torba.length);
+                let kazanan = torba.splice(secilenIndex, 1)[0];
+                
+                while(document.getElementById(`grup_listesi_${mevcutGrupIndex}`).children.length >= grupKapasiteleri[mevcutGrupIndex]) {
+                    mevcutGrupIndex = (mevcutGrupIndex + 1) % toplamGrupSayisi;
+                }
+
+                let hedefGrupUl = document.getElementById(`grup_listesi_${mevcutGrupIndex}`);
+                let li = document.createElement("li");
+                li.innerHTML = `${kazanan.ad} ${kazanan.soyad}`;
+                hedefGrupUl.appendChild(li);
+
+                finalSonuclar.push({
+                    id: kazanan.id,
+                    grup: `Grup ${grupHarfleri[mevcutGrupIndex]}`
+                });
+
+                mevcutGrupIndex = (mevcutGrupIndex + 1) % toplamGrupSayisi;
+            }
+            
+            torbaCiz();
+            document.getElementById("sahneIsim").className = "drawn-name text-white";
+            document.getElementById("sahneIsim").innerText = "HIZLI ÇEKİM TAMAMLANDI";
         }
 
         function kuraCek(otomatikMi = false) {
@@ -273,6 +370,10 @@
                 sahne.className = "drawn-name text-white";
                 sahne.innerText = `${kazanan.ad} ${kazanan.soyad}`;
                 
+                while(document.getElementById(`grup_listesi_${mevcutGrupIndex}`).children.length >= grupKapasiteleri[mevcutGrupIndex]) {
+                    mevcutGrupIndex = (mevcutGrupIndex + 1) % toplamGrupSayisi;
+                }
+
                 let hedefGrupUl = document.getElementById(`grup_listesi_${mevcutGrupIndex}`);
                 let li = document.createElement("li");
                 li.innerHTML = `${kazanan.ad} ${kazanan.soyad}`;
@@ -298,14 +399,10 @@
             }, 1200); 
         }
 
-        function otomatikCek() {
-            kuraCek(true);
-        }
-
         function kuralariKaydet() {
             let btn = document.getElementById("btnKaydet");
             let secimKutusu = document.getElementById("kategoriSecim");
-            let silinecekIndex = secimKutusu.selectedIndex; // İşlemi biten kategorinin sırası
+            let silinecekIndex = secimKutusu.selectedIndex; 
             
             btn.innerHTML = "<i class='fa-solid fa-spinner fa-spin me-2'></i>Sonuçlar Onaylanıyor...";
             btn.disabled = true;
@@ -325,28 +422,17 @@
                     btn.innerHTML = "<i class='fa-solid fa-check-double me-2'></i>SONUÇLAR ONAYLANDI!";
                     
                     setTimeout(() => {
-                        // 1. Kategoriyi Listeden Temizle
                         secimKutusu.remove(silinecekIndex);
-                        
-                        // 2. Ekranı Sıfırla
                         secimKutusu.value = "";
-                        kategoriYukle();
                         
-                        // 3. Eğer başka kategori kalmadıysa FİNAL EKRANI göster
                         if(secimKutusu.options.length <= 1) {
-                            document.getElementById("sahneIsim").innerHTML = "<span class='text-warning' style='font-size:2.8rem;'><i class='fa-solid fa-trophy me-2'></i>TÜM KURALAR TAMAMLANDI!</span>";
-                            document.getElementById("grupMimarisiGosterge").innerText = "Turnuva Başlamaya Hazır";
-                            document.getElementById("grupMimarisiGosterge").className = "badge bg-warning text-dark fs-6 py-2 px-3 fw-bold";
-                            alert("🏆 Tebrikler! Tüm kategorilerin kuraları tamamlandı ve veritabanına işlendi.");
+                            kuraBitisEkraniniGoster();
                         } else {
-                            alert("Kategori kuraları kaydedildi! Sıradaki kategoriye geçebilirsiniz.");
+                            kategoriYukle();
+                            btn.className = "btn btn-primary btn-lg fw-bold px-4 shadow animate-bounce";
+                            btn.innerHTML = "<i class='fa-solid fa-check-to-slot me-2'></i>GRUPLARI ONAYLA VE KAYDET";
+                            btn.disabled = false;
                         }
-                        
-                        // Butonu sıfırla (Bir sonraki kategori için hazırla)
-                        btn.className = "btn btn-primary btn-lg fw-bold px-4 shadow animate-bounce";
-                        btn.innerHTML = "<i class='fa-solid fa-check-to-slot me-2'></i>GRUPLARI ONAYLA VE KAYDET";
-                        btn.disabled = false;
-                        
                     }, 1500);
 
                 } else {
