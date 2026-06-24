@@ -1,5 +1,6 @@
 import json
 import random
+import re  # EKLENDİ: Telefon numarası temizliği için
 from itertools import combinations
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib import messages
@@ -13,6 +14,7 @@ from django.db.models import Count, Q
 from django.contrib.auth.models import User
 from django.utils.safestring import mark_safe
 from django.utils.html import escape
+import unicodedata
 
 from django.core.mail import send_mail
 from django.conf import settings
@@ -25,6 +27,92 @@ from .forms import KayitForm
 def turkce_tarih_format(tarih):
     aylar = ["", "Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"]
     return f"{tarih.day} {aylar[tarih.month]} {tarih.year}"
+
+# --- YARDIMCI FONKSİYON: ATP Puan Durumu Hesaplama ---
+def puan_durumu_hesapla(grup_adi, kategori, turnuva):
+    oyuncular = Kayit.objects.filter(turnuva=turnuva, kategori=kategori, grup=grup_adi)
+    maclar = Mac.objects.filter(turnuva=turnuva, kategori=kategori, grup=grup_adi)
+    
+    istatistikler = []
+    for oyuncu in oyuncular:
+        stat = {
+            'oyuncu': oyuncu,
+            'oynadi': 0, 'galibiyet': 0, 'maglubiyet': 0,
+            'aldigi_set': 0, 'verdigi_set': 0,
+            'aldigi_oyun': 0, 'verdigi_oyun': 0
+        }
+        
+        oynanan_maclar = maclar.filter(Q(oyuncu1=oyuncu) | Q(oyuncu2=oyuncu), durum='oynandi')
+        
+        for mac in oynanan_maclar:
+            if 'BAY' in mac.oyuncu1.ad.upper() or 'BAY' in mac.oyuncu2.ad.upper():
+                continue
+                
+            stat['oynadi'] += 1
+            is_oyuncu1 = (mac.oyuncu1 == oyuncu)
+            
+            # Galibiyet hesabı
+            if hasattr(mac, 'kazanan') and mac.kazanan == oyuncu:
+                stat['galibiyet'] += 1
+            else:
+                stat['maglubiyet'] += 1
+                
+            if mac.set1_oyuncu1 is not None and mac.set1_oyuncu2 is not None:
+                if is_oyuncu1:
+                    stat['aldigi_oyun'] += mac.set1_oyuncu1
+                    stat['verdigi_oyun'] += mac.set1_oyuncu2
+                    if mac.set1_oyuncu1 > mac.set1_oyuncu2: stat['aldigi_set'] += 1
+                    elif mac.set1_oyuncu1 < mac.set1_oyuncu2: stat['verdigi_set'] += 1
+                else:
+                    stat['aldigi_oyun'] += mac.set1_oyuncu2
+                    stat['verdigi_oyun'] += mac.set1_oyuncu1
+                    if mac.set1_oyuncu2 > mac.set1_oyuncu1: stat['aldigi_set'] += 1
+                    elif mac.set1_oyuncu2 < mac.set1_oyuncu1: stat['verdigi_set'] += 1
+                    
+            if mac.set2_oyuncu1 is not None and mac.set2_oyuncu2 is not None:
+                if is_oyuncu1:
+                    stat['aldigi_oyun'] += mac.set2_oyuncu1
+                    stat['verdigi_oyun'] += mac.set2_oyuncu2
+                    if mac.set2_oyuncu1 > mac.set2_oyuncu2: stat['aldigi_set'] += 1
+                    elif mac.set2_oyuncu1 < mac.set2_oyuncu2: stat['verdigi_set'] += 1
+                else:
+                    stat['aldigi_oyun'] += mac.set2_oyuncu2
+                    stat['verdigi_oyun'] += mac.set2_oyuncu1
+                    if mac.set2_oyuncu2 > mac.set2_oyuncu1: stat['aldigi_set'] += 1
+                    elif mac.set2_oyuncu2 < mac.set2_oyuncu1: stat['verdigi_set'] += 1
+                    
+            if mac.set3_oyuncu1 is not None and mac.set3_oyuncu2 is not None:
+                if is_oyuncu1:
+                    if mac.set3_oyuncu1 > mac.set3_oyuncu2:
+                        stat['aldigi_set'] += 1
+                        stat['aldigi_oyun'] += 1
+                    elif mac.set3_oyuncu1 < mac.set3_oyuncu2:
+                        stat['verdigi_set'] += 1
+                        stat['verdigi_oyun'] += 1
+                else:
+                    if mac.set3_oyuncu2 > mac.set3_oyuncu1:
+                        stat['aldigi_set'] += 1
+                        stat['aldigi_oyun'] += 1
+                    elif mac.set3_oyuncu2 < mac.set3_oyuncu1:
+                        stat['verdigi_set'] += 1
+                        stat['verdigi_oyun'] += 1
+                        
+        istatistikler.append(stat)
+        
+    istatistikler.sort(key=lambda x: (
+        x['galibiyet'], 
+        (x['aldigi_set'] - x['verdigi_set']), 
+        (x['aldigi_oyun'] - x['verdigi_oyun'])
+    ), reverse=True)
+    
+    return istatistikler
+
+
+# --- YARDIMCI FONKSİYON: Türkçe Karakterleri İngilizceye Çevirme (Username için) ---
+def slugify_turkce(text):
+    text = text.replace('ı', 'i').replace('İ', 'I')
+    return ''.join(c for c in unicodedata.normalize('NFD', text) if unicodedata.category(c) != 'Mn').lower()
+
 
 # ==========================================
 # ANA SAYFA 
@@ -108,10 +196,42 @@ def yonetim_paneli(request):
         messages.error(request, 'Erişim Engellendi: Bu sayfaya sadece yetkili kulüp personeli erişebilir!')
         return redirect('profil')
         
-    aktif_turnuva = Turnuva.objects.filter(kayit_acik_mi=True).first()
+    aktif_turnuva = Turnuva.objects.order_by('-id').first()
     
     if request.method == 'POST':
-        if 'manuel_kayit' in request.POST:
+        # YENİ EKLENEN: OTOMATİK ŞİFRE OLUŞTURMA İŞLEMİ (Telefon Numarası ile)
+        if 'otomatik_sifre_olustur' in request.POST:
+            onayli_oyuncular = Kayit.objects.filter(turnuva=aktif_turnuva, odeme_durumu='onaylandi').exclude(grup__isnull=True).exclude(grup='')
+            olusturulan_hesap_sayisi = 0
+            
+            for oyuncu in onayli_oyuncular:
+                if 'BAY' in oyuncu.ad.upper():
+                    continue
+                    
+                # Telefon numarasından tüm boşluk, tire, parantez gibi karakterleri sil
+                temiz_telefon = re.sub(r'\D', '', oyuncu.telefon) if oyuncu.telefon else None
+                
+                # Eğer kullanıcının numarası yoksa (olmamalı ama önlem) atla
+                if not temiz_telefon:
+                    continue
+                    
+                # Eğer bu telefon numarasıyla daha önce açılmışsa geç
+                if User.objects.filter(username=temiz_telefon).exists():
+                    continue
+                    
+                # Kullanıcıyı oluştur (Kullanıcı Adı: Temiz Telefon, Şifre: Ahal2026!)
+                yeni_user = User.objects.create_user(
+                    username=temiz_telefon,
+                    password='Ahal2026!',
+                    first_name=oyuncu.ad,
+                    last_name=oyuncu.soyad
+                )
+                olusturulan_hesap_sayisi += 1
+                
+            messages.success(request, f"İşlem Tamam! {olusturulan_hesap_sayisi} adet oyuncuya otomatik telefon numarasıyla giriş oluşturuldu. (Standart Şifre: Ahal2026!)")
+            return redirect('yonetim_paneli')
+
+        elif 'manuel_kayit' in request.POST:
             form = KayitForm(request.POST)
             if form.is_valid() and aktif_turnuva:
                 kayit = form.save(commit=False)
@@ -198,12 +318,10 @@ def kura_cekimi(request):
         messages.error(request, 'Yetkisiz erişim.')
         return redirect('profil')
         
-    aktif_turnuva = Turnuva.objects.filter(kayit_acik_mi=True).first()
+    aktif_turnuva = Turnuva.objects.order_by('-id').first()
     
-    # SADECE "ONAYLANDI" olan oyuncuları kuraya sokuyoruz
     onayli_kayitlar = Kayit.objects.filter(turnuva=aktif_turnuva, odeme_durumu='onaylandi')
     
-    # JS tarafında kullanmak üzere verileri JSON formatına çeviriyoruz
     kategori_oyunculari = {}
     kategoriler = Kategori.objects.all()
     
@@ -224,7 +342,6 @@ def kura_cekimi(request):
 
 @login_required(login_url='/giris/')
 def kura_kaydet(request):
-    # JavaScript'ten gelen kura sonuçlarını veritabanına yazar
     if request.method == 'POST' and request.user.is_staff:
         try:
             data = json.loads(request.body)
@@ -246,7 +363,7 @@ def fikstur_olustur(request):
     if not request.user.is_staff:
         return redirect('profil')
         
-    aktif_turnuva = Turnuva.objects.filter(kayit_acik_mi=True).first()
+    aktif_turnuva = Turnuva.objects.order_by('-id').first()
     if not aktif_turnuva:
         messages.error(request, "Aktif turnuva bulunamadı.")
         return redirect('yonetim_paneli')
@@ -255,45 +372,36 @@ def fikstur_olustur(request):
     olusturulan_mac_sayisi = 0
 
     for kat in kategoriler:
-        # Bu kategorideki, onaylı ve grubu belli olan oyuncuları al
         oyuncular = Kayit.objects.filter(turnuva=aktif_turnuva, kategori=kat, odeme_durumu='onaylandi').exclude(grup__isnull=True).exclude(grup='')
         
-        # Oyuncuları gruplarına göre sözlüğe (dictionary) ayır
         gruplar_dict = {}
         for o in oyuncular:
             if o.grup not in gruplar_dict:
                 gruplar_dict[o.grup] = []
             gruplar_dict[o.grup].append(o)
             
-        # Her grup için eşleşmeleri yap
         for grup_adi, grup_oyunculari in gruplar_dict.items():
-            # Eğer bu grup için zaten maç oluşturulmuşsa atla (çifte kaydı önler)
             varsa_mac = Mac.objects.filter(turnuva=aktif_turnuva, kategori=kat, grup=grup_adi).exists()
             if varsa_mac:
                 continue
                 
-            # Kombinasyonları al
             eslesmeler = list(combinations(grup_oyunculari, 2))
             
-            # Aynı kişinin maçlarının peş peşe gelmesini önleyen sıralama algoritması
             if len(grup_oyunculari) == 4:
-                # 4 Kişilik grup için kusursuz sıralama: Maç 1-2, Maç 3-4, Maç 1-3, Maç 2-4, Maç 1-4, Maç 2-3
                 eslesmeler = [eslesmeler[0], eslesmeler[5], eslesmeler[1], eslesmeler[4], eslesmeler[2], eslesmeler[3]]
             elif len(grup_oyunculari) == 3:
-                # 3 Kişilik grup için dağılım
                 eslesmeler = [eslesmeler[0], eslesmeler[2], eslesmeler[1]]
             else:
-                # Eğer grupta 5 veya daha fazla kişi varsa sadece rastgele karıştır
                 random.shuffle(eslesmeler)
             
-            # Dağıtılmış sıraya göre maçları veritabanına kaydet
             for oyuncu1, oyuncu2 in eslesmeler:
                 Mac.objects.create(
                     turnuva=aktif_turnuva,
                     kategori=kat,
                     grup=grup_adi,
                     oyuncu1=oyuncu1,
-                    oyuncu2=oyuncu2
+                    oyuncu2=oyuncu2,
+                    durum='planlaniyor'
                 )
                 olusturulan_mac_sayisi += 1
 
@@ -313,9 +421,8 @@ def fikstur_yonetimi(request):
     if not request.user.is_staff:
         return redirect('profil')
         
-    aktif_turnuva = Turnuva.objects.filter(kayit_acik_mi=True).first()
+    aktif_turnuva = Turnuva.objects.order_by('-id').first()
     
-    # AJAX ile (Arka planda sayfa yenilenmeden) tarih, saat ve kort kaydetme işlemi
     if request.method == 'POST' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
         try:
             data = json.loads(request.body)
@@ -334,7 +441,6 @@ def fikstur_yonetimi(request):
             if kort: mac.kort = kort
             else: mac.kort = None
             
-            # Eğer tarih ve saat girildiyse durumu "bekliyor" (planlandı) yap. 
             if mac.tarih and mac.saat:
                 mac.durum = 'bekliyor'
             else:
@@ -345,16 +451,13 @@ def fikstur_yonetimi(request):
         except Exception as e:
             return JsonResponse({'status': 'error', 'message': str(e)})
 
-    # Ekrana basılacak maçlar listesi
     maclar = Mac.objects.filter(turnuva=aktif_turnuva).order_by('kategori', 'grup', 'id')
     kategoriler = Kategori.objects.all()
     
-    # Kategoriye göre filtreleme
     secilen_kat = request.GET.get('kategori_filtre')
     if secilen_kat:
         maclar = maclar.filter(kategori__id=secilen_kat)
         
-    # MAÇLARI İKİYE BÖL (Planlanmamışlar ve Planlanmışlar)
     planlanmamis_maclar = maclar.filter(durum='planlaniyor')
     planlanmis_maclar = maclar.filter(durum__in=['bekliyor', 'oynandi'])
         
@@ -377,7 +480,7 @@ def fikstur_sifirla(request):
         return redirect('profil')
         
     if request.method == 'POST':
-        aktif_turnuva = Turnuva.objects.filter(kayit_acik_mi=True).first()
+        aktif_turnuva = Turnuva.objects.order_by('-id').first()
         if aktif_turnuva:
             silinen_sayi, _ = Mac.objects.filter(turnuva=aktif_turnuva).delete()
             messages.success(request, f"Tüm fikstür başarıyla sıfırlandı! (Silinen eşleşme: {silinen_sayi})")
@@ -394,14 +497,13 @@ def hakem_canli_skor(request):
         messages.error(request, 'Bu sayfaya erişim yetkiniz yok.')
         return redirect('profil')
         
-    aktif_turnuva = Turnuva.objects.filter(kayit_acik_mi=True).first()
+    aktif_turnuva = Turnuva.objects.order_by('-id').first()
     
     if request.method == 'POST':
         mac_id = request.POST.get('mac_id')
         if mac_id:
             mac = get_object_or_404(Mac, id=mac_id)
             
-            # Formdan skorları al
             set1_o1 = request.POST.get('set1_o1')
             set1_o2 = request.POST.get('set1_o2')
             set1_tb1 = request.POST.get('set1_tb1')
@@ -415,11 +517,9 @@ def hakem_canli_skor(request):
             set3_o1 = request.POST.get('set3_o1')
             set3_o2 = request.POST.get('set3_o2')
 
-            # Skor formatlama
             skor1_str = ""
             skor2_str = ""
             
-            # 1. Set
             if set1_o1 and set1_o2:
                 skor1_str += f"{set1_o1}"
                 skor2_str += f"{set1_o2}"
@@ -427,7 +527,6 @@ def hakem_canli_skor(request):
                     skor1_str += f"({set1_tb1 or 0})"
                     skor2_str += f"({set1_tb2 or 0})"
             
-            # 2. Set
             if set2_o1 and set2_o2:
                 skor1_str += f", {set2_o1}"
                 skor2_str += f", {set2_o2}"
@@ -435,7 +534,6 @@ def hakem_canli_skor(request):
                     skor1_str += f"({set2_tb1 or 0})"
                     skor2_str += f"({set2_tb2 or 0})"
                     
-            # 3. Set (Süper Tie-Break)
             if set3_o1 and set3_o2:
                 skor1_str += f", [{set3_o1}]"
                 skor2_str += f", [{set3_o2}]"
@@ -448,7 +546,6 @@ def hakem_canli_skor(request):
             messages.success(request, f"Skor başarıyla kaydedildi: {mac.oyuncu1.ad} vs {mac.oyuncu2.ad}")
             return redirect('hakem')
 
-    # Hakem sadece planlanmış ("bekliyor" durumundaki) maçları görsün
     bekleyen_maclar = Mac.objects.filter(turnuva=aktif_turnuva, durum='bekliyor').order_by('tarih', 'saat', 'kategori')
 
     context = {
@@ -458,31 +555,87 @@ def hakem_canli_skor(request):
 
 
 # ==========================================
-# OYUNCU PROFİLİ
+# GENEL ZİYARETÇİ: FİKSTÜR GÖRÜNÜMÜ
+# ==========================================
+def fikstur(request):
+    aktif_turnuva = Turnuva.objects.order_by('-id').first()
+    kategoriler = Kategori.objects.all() if aktif_turnuva else []
+    
+    secili_kategori = None
+    gruplar_verisi = []
+    
+    kat_id = request.GET.get('kategori')
+    if kat_id:
+        secili_kategori = Kategori.objects.filter(id=kat_id).first()
+    elif kategoriler:
+        secili_kategori = kategoriler.first()
+        
+    if secili_kategori and aktif_turnuva:
+        grup_isimleri = Kayit.objects.filter(turnuva=aktif_turnuva, kategori=secili_kategori).exclude(grup__isnull=True).exclude(grup='').values_list('grup', flat=True).distinct()
+        
+        for grup_adi in grup_isimleri:
+            istatistikler = puan_durumu_hesapla(grup_adi, secili_kategori, aktif_turnuva)
+            grup_maclari = Mac.objects.filter(turnuva=aktif_turnuva, kategori=secili_kategori, grup=grup_adi).order_by('tarih', 'saat')
+            
+            gruplar_verisi.append({
+                'grup_ismi': grup_adi,
+                'oyuncular': istatistikler,
+                'maclar': grup_maclari
+            })
+            
+    context = {
+        'kategoriler': kategoriler,
+        'secili_kategori': secili_kategori,
+        'gruplar_verisi': gruplar_verisi,
+    }
+    return render(request, 'core/fikstur.html', context)
+
+
+# ==========================================
+# OYUNCU PROFİLİ (MOBİL PANEL)
 # ==========================================
 @login_required(login_url='/giris/')
 def profil(request):
-    kayit_bilgisi = None 
+    oyuncu = Kayit.objects.filter(
+        ad__iexact=request.user.first_name,
+        soyad__iexact=request.user.last_name
+    ).order_by('-id').first()
+    
+    if not oyuncu:
+        return render(request, 'core/oyuncu_paneli.html', {'mesaj': 'Henüz bir turnuvaya kayıtlı değilsiniz veya hesabınız eşleşmedi. Lütfen yönetimle iletişime geçin.'})
 
-    if request.method == 'POST':
-        form = PasswordChangeForm(request.user, request.POST)
-        if form.is_valid():
-            user = form.save()
-            update_session_auth_hash(request, user)
-            messages.success(request, 'Şifreniz başarıyla güncellendi!')
-            return redirect('profil')
-        else:
-            messages.error(request, 'Lütfen aşağıdaki hataları düzeltin.')
-    else:
-        form = PasswordChangeForm(request.user)
+    oyuncunun_grubu = oyuncu.grup
+    kategori = oyuncu.kategori
+    aktif_turnuva = oyuncu.turnuva
+    
+    oyuncu_maclari = Mac.objects.filter(Q(oyuncu1=oyuncu) | Q(oyuncu2=oyuncu))
+    bekleyen_maclar = oyuncu_maclari.filter(durum__in=['planlaniyor', 'bekliyor']).order_by('tarih', 'saat')
+    gecmis_maclar = oyuncu_maclari.filter(durum='oynandi').order_by('-tarih', '-saat')
+    
+    tum_gruplar_verisi = []
+    
+    if kategori and aktif_turnuva:
+        grup_isimleri = Kayit.objects.filter(turnuva=aktif_turnuva, kategori=kategori).exclude(grup__isnull=True).exclude(grup='').values_list('grup', flat=True).distinct()
+        
+        for grup_adi in grup_isimleri:
+            istatistikler = puan_durumu_hesapla(grup_adi, kategori, aktif_turnuva)
+            grup_maclari = Mac.objects.filter(turnuva=aktif_turnuva, kategori=kategori, grup=grup_adi).order_by('tarih', 'saat')
+            
+            tum_gruplar_verisi.append({
+                'grup': {'isim': grup_adi}, 
+                'istatistikler': istatistikler,
+                'maclar': grup_maclari,
+                'is_kendi_grubu': (grup_adi == oyuncunun_grubu)
+            })
 
     context = {
-        'form': form,
-        'kayit': kayit_bilgisi,
-        'gecmis_maclar': [],
-        'gelecek_maclar': []
+        'oyuncu': oyuncu,
+        'oyuncunun_grubu': {'isim': oyuncunun_grubu} if oyuncunun_grubu else None,
+        'bekleyen_maclar': bekleyen_maclar,
+        'gecmis_maclar': gecmis_maclar,
+        'tum_gruplar_verisi': tum_gruplar_verisi,
     }
-    return render(request, 'core/profil.html', context)
+    return render(request, 'core/oyuncu_paneli.html', context)
 
 
 # ==========================================

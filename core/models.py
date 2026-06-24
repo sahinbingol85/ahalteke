@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
+from datetime import datetime # Bunu ekleyin!
 
 # ==========================================
 # KORT REZERVASYON SİSTEMİ (SADECE PERSONEL)
@@ -137,6 +138,14 @@ class Mac(models.Model):
 
     def __str__(self):
         return f"{self.grup}: {self.oyuncu1.ad} vs {self.oyuncu2.ad}"
+    
+    @property
+    def tarih_saat(self):
+        if self.tarih and self.saat:
+            # datetime.combine kullanmak için dosyanın en üstüne import eklememiz lazım
+            from datetime import datetime
+            return datetime.combine(self.tarih, self.saat)
+        return None
 
     class Meta:
         verbose_name = "Maç"
