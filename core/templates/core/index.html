@@ -238,32 +238,9 @@
                     <li class="nav-item"><a class="nav-link" href="{% url 'index' %}#hakkimizda">Kulüp</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'index' %}#galeri">Kortlar</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'turnuvalar' %}">Turnuvalar</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'fikstur' %}">Fikstür & Sonuçlar</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'index' %}#iletisim">İletişim</a></li>
                     
-                    {% if request.user.is_authenticated %}
-                        <li class="nav-item dropdown ms-lg-2">
-                            <a class="nav-link dropdown-toggle text-success fw-bold" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="border: 1px solid var(--accent-green); padding: 5px 15px; border-radius: 20px;">
-                                <i class="fa-solid fa-circle-user me-1"></i> {{ request.user.first_name }}
-                            </a>
-                            <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2" aria-labelledby="navbarDropdown" style="border-radius: 10px;">
-                                <li><a class="dropdown-item fw-bold text-dark py-2" href="{% url 'profil' %}"><i class="fa-solid fa-id-badge me-2 text-primary"></i>Profilim</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li>
-                                    <form action="{% url 'logout' %}" method="post" class="px-2 py-1">
-                                        {% csrf_token %}
-                                        <button type="submit" class="btn btn-sm btn-danger w-100 fw-bold"><i class="fa-solid fa-right-from-bracket me-1"></i> Çıkış Yap</button>
-                                    </form>
-                                </li>
-                            </ul>
-                        </li>
-                    {% else %}
-                        <li class="nav-item ms-lg-2">
-                            <a class="nav-link text-warning fw-bold" href="{% url 'login' %}" style="border: 1px solid #ffc107; padding: 5px 15px; border-radius: 20px;">
-                                <i class="fa-solid fa-right-to-bracket me-1"></i> Giriş
-                            </a>
-                        </li>
-                    {% endif %}
+                    
                     <li class="nav-item ms-lg-3 mt-3 mt-lg-0">
                         <a class="nav-link instagram-btn" href="https://instagram.com/ahalteketeniskulubu" target="_blank">
                             <i class="fa-brands fa-instagram fa-lg"></i> Takip Et
