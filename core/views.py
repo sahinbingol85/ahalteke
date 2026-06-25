@@ -199,7 +199,6 @@ def yonetim_paneli(request):
     aktif_turnuva = Turnuva.objects.order_by('-id').first()
     
     if request.method == 'POST':
-        # YENİ EKLENEN: OTOMATİK ŞİFRE OLUŞTURMA İŞLEMİ (Telefon Numarası ile)
         if 'otomatik_sifre_olustur' in request.POST:
             onayli_oyuncular = Kayit.objects.filter(turnuva=aktif_turnuva, odeme_durumu='onaylandi')
             olusturulan_hesap_sayisi = 0
@@ -208,18 +207,14 @@ def yonetim_paneli(request):
                 if 'BAY' in oyuncu.ad.upper():
                     continue
                     
-                # Telefon numarasından tüm boşluk, tire, parantez gibi karakterleri sil
                 temiz_telefon = re.sub(r'\D', '', oyuncu.telefon) if oyuncu.telefon else None
                 
-                # Eğer kullanıcının numarası yoksa (olmamalı ama önlem) atla
                 if not temiz_telefon:
                     continue
                     
-                # Eğer bu telefon numarasıyla daha önce açılmışsa geç
                 if User.objects.filter(username=temiz_telefon).exists():
                     continue
                     
-                # Kullanıcıyı oluştur (Kullanıcı Adı: Temiz Telefon, Şifre: Ahal2026!)
                 yeni_user = User.objects.create_user(
                     username=temiz_telefon,
                     password='Ahal2026!',
@@ -571,11 +566,20 @@ def fikstur(request):
         secili_kategori = kategoriler.first()
         
     if secili_kategori and aktif_turnuva:
-        grup_isimleri = Kayit.objects.filter(turnuva=aktif_turnuva, kategori=secili_kategori).exclude(grup__isnull=True).exclude(grup='').values_list('grup', flat=True).distinct()
+        # ÖNEMLİ DEĞİŞİKLİK BURADA:
+        # Fikstürü veritabanından, sadece Mac'i (eşleşmesi) olanlardan çekiyoruz.
+        grup_isimleri = Mac.objects.filter(
+            turnuva=aktif_turnuva, 
+            kategori=secili_kategori
+        ).values_list('grup', flat=True).distinct()
         
         for grup_adi in grup_isimleri:
             istatistikler = puan_durumu_hesapla(grup_adi, secili_kategori, aktif_turnuva)
-            grup_maclari = Mac.objects.filter(turnuva=aktif_turnuva, kategori=secili_kategori, grup=grup_adi).order_by('tarih', 'saat')
+            grup_maclari = Mac.objects.filter(
+                turnuva=aktif_turnuva, 
+                kategori=secili_kategori, 
+                grup=grup_adi
+            ).order_by('tarih', 'saat')
             
             gruplar_verisi.append({
                 'grup_ismi': grup_adi,
@@ -612,8 +616,6 @@ def profil(request):
         })
 
     # 2. Maçları çek
-    # Çok kritik: Q kullanırken oyuncunun model objesini (oyuncu) doğrudan kullanıyoruz.
-    # Eğer bu boş dönüyorsa, veritabanında Mac tablosundaki oyuncu1/2 id'leri ile Kayit id'leri uyuşmuyor demektir.
     oyuncu_maclari = Mac.objects.filter(Q(oyuncu1=oyuncu) | Q(oyuncu2=oyuncu))
     
     bekleyen_maclar = oyuncu_maclari.filter(durum__in=['planlaniyor', 'bekliyor']).order_by('tarih', 'saat')
@@ -647,8 +649,6 @@ def profil(request):
         'tum_gruplar_verisi': tum_gruplar_verisi,
     }
     return render(request, 'core/oyuncu_paneli.html', context)
-
-
 
 
 # ==========================================
