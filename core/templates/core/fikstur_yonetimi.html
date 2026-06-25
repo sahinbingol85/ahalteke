@@ -246,10 +246,18 @@
                                                                 <option value="">Saat Seç</option>
                                                                 <script>
                                                                     let selectedSaat_{{ mac.id }} = "{{ mac.saat|time:'H:i' }}";
-                                                                    for (let i = 0; i < 24; i++) {
-                                                                        let h = i.toString().padStart(2, '0') + ":00";
-                                                                        let selected = (h === selectedSaat_{{ mac.id }}) ? "selected" : "";
-                                                                        document.write(`<option value="${h}" ${selected}>${h}</option>`);
+                                                                    for (let i = 8; i < 24; i++) { // Sabah 08:00'den gece 23:30'a kadar
+                                                                        let h = i.toString().padStart(2, '0');
+            
+                                                                        // Tam saat (örneğin 08:00)
+                                                                        let saat00 = `${h}:00`;
+                                                                        let selected00 = (saat00 === selectedSaat_{{ mac.id }}) ? "selected" : "";
+                                                                        document.write(`<option value="${saat00}" ${selected00}>${saat00}</option>`);
+            
+                                                                        // Yarım saat (örneğin 08:30)
+                                                                        let saat30 = `${h}:30`;
+                                                                        let selected30 = (saat30 === selectedSaat_{{ mac.id }}) ? "selected" : "";
+                                                                        document.write(`<option value="${saat30}" ${selected30}>${saat30}</option>`);
                                                                     }
                                                                 </script>
                                                             </select>
