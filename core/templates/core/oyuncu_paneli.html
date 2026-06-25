@@ -1,0 +1,371 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Oyuncu Paneli | Ahal Teke</title>
+    
+    <link rel="manifest" href="/manifest_oyuncu.json">
+    
+    <meta name="theme-color" content="#0a2342">
+    <link rel="apple-touch-icon" href="https://i.ibb.co/HTPhptVQ/logo.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700;800&family=Poppins:wght@300;400;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        :root { --main-navy: #0a2342; --accent-green: #28a745; --bg-light: #f8f9fa; }
+        body { font-family: 'Poppins', sans-serif; background-color: #e9ecef; padding-top: 70px; padding-bottom: 90px; }
+        h1, h2, h3, .navbar-brand { font-family: 'Montserrat', sans-serif; font-weight: 700; }
+        
+        .navbar { background-color: var(--main-navy); padding: 0.5rem 0; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .navbar-brand { color: white !important; letter-spacing: 1px; font-size: 1.1rem; display: flex; align-items: center; justify-content: center; }
+        .brand-logo { width: 35px; height: 35px; object-fit: contain; border-radius: 8px; margin-right: 10px; border: 2px solid var(--accent-green); background-color: white; padding: 2px; }
+        
+        .player-header { background: linear-gradient(135deg, var(--main-navy), #1a3a5f); color: white; padding: 25px 0; text-align: center; border-radius: 0 0 25px 25px; margin-top: -20px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        .player-name { font-size: 1.5rem; color: var(--accent-green); text-transform: uppercase; letter-spacing: 1px; }
+
+        .tab-section { display: none; animation: fadeIn 0.3s ease-in-out; }
+        .tab-section.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .card-custom { background: white; border-radius: 15px; padding: 15px; margin-bottom: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #dee2e6; }
+        .match-date { font-size: 0.8rem; color: #6c757d; border-bottom: 1px solid #eee; padding-bottom: 8px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .player-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; font-weight: 600; color: var(--main-navy); }
+        .winner-text { color: var(--accent-green); font-weight: 800; }
+        .score-pill { background-color: #f8f9fa; border: 1px solid #ced4da; border-radius: 8px; padding: 3px 8px; font-size: 0.9rem; margin-left: 5px; min-width: 30px; text-align: center; display: inline-block; }
+        .winner-pill { background-color: var(--accent-green); color: white; border-color: var(--accent-green); }
+
+        .table-container { background: white; border-radius: 15px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.05); border: 1px solid #dee2e6; margin-bottom: 25px; }
+        .table { margin-bottom: 0; font-size: 0.85rem; }
+        .table thead th { background-color: var(--main-navy); color: white; border: none; padding: 12px; font-weight: 600; text-align: center; }
+        .table tbody td { vertical-align: middle; text-align: center; font-weight: 600; color: #495057; border-bottom: 1px solid #eee; }
+        .table tbody tr:last-child td { border-bottom: none; }
+        .rank-1 { background-color: rgba(40, 167, 69, 0.1); border-left: 4px solid var(--accent-green) !important; }
+        
+        .bottom-nav { position: fixed; bottom: 0; left: 0; width: 100%; background: white; box-shadow: 0 -5px 15px rgba(0,0,0,0.05); display: flex; justify-content: space-around; z-index: 1000; padding: 10px 0; padding-bottom: calc(10px + env(safe-area-inset-bottom)); border-radius: 20px 20px 0 0; }
+        .nav-item { flex: 1; text-align: center; color: #adb5bd; text-decoration: none; font-size: 0.75rem; font-weight: 700; display: flex; flex-direction: column; align-items: center; gap: 5px; cursor: pointer; transition: 0.3s; }
+        .nav-item.active { color: var(--main-navy); }
+        .nav-item i { font-size: 1.4rem; transition: 0.3s; }
+        .nav-item.active i { color: var(--accent-green); transform: scale(1.15); }
+        
+        .rules-list { padding-left: 1.2rem; font-size: 0.85rem; color: #495057; }
+        .rules-list li { margin-bottom: 12px; }
+        .rules-list li strong { color: var(--main-navy); }
+
+        .navbar-actions .btn { font-size: 0.8rem; padding: 5px 10px; border-radius: 8px; }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar navbar-expand-lg fixed-top navbar-dark">
+        <div class="container d-flex justify-content-between align-items-center">
+            <div class="navbar-brand m-0" style="pointer-events: none;">
+                <img src="https://i.ibb.co/HTPhptVQ/logo.png" alt="Ahal Teke Logo" class="brand-logo">
+                OYUNCU PANELİ
+            </div>
+            <div class="navbar-actions d-flex gap-2">
+                <a href="{% url 'sifre_degistir' %}" class="btn btn-outline-light fw-bold" title="Şifre Değiştir">
+                    <i class="fa-solid fa-key"></i>
+                </a>
+                <form action="{% url 'logout' %}" method="post" class="m-0">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{% url 'index' %}">
+                    <button type="submit" class="btn btn-danger fw-bold" title="Çıkış Yap">
+                        <i class="fa-solid fa-right-from-bracket"></i>
+                    </button>
+                </form>
+            </div>
+        </div>
+    </nav>
+
+    <div class="player-header mb-4">
+        <div class="container">
+            <h2 class="player-name mb-1">{{ oyuncu.ad }} {{ oyuncu.soyad }}</h2>
+            <div class="mb-0 text-white-50 small">
+                <!-- Kategori Bilgisi -->
+                {% if oyuncu.kategori %}
+                    <i class="fa-solid fa-medal text-info me-1"></i> {{ oyuncu.kategori.isim }}
+                {% else %}
+                    <i class="fa-solid fa-medal text-muted me-1"></i> Kategori Bekleniyor
+                {% endif %}
+                
+                <span class="mx-2 opacity-50">|</span>
+                
+                <!-- Grup Bilgisi -->
+                {% if oyuncu.grup %}
+                    <i class="fa-solid fa-trophy text-warning me-1"></i> {{ oyuncu.grup }}
+                {% else %}
+                    <i class="fa-solid fa-trophy text-muted me-1"></i> Grup Bekleniyor
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <div class="container">
+        <div id="tab-maclarim" class="tab-section active">
+    
+            <h5 class="fw-bold text-muted mb-3" style="font-size: 0.9rem;">
+                <i class="fa-solid fa-hourglass-half me-2"></i>SIRADAKİ MAÇLARIM ({{ bekleyen_maclar.count }})
+            </h5>
+    
+            {% if bekleyen_maclar %}
+                {% for mac in bekleyen_maclar %}
+                    {% if mac.tarih %}
+                        <div class="card-custom border-start border-4 border-success shadow-sm">
+                            <div class="match-date text-success fw-bold">
+                                <span><i class="fa-solid fa-calendar-check me-1"></i> 
+                                    {{ mac.tarih|date:"d M" }} - {{ mac.saat|time:"H:i"|default:"Saat Belirsiz" }}
+                                </span>
+                                <span>Kort: {{ mac.kort|default:"?" }}</span>
+                            </div>
+                            <div class="player-row text-dark">
+                                <span>{{ mac.oyuncu1.ad }} {{ mac.oyuncu1.soyad }}</span>
+                                <span class="text-muted small">VS</span>
+                            </div>
+                            <div class="player-row text-dark">
+                                <span>{{ mac.oyuncu2.ad }} {{ mac.oyuncu2.soyad }}</span>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+
+                {% for mac in bekleyen_maclar %}
+                    {% if not mac.tarih %}
+                        <div class="card-custom border-start border-4 border-warning">
+                            <div class="match-date text-warning fw-bold">
+                                <span><i class="fa-regular fa-clock me-1"></i> Tarih Bekleniyor...</span>
+                            </div>
+                            <div class="player-row">
+                                <span>{{ mac.oyuncu1.ad }} {{ mac.oyuncu1.soyad }}</span>
+                               <span class="text-muted small">VS</span>
+                            </div>
+                            <div class="player-row">
+                                <span>{{ mac.oyuncu2.ad }} {{ mac.oyuncu2.soyad }}</span>
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            {% else %}
+                <div class="text-center text-muted p-4 bg-white rounded-4 border mb-4">
+                    <i class="fa-solid fa-check-double fa-2x mb-2 text-success"></i>
+                    <p class="mb-0 small">Bekleyen maçınız bulunmuyor.</p>
+                </div>
+            {% endif %}
+
+            <h5 class="fw-bold text-muted mb-3 mt-4" style="font-size: 0.9rem;"><i class="fa-solid fa-clock-rotate-left me-2"></i>GEÇMİŞ MAÇLARIM</h5>
+            {% if gecmis_maclar %}
+                {% for mac in gecmis_maclar %}
+                    <div class="card-custom">
+                        <div class="match-date">
+                            <span><i class="fa-regular fa-calendar-check text-success me-1"></i> {{ mac.tarih|date:"d M Y" }}</span>
+                            <span class="badge bg-light text-dark border">Bitti</span>
+                        </div>
+                        <div class="player-row {% if mac.kazanan == mac.oyuncu1 %}winner-text{% endif %}">
+                           <span>{{ mac.oyuncu1.ad }} {{ mac.oyuncu1.soyad }}</span>
+                            <span>{{ mac.skor1|default:"" }}</span>
+                        </div>
+                        <div class="player-row {% if mac.kazanan == mac.oyuncu2 %}winner-text{% endif %}">
+                            <span>{{ mac.oyuncu2.ad }} {{ mac.oyuncu2.soyad }}</span>
+                            <span>{{ mac.skor2|default:"" }}</span>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-center text-muted small">Henüz oynanmış bir maçınız yok.</p>
+            {% endif %}
+        </div>
+
+        <div id="tab-puan" class="tab-section">
+            {% if tum_gruplar_verisi %}
+                {% for veri in tum_gruplar_verisi %}
+                    <h5 class="fw-bold text-muted mb-2 {% if not forloop.first %}mt-4{% endif %}" style="font-size: 0.9rem;">
+                        <i class="fa-solid fa-list-ol me-2"></i>{{ veri.grup.isim }} SIRALAMASI
+                        {% if veri.is_kendi_grubu %}<span class="badge bg-success ms-2">Senin Grubun</span>{% endif %}
+                    </h5>
+                    
+                    <div class="table-container table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th style="text-align: left; padding-left: 15px;">Oyuncu</th>
+                                    <th>O</th>
+                                    <th>G</th>
+                                    <th>Set</th>
+                                    <th>Oyun</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for stat in veri.istatistikler %}
+                                    <tr class="{% if forloop.counter == 1 %}rank-1{% endif %} {% if stat.oyuncu.id == oyuncu.id %}bg-light{% endif %}">
+                                        <td style="text-align: left; padding-left: 15px; color: var(--main-navy);">
+                                            <span class="text-muted me-1 small">{{ forloop.counter }}.</span> 
+                                            {{ stat.oyuncu.ad }} {{ stat.oyuncu.soyad }}
+                                            {% if stat.oyuncu.id == oyuncu.id %}<span class="badge bg-secondary ms-1" style="font-size:0.6rem;">Sen</span>{% endif %}
+                                        </td>
+                                        <td>{{ stat.oynadi }}</td>
+                                        <td class="text-success">{{ stat.galibiyet }}</td>
+                                        <td>
+                                            {% with set_fark=stat.aldigi_set|add:"-"|add:stat.verdigi_set %}
+                                                {% if stat.aldigi_set > stat.verdigi_set %}<span class="text-success">+{{ set_fark }}</span>
+                                                {% elif stat.verdigi_set > stat.aldigi_set %}<span class="text-danger">{{ stat.aldigi_set|add:"-"|add:stat.verdigi_set }}</span>
+                                                {% else %}0{% endif %}
+                                            {% endwith %}
+                                        </td>
+                                        <td>
+                                            {% with oyun_fark=stat.aldigi_oyun|add:"-"|add:stat.verdigi_oyun %}
+                                                {% if stat.aldigi_oyun > stat.verdigi_oyun %}<span class="text-success">+{{ oyun_fark }}</span>
+                                                {% elif stat.verdigi_oyun > stat.aldigi_oyun %}<span class="text-danger">{{ stat.aldigi_oyun|add:"-"|add:stat.verdigi_oyun }}</span>
+                                                {% else %}0{% endif %}
+                                            {% endwith %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% endfor %}
+                <div class="mt-2 text-center text-muted" style="font-size: 0.7rem;">Sıralama kurallara göre (Galibiyet > Set Av. > Oyun Av.) otomatik hesaplanır.</div>
+            {% else %}
+                <div class="text-center p-4">
+                    <i class="fa-solid fa-circle-info fa-2x text-muted mb-2"></i>
+                    <p class="text-muted">Herhangi bir gruba dahil değilsiniz veya turnuva eleme usulü oynanıyor.</p>
+                </div>
+            {% endif %}
+        </div>
+
+        <div id="tab-fikstur" class="tab-section">
+            {% if tum_gruplar_verisi %}
+                {% for veri in tum_gruplar_verisi %}
+                    <h5 class="fw-bold text-muted mb-3 {% if not forloop.first %}mt-4{% endif %}" style="font-size: 0.9rem;">
+                        <i class="fa-solid fa-calendar-days me-2"></i>{{ veri.grup.isim }} MAÇLARI
+                        {% if veri.is_kendi_grubu %}<span class="badge bg-success ms-2">Senin Grubun</span>{% endif %}
+                    </h5>
+            
+                    {% for mac in veri.maclar %}
+                        {% if mac.tarih and mac.saat %}
+                            <div class="card-custom border-start border-4 border-success shadow-sm">
+                                <div class="match-date text-success fw-bold">
+                                    <span><i class="fa-solid fa-calendar-check me-1"></i> {{ mac.tarih|date:"d M" }} - {{ mac.saat|time:"H:i" }}</span>
+                                    <span>Kort: {{ mac.kort|default:"?" }}</span>
+                                </div>
+                                <div class="player-row text-dark">
+                                    <span>{{ mac.oyuncu1.ad }} {{ mac.oyuncu1.soyad }}</span>
+                                    <span class="text-muted small">VS</span>
+                                </div>
+                                <div class="player-row text-dark">
+                                    <span>{{ mac.oyuncu2.ad }} {{ mac.oyuncu2.soyad }}</span>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% for mac in veri.maclar %}
+                        {% if not mac.tarih or not mac.saat %}
+                            <div class="card-custom border-start border-4 border-warning">
+                                <div class="match-date text-warning fw-bold">
+                                    <span><i class="fa-regular fa-clock me-1"></i> Tarih Bekleniyor</span>
+                                </div>
+                               <div class="player-row">
+                                    <span>{{ mac.oyuncu1.ad }} {{ mac.oyuncu1.soyad }}</span>
+                                    <span class="text-muted small">VS</span>
+                                </div>
+                                <div class="player-row">
+                                    <span>{{ mac.oyuncu2.ad }} {{ mac.oyuncu2.soyad }}</span>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% for mac in veri.maclar %}
+                        {% if mac.tamamlandi %}
+                            <div class="card-custom bg-light opacity-75">
+                                <div class="match-date">
+                                    <span><i class="fa-solid fa-check text-success me-1"></i> {{ mac.tarih|date:"d M" }}</span>
+                                    <span class="badge bg-secondary">Bitti</span>
+                                </div>
+                                <div class="player-row">
+                                    <span>{{ mac.oyuncu1.ad }} {{ mac.oyuncu1.soyad }}</span>
+                                    <span>{{ mac.skor1|default:"" }}</span>
+                                </div>
+                                <div class="player-row">
+                                    <span>{{ mac.oyuncu2.ad }} {{ mac.oyuncu2.soyad }}</span>
+                                    <span>{{ mac.skor2|default:"" }}</span>
+                                </div>
+                            </div>
+                        {% endif %}
+                    {% endfor %}
+
+                {% endfor %}
+            {% else %}
+                <div class="text-center text-muted p-4">Fikstür verisi bulunamadı.</div>
+            {% endif %}
+        </div>
+
+        <div id="tab-kurallar" class="tab-section">
+            <h5 class="fw-bold text-muted mb-3" style="font-size: 0.9rem;"><i class="fa-solid fa-scale-balanced me-2"></i>TURNUVA KURALLARI</h5>
+            <div class="card-custom">
+                <p class="text-muted small mb-3">Turnuvamızın adil, disiplinli ve keyifli bir ortamda gerçekleşebilmesi adına tüm katılımcıların aşağıdaki kurallara riayet etmesi beklenmektedir:</p>
+                <ul class="rules-list">
+                    <li><strong>Maç Formatı:</strong> Maçlar 2 set üzerinden oynanacaktır. Setler 6 oyun üzerinden tamamlanır. Setlerde durum 6-6 olduğunda, seti belirlemek için 7 puanlık tie-break uygulamasına geçilir.</li>
+                    <li><strong>Beraberlik Durumu:</strong> Setlerde durumun eşitlenmesi (1-1) halinde, kazananı belirlemek için süper tie-break oynanacaktır.</li>
+                    <li><strong>Karar Puanı (No-Ad):</strong> Oyun içerisinde avantaj durumuna kalmaksızın "karar puanı" uygulaması geçerli olacaktır.</li>
+                    <li><strong>Gecikme (Walkover):</strong> İlan edilen başlama saatinden itibaren kortta hazır bulunmayan oyuncu/takımlara 15 dakikalık tolerans süresi tanınır. Bu süre sonunda korta çıkmayan taraf hükmen mağlup sayılır.</li>
+                    <li><strong>Isınma:</strong> Maç öncesi kort içi ısınma süresi en fazla 5 dakika ile sınırlandırılmıştır.</li>
+                    <li><strong>Hakemlik & Fair-Play:</strong> Maçlar hakemsiz oynanacaktır. Oyuncuların kendi kararlarını dürüstlük ilkesi çerçevesinde vermeleri esas kabul edilir.</li>
+                    <li><strong>Ekipman:</strong> Uygun tenis ayakkabısı ve raketle gelinmesi zorunludur. Toplar kulüp tarafından temin edilir.</li>
+                    <li><strong>İtirazlar:</strong> Saha içi anlaşmazlıklarda Turnuva Direktörü'nün kararı nihai ve bağlayıcıdır.</li>
+                    <li><strong>Otopark:</strong> Kulüp bünyesindeki otopark ücretli olarak hizmet vermektedir.</li>
+                </ul>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="bottom-nav">
+        <div class="nav-item active" onclick="switchTab('tab-maclarim', this)">
+            <i class="fa-solid fa-user-ninja"></i>
+            <span>Maçlarım</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('tab-puan', this)">
+            <i class="fa-solid fa-chart-column"></i>
+            <span>Puan Durumu</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('tab-fikstur', this)">
+            <i class="fa-solid fa-calendar-days"></i>
+            <span>Fikstür</span>
+        </div>
+        <div class="nav-item" onclick="switchTab('tab-kurallar', this)">
+            <i class="fa-solid fa-scale-balanced"></i>
+            <span>Kurallar</span>
+        </div>
+    </div>
+
+    <script>
+        function switchTab(tabId, element) {
+            document.querySelectorAll('.tab-section').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            document.querySelectorAll('.nav-item').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            document.getElementById(tabId).classList.add('active');
+            element.classList.add('active');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/sw.js').then(function(registration) {
+                    console.log('PWA kaydedildi.');
+                });
+            });
+        }
+    </script>
+</body>
+</html>

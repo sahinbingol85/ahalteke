@@ -100,9 +100,33 @@
                     <li class="nav-item"><a class="nav-link" href="{% url 'index' %}#hakkimizda">Kulüp</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'index' %}#galeri">Kortlar</a></li>
                     <li class="nav-item"><a class="nav-link active" href="{% url 'turnuvalar' %}">Turnuvalar</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{% url 'fikstur' %}">Fikstür & Sonuçlar</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'index' %}#iletisim">İletişim</a></li>
 
-                    
+                    {% if request.user.is_authenticated %}
+                        <li class="nav-item dropdown ms-lg-2">
+                            <a class="nav-link dropdown-toggle text-success fw-bold" href="#" id="navbarDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" style="border: 1px solid var(--accent-green); padding: 5px 15px; border-radius: 20px;">
+                                <i class="fa-solid fa-circle-user me-1"></i> {{ request.user.first_name }}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end shadow border-0 mt-2" aria-labelledby="navbarDropdown" style="border-radius: 10px;">
+                                <li><a class="dropdown-item fw-bold text-dark py-2" href="{% url 'profil' %}"><i class="fa-solid fa-id-badge me-2 text-primary"></i>Profilim</a></li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <form action="{% url 'logout' %}" method="post" class="px-2 py-1">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-sm btn-danger w-100 fw-bold"><i class="fa-solid fa-right-from-bracket me-1"></i> Çıkış Yap</button>
+                                    </form>
+                                </li>
+                            </ul>
+                        </li>
+                    {% else %}
+                        <li class="nav-item ms-lg-2">
+                            <a class="nav-link text-warning fw-bold" href="{% url 'login' %}" style="border: 1px solid #ffc107; padding: 5px 15px; border-radius: 20px;">
+                                <i class="fa-solid fa-right-to-bracket me-1"></i> Giriş
+                            </a>
+                        </li>
+                    {% endif %}
+
                     <li class="nav-item ms-lg-3 mt-3 mt-lg-0">
                         <a class="nav-link instagram-btn" href="https://instagram.com/ahalteketeniskulubu" target="_blank">
                             <i class="fa-brands fa-instagram fa-lg"></i> Takip Et
@@ -135,23 +159,77 @@
                         {% endfor %}
                     {% endif %}
 
+                    {% if aktif_turnuvalar %}
                     <div class="coming-soon-box">
-                        <span class="badge bg-danger text-white mb-3 shadow-sm" style="font-size: 1rem; padding: 10px 20px; border-radius: 30px;">KAYITLAR TAMAMLANDI 🎾</span>
+                        <span class="badge bg-accent-green mb-2" style="background-color: var(--accent-green); font-size: 1rem; padding: 10px 20px; border-radius: 30px;">KAYITLAR DEVAM EDİYOR</span>
+                        <h2 style="color: var(--main-navy); font-size: 2.5rem; margin-bottom: 20px;">YAZ TURNUVASI ÖN KAYIT FORMU</h2>
                         
-                        <h2 style="color: var(--main-navy); font-size: 2.5rem; margin-bottom: 25px;">YAZ TURNUVASI BAŞLADI!</h2>
+                        <div class="alert alert-info py-2 mb-4" style="border-radius: 10px; font-size: 0.95rem;">
+                            <i class="fa-solid fa-calendar-days me-2"></i> <strong>Turnuva Tarihi:</strong> 27 Haziran - 2 Ağustos
+                        </div>
+
+                        <p class="lead text-muted mb-3" style="font-size: 1rem;">
+                            Aşağıdaki formu doldurarak sistem üzerinden ön kaydınızı oluşturabilir <strong>VEYA</strong> doğrudan bize mesaj atarak kaydınızı yazdırabilirsiniz.
+                        </p>
+
+                        <div class="text-center mb-4">
+                            <a href="https://instagram.com/ahalteketeniskulubu" target="_blank" class="btn btn-outline-dark rounded-pill px-4 py-2" style="border-color: #E1306C; color: #E1306C; font-weight: bold;">
+                                <i class="fa-brands fa-instagram fa-lg me-2"></i> DM'den Kayıt Ol
+                            </a>
+                        </div>
+                        
+                        <hr class="mb-4" style="border-color: rgba(0,0,0,0.1);">
+
+                        <form method="POST" action="" class="text-start">
+                            {% csrf_token %}
+                            <div class="row g-4">
+                                <div class="col-12">
+                                    <label class="form-label fw-bold text-muted">{{ form.kategori.label }}</label>
+                                    {{ form.kategori }}
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold text-muted">{{ form.ad.label }}</label>
+                                    {{ form.ad }}
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold text-muted">{{ form.soyad.label }}</label>
+                                    {{ form.soyad }}
+                                </div>
+                                <div class="col-12">
+                                    <label class="form-label fw-bold text-muted">{{ form.telefon.label }}</label>
+                                    {{ form.telefon }}
+                                </div>
+
+                                <div class="col-12 text-center mt-4">
+                                    <button type="submit" class="btn btn-accent w-100 py-3" style="font-size: 1.2rem;">ÖN KAYDI TAMAMLA <i class="fa-solid fa-arrow-right ms-2"></i></button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    {% else %}
+                    <!-- TURNUVA DEVAM EDİYOR EKRANI -->
+                    <div class="coming-soon-box">
+                        <span class="badge bg-warning text-dark mb-3 shadow-sm" style="font-size: 1rem; padding: 10px 20px; border-radius: 30px;">TURNUVA DEVAM EDİYOR 🎾</span>
+                        
+                        <h2 style="color: var(--main-navy); font-size: 2.5rem; margin-bottom: 25px;">HEYECAN KORTLARDA!</h2>
                         <p class="lead text-muted mb-4">
-                            Ahal Teke Tenis Kulübü Yaz Turnuvası için online <strong>ön kayıt sürecimiz sona ermiştir.</strong> Gösterdiğiniz yoğun ilgiye çok teşekkür ederiz!
+                            Ahal Teke Tenis Kulübü Yaz Turnuvası için <strong>kayıtlarımız sona ermiştir.</strong> Gösterdiğiniz yoğun ilgiye teşekkür ederiz!
                         </p>
                         <p class="mb-5" style="font-size: 1.1rem;">
-                            Turnuvamızın kura çekimi yapılacak olup, grup ve fikstür belirlendikten sonra maçlar sitemizde yayınlanacaktır. Tüm sporcularımıza başarılar dileriz.
+                            Turnuvamız şu anda tüm hızıyla devam etmektedir. Fikstürü, maç sonuçlarını ve güncel puan durumlarını anlık olarak takip etmek için aşağıdaki butonu kullanabilirsiniz. Tüm sporcularımıza başarılar dileriz!
                         </p>
 
                         <div class="d-flex justify-content-center gap-3 flex-wrap">
+                            <a href="{% url 'fikstur' %}" class="btn btn-accent">
+                                <i class="fa-solid fa-trophy me-2 fa-lg"></i> Fikstür ve Sonuçlar
+                            </a>
                             <a href="https://instagram.com/ahalteketeniskulubu" target="_blank" class="btn btn-outline-dark rounded-pill px-4 py-3 fw-bold" style="border-width: 2px;">
                                 <i class="fa-brands fa-instagram fa-lg me-2"></i> Bizi Takip Edin
                             </a>
                         </div>
                     </div>
+                    {% endif %}
 
                 </div>
             </div>
