@@ -596,46 +596,59 @@ def fikstur(request):
 # ==========================================
 @login_required(login_url='/giris/')
 def profil(request):
-    oyuncu = Kayit.objects.filter(
-        ad__iexact=request.user.first_name,
-        soyad__iexact=request.user.last_name
-    ).order_by('-id').first()
+    # 1. Kullanıcıyı Telefon (username) veya İsim ile bul
+    telefon = request.user.username.strip()
+    oyuncu = Kayit.objects.filter(telefon=telefon).first()
     
     if not oyuncu:
-        return render(request, 'core/oyuncu_paneli.html', {'mesaj': 'Henüz bir turnuvaya kayıtlı değilsiniz veya hesabınız eşleşmedi. Lütfen yönetimle iletişime geçin.'})
-
-    oyuncunun_grubu = oyuncu.grup
-    kategori = oyuncu.kategori
-    aktif_turnuva = oyuncu.turnuva
+        oyuncu = Kayit.objects.filter(
+            ad__iexact=request.user.first_name,
+            soyad__iexact=request.user.last_name
+        ).order_by('-id').first()
     
+    if not oyuncu:
+        return render(request, 'core/oyuncu_paneli.html', {
+            'mesaj': 'Henüz bir turnuvaya kayıtlı değilsiniz.'
+        })
+
+    # 2. Maçları çek
+    # Çok kritik: Q kullanırken oyuncunun model objesini (oyuncu) doğrudan kullanıyoruz.
+    # Eğer bu boş dönüyorsa, veritabanında Mac tablosundaki oyuncu1/2 id'leri ile Kayit id'leri uyuşmuyor demektir.
     oyuncu_maclari = Mac.objects.filter(Q(oyuncu1=oyuncu) | Q(oyuncu2=oyuncu))
+    
     bekleyen_maclar = oyuncu_maclari.filter(durum__in=['planlaniyor', 'bekliyor']).order_by('tarih', 'saat')
     gecmis_maclar = oyuncu_maclari.filter(durum='oynandi').order_by('-tarih', '-saat')
     
+    # 3. Sıralama verisi
     tum_gruplar_verisi = []
-    
-    if kategori and aktif_turnuva:
-        grup_isimleri = Kayit.objects.filter(turnuva=aktif_turnuva, kategori=kategori).exclude(grup__isnull=True).exclude(grup='').values_list('grup', flat=True).distinct()
+    if oyuncu.kategori and oyuncu.turnuva:
+        grup_isimleri = Kayit.objects.filter(
+            turnuva=oyuncu.turnuva, 
+            kategori=oyuncu.kategori
+        ).exclude(grup__isnull=True).exclude(grup='').values_list('grup', flat=True).distinct()
         
         for grup_adi in grup_isimleri:
-            istatistikler = puan_durumu_hesapla(grup_adi, kategori, aktif_turnuva)
-            grup_maclari = Mac.objects.filter(turnuva=aktif_turnuva, kategori=kategori, grup=grup_adi).order_by('tarih', 'saat')
+            istatistikler = puan_durumu_hesapla(grup_adi, oyuncu.kategori, oyuncu.turnuva)
+            grup_maclari = Mac.objects.filter(turnuva=oyuncu.turnuva, kategori=oyuncu.kategori, grup=grup_adi).order_by('tarih', 'saat')
             
             tum_gruplar_verisi.append({
                 'grup': {'isim': grup_adi}, 
                 'istatistikler': istatistikler,
                 'maclar': grup_maclari,
-                'is_kendi_grubu': (grup_adi == oyuncunun_grubu)
+                'is_kendi_grubu': (grup_adi == oyuncu.grup)
             })
 
     context = {
         'oyuncu': oyuncu,
-        'oyuncunun_grubu': {'isim': oyuncunun_grubu} if oyuncunun_grubu else None,
+        'kategori': oyuncu.kategori,
+        'oyuncunun_grubu': {'isim': oyuncu.grup} if oyuncu.grup else None,
         'bekleyen_maclar': bekleyen_maclar,
         'gecmis_maclar': gecmis_maclar,
         'tum_gruplar_verisi': tum_gruplar_verisi,
     }
     return render(request, 'core/oyuncu_paneli.html', context)
+
+
 
 
 # ==========================================
