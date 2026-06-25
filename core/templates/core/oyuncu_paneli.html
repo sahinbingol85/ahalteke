@@ -1,4 +1,7 @@
 {% load static %}
+{% if user.is_staff %}
+    <script>window.location.href = "{% url 'rezervasyon' %}";</script>
+{% endif %}
 <!DOCTYPE html>
 <html lang="tr">
 <head>
