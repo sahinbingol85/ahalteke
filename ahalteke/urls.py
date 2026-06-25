@@ -31,7 +31,8 @@ urlpatterns = [
     path('yonetim_paneli/kura-cekimi/', views.kura_cekimi, name='kura_cekimi'),
     path('yonetim_paneli/kura-kaydet/', views.kura_kaydet, name='kura_kaydet'),
     
-    path('fikstur/', views.index, name='fikstur'), 
+    # --- DÜZELTİLEN: FİKSTÜR ---
+    path('fikstur/', views.fikstur, name='fikstur'), 
 
     # FİKSTÜR VE MAÇ YÖNETİMİ
     path('yonetim_paneli/fikstur-olustur/', views.fikstur_olustur, name='fikstur_olustur'),
@@ -57,4 +58,7 @@ urlpatterns = [
     
     # HAKEM UYGULAMASI MANIFESTOSU
     path('manifest_hakem.json', TemplateView.as_view(template_name='core/manifest_hakem.json', content_type='application/json'), name='manifest_hakem'),
+    
+    # OYUNCU UYGULAMASI MANIFESTOSU (Hazırlık)
+    path('manifest_oyuncu.json', TemplateView.as_view(template_name='core/manifest_oyuncu.json', content_type='application/json'), name='manifest_oyuncu'),
 ]
