@@ -843,9 +843,10 @@ def rezervasyon_sil(request, rez_id):
 # ==========================================
 def manifest_view(request):
     data = {
-        "name": "Ahal Teke Rezervasyon",
-        "short_name": "AT Rezervasyon",
-        "start_url": "/giris/",
+        "id": "/rezervasyon-app/",  # UYGULAMAYI AYIRAN KİMLİK
+        "name": "AT Rezervasyon",
+        "short_name": "Rezervasyon",
+        "start_url": "/rezervasyon/",  # GİRİŞ DEĞİL, DİREKT REZERVASYON SAYFASI
         "scope": "/",
         "display": "standalone",
         "background_color": "#f4f6f9",
