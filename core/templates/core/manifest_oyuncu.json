@@ -1,8 +1,8 @@
 {
-  "id": "/oyuncu-app/",
+  "id": "at-oyuncu-v1",
   "name": "Ahal Teke Oyuncu Paneli",
   "short_name": "AT Oyuncu",
-  "start_url": "/profil/",
+  "start_url": "/profil/?pwa=1",
   "scope": "/",
   "display": "standalone",
   "background_color": "#f8f9fa",

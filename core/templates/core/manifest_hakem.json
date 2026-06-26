@@ -1,8 +1,8 @@
 {
-  "id": "/hakem-app/",
+  "id": "at-hakem-v1",
   "name": "Ahal Teke Hakem Paneli",
   "short_name": "AT Hakem",
-  "start_url": "/yonetim_paneli/hakem/",
+  "start_url": "/yonetim_paneli/hakem/?pwa=1",
   "scope": "/",
   "display": "standalone",
   "background_color": "#e9ecef",
