@@ -640,6 +640,10 @@ def profil(request):
                 'is_kendi_grubu': (grup_adi == oyuncu.grup)
             })
 
+        # YENİ EKLENEN SIRALAMA KODU: 
+        # 1. Kendi grubunu en üste alır. 2. Kalanları isme göre alfabetik sıralar.
+        tum_gruplar_verisi.sort(key=lambda x: (not x['is_kendi_grubu'], x['grup']['isim']))
+
     context = {
         'oyuncu': oyuncu,
         'kategori': oyuncu.kategori,
