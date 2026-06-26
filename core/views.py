@@ -486,6 +486,9 @@ def fikstur_sifirla(request):
 # ==========================================
 # HAKEM SİSTEMİ: CANLI SKOR GİRİŞİ
 # ==========================================
+# ==========================================
+# HAKEM SİSTEMİ: CANLI SKOR GİRİŞİ
+# ==========================================
 @login_required(login_url='/giris/')
 def hakem_canli_skor(request):
     if not request.user.is_staff:
@@ -499,43 +502,35 @@ def hakem_canli_skor(request):
         if mac_id:
             mac = get_object_or_404(Mac, id=mac_id)
             
-            set1_o1 = request.POST.get('set1_o1')
-            set1_o2 = request.POST.get('set1_o2')
-            set1_tb1 = request.POST.get('set1_tb1')
-            set1_tb2 = request.POST.get('set1_tb2')
+            # 1. Hakemin seçtiği kazananı kaydet
+            kazanan_id = request.POST.get('kazanan_id')
+            if kazanan_id:
+                mac.kazanan_id = kazanan_id
             
-            set2_o1 = request.POST.get('set2_o1')
-            set2_o2 = request.POST.get('set2_o2')
-            set2_tb1 = request.POST.get('set2_tb1')
-            set2_tb2 = request.POST.get('set2_tb2')
-            
-            set3_o1 = request.POST.get('set3_o1')
-            set3_o2 = request.POST.get('set3_o2')
+            # Formdan gelen boş stringleri ('') None veya Integer'a çeviren küçük yardımcı
+            def to_int(value):
+                return int(value) if value and value.isdigit() else None
 
-            skor1_str = ""
-            skor2_str = ""
+            # 2. Set Skorlarını Ayrı Ayrı Kaydet (Puan Durumu Hesaplaması İçin Şart!)
+            mac.set1_oyuncu1 = to_int(request.POST.get('set1_o1'))
+            mac.set1_oyuncu2 = to_int(request.POST.get('set1_o2'))
+            mac.set1_tb_oyuncu1 = to_int(request.POST.get('set1_tb1'))
+            mac.set1_tb_oyuncu2 = to_int(request.POST.get('set1_tb2'))
             
-            if set1_o1 and set1_o2:
-                skor1_str += f"{set1_o1}"
-                skor2_str += f"{set1_o2}"
-                if set1_tb1 or set1_tb2:
-                    skor1_str += f"({set1_tb1 or 0})"
-                    skor2_str += f"({set1_tb2 or 0})"
+            mac.set2_oyuncu1 = to_int(request.POST.get('set2_o1'))
+            mac.set2_oyuncu2 = to_int(request.POST.get('set2_o2'))
+            mac.set2_tb_oyuncu1 = to_int(request.POST.get('set2_tb1'))
+            mac.set2_tb_oyuncu2 = to_int(request.POST.get('set2_tb2'))
             
-            if set2_o1 and set2_o2:
-                skor1_str += f", {set2_o1}"
-                skor2_str += f", {set2_o2}"
-                if set2_tb1 or set2_tb2:
-                    skor1_str += f"({set2_tb1 or 0})"
-                    skor2_str += f"({set2_tb2 or 0})"
-                    
-            if set3_o1 and set3_o2:
-                skor1_str += f", [{set3_o1}]"
-                skor2_str += f", [{set3_o2}]"
+            mac.set3_oyuncu1 = to_int(request.POST.get('set3_o1'))
+            mac.set3_oyuncu2 = to_int(request.POST.get('set3_o2'))
 
-            mac.skor1 = skor1_str
-            mac.skor2 = skor2_str
-            mac.durum = 'oynandi'
+            # Maçın durumunu tamamlandı olarak işaretle
+            mac.tamamlandi = True
+            
+            # Eğer modelinizde hala bir text alanı kullanıyorsanız hata vermemesi için
+            if hasattr(mac, 'durum'):
+                mac.durum = 'oynandi'
             
             mac.save()
             messages.success(request, f"Skor başarıyla kaydedildi: {mac.oyuncu1.ad} vs {mac.oyuncu2.ad}")
@@ -847,10 +842,10 @@ def rezervasyon_sil(request, rez_id):
 # ==========================================
 def manifest_view(request):
     data = {
-        "id": "/rezervasyon-app/",  # UYGULAMAYI AYIRAN KİMLİK
+        "id": "at-rezervasyon-v1",
         "name": "AT Rezervasyon",
         "short_name": "Rezervasyon",
-        "start_url": "/rezervasyon/",  # GİRİŞ DEĞİL, DİREKT REZERVASYON SAYFASI
+        "start_url": "/rezervasyon/?pwa=1", 
         "scope": "/",
         "display": "standalone",
         "background_color": "#f4f6f9",
