@@ -277,9 +277,12 @@
                                                             <label class="form-label text-muted small mb-1">Kort</label>
                                                             <input type="text" id="kort_{{ mac.id }}" class="form-control form-control-sm text-center fw-bold" value="{{ mac.kort|default_if_none:'' }}">
                                                         </div>
-                                                        <div class="col-12 mt-2">
-                                                            <button onclick="maciKaydet({{ mac.id }})" id="btn-{{ mac.id }}" class="btn-save-match bg-warning text-dark w-100">
-                                                                <i class="fa-solid fa-pen-to-square me-1"></i> Değişikliği Güncelle
+                                                        <div class="col-12 mt-2 d-flex gap-2">
+                                                            <button type="button" onclick="maciIptalEt({{ mac.id }})" id="btn-iptal-{{ mac.id }}" class="btn btn-outline-danger w-50 fw-bold shadow-sm" style="border-radius: 8px;">
+                                                                <i class="fa-solid fa-rotate-left me-1"></i> İptal Et
+                                                            </button>
+                                                            <button type="button" onclick="maciKaydet({{ mac.id }})" id="btn-{{ mac.id }}" class="btn-save-match bg-warning text-dark w-50">
+                                                                <i class="fa-solid fa-pen-to-square me-1"></i> Güncelle
                                                             </button>
                                                         </div>
                                                     </div>
@@ -424,6 +427,43 @@
                 }
             });
         }
+        function maciIptalEt(macId) {
+            if(!confirm('Bu maçın planlamasını iptal edip "Planlanacaklar" listesine geri almak istediğinize emin misiniz?')) {
+                return;
+            }
+    
+            let btn = document.getElementById(`btn-iptal-${macId}`);
+            btn.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i> İşleniyor...";
+            btn.disabled = true;
+
+            // Tarih, saat ve kortu boş ("") göndererek sistemden silinmesini sağlıyoruz
+            fetch('{% url "fikstur_yonetimi" %}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.getElementById('csrf_token').value,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                body: JSON.stringify({
+                    'mac_id': macId,
+                    'tarih': '',
+                    'saat': '',
+                    'kort': ''
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.status === 'success') {
+                    setTimeout(() => {
+                        window.location.reload();
+                }, 500);
+            } else {
+                alert("Hata: " + data.message);
+                btn.disabled = false;
+                btn.innerHTML = "<i class='fa-solid fa-rotate-left me-1'></i> İptal Et";
+            }
+        });
+    }
     </script>
 </body>
 </html>
