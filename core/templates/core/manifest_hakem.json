@@ -1,12 +1,12 @@
 {
+  "id": "/hakem-app/",
   "name": "Ahal Teke Hakem Paneli",
   "short_name": "AT Hakem",
   "start_url": "/yonetim_paneli/hakem/",
   "scope": "/",
   "display": "standalone",
-  "orientation": "portrait",
   "background_color": "#e9ecef",
-  "theme_color": "#0a2342",
+  "theme_color": "#dc3545", 
   "icons": [
     {
       "src": "https://i.ibb.co/HTPhptVQ/logo.png",

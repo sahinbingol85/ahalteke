@@ -1,13 +1,12 @@
 {
+  "id": "/oyuncu-app/",
   "name": "Ahal Teke Oyuncu Paneli",
   "short_name": "AT Oyuncu",
   "start_url": "/profil/",
   "scope": "/",
   "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#e9ecef",
+  "background_color": "#f8f9fa",
   "theme_color": "#0a2342",
-  "description": "Ahal Teke Tenis Kulübü oyuncu maç ve istatistik takip uygulaması.",
   "icons": [
     {
       "src": "https://i.ibb.co/HTPhptVQ/logo.png",
