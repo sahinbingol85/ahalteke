@@ -490,6 +490,13 @@ def fikstur_sifirla(request):
 # HAKEM SİSTEMİ: CANLI SKOR GİRİŞİ
 # ==========================================
 @login_required(login_url='/giris/')
+# ==========================================
+# HAKEM SİSTEMİ: CANLI SKOR GİRİŞİ
+# ==========================================
+# ==========================================
+# HAKEM SİSTEMİ: CANLI SKOR GİRİŞİ
+# ==========================================
+@login_required(login_url='/giris/')
 def hakem_canli_skor(request):
     if not request.user.is_staff:
         messages.error(request, 'Bu sayfaya erişim yetkiniz yok.')
@@ -507,11 +514,10 @@ def hakem_canli_skor(request):
             if kazanan_id:
                 mac.kazanan_id = kazanan_id
             
-            # Formdan gelen boş stringleri ('') None veya Integer'a çeviren küçük yardımcı
             def to_int(value):
                 return int(value) if value and value.isdigit() else None
 
-            # 2. Set Skorlarını Ayrı Ayrı Kaydet (Puan Durumu Hesaplaması İçin Şart!)
+            # 2. Oyun Skorlarını Ayrı Ayrı Kaydet
             mac.set1_oyuncu1 = to_int(request.POST.get('set1_o1'))
             mac.set1_oyuncu2 = to_int(request.POST.get('set1_o2'))
             mac.set1_tb_oyuncu1 = to_int(request.POST.get('set1_tb1'))
@@ -525,12 +531,27 @@ def hakem_canli_skor(request):
             mac.set3_oyuncu1 = to_int(request.POST.get('set3_o1'))
             mac.set3_oyuncu2 = to_int(request.POST.get('set3_o2'))
 
-            # Maçın durumunu tamamlandı olarak işaretle
-            mac.tamamlandi = True
+            # 3. SET SKORUNU HESAPLA (Siyah kutucuk için Örn: 2-0)
+            o1_set = 0
+            o2_set = 0
             
-            # Eğer modelinizde hala bir text alanı kullanıyorsanız hata vermemesi için
-            if hasattr(mac, 'durum'):
-                mac.durum = 'oynandi'
+            if mac.set1_oyuncu1 is not None and mac.set1_oyuncu2 is not None:
+                if mac.set1_oyuncu1 > mac.set1_oyuncu2: o1_set += 1
+                elif mac.set1_oyuncu2 > mac.set1_oyuncu1: o2_set += 1
+                
+            if mac.set2_oyuncu1 is not None and mac.set2_oyuncu2 is not None:
+                if mac.set2_oyuncu1 > mac.set2_oyuncu2: o1_set += 1
+                elif mac.set2_oyuncu2 > mac.set2_oyuncu1: o2_set += 1
+                
+            if mac.set3_oyuncu1 is not None and mac.set3_oyuncu2 is not None:
+                if mac.set3_oyuncu1 > mac.set3_oyuncu2: o1_set += 1
+                elif mac.set3_oyuncu2 > mac.set3_oyuncu1: o2_set += 1
+
+            mac.skor1 = str(o1_set)
+            mac.skor2 = str(o2_set)
+
+            # Maçı kapat
+            mac.durum = 'oynandi'
             
             mac.save()
             messages.success(request, f"Skor başarıyla kaydedildi: {mac.oyuncu1.ad} vs {mac.oyuncu2.ad}")
@@ -542,7 +563,6 @@ def hakem_canli_skor(request):
         'bekleyen_maclar': bekleyen_maclar
     }
     return render(request, 'core/hakem.html', context)
-
 
 # ==========================================
 # GENEL ZİYARETÇİ: FİKSTÜR GÖRÜNÜMÜ

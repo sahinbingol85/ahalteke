@@ -124,6 +124,7 @@ class Mac(models.Model):
     
     oyuncu1 = models.ForeignKey(Kayit, related_name='mac_oyuncu1', on_delete=models.CASCADE, verbose_name="1. Oyuncu")
     oyuncu2 = models.ForeignKey(Kayit, related_name='mac_oyuncu2', on_delete=models.CASCADE, verbose_name="2. Oyuncu")
+    kazanan = models.ForeignKey(Kayit, related_name='kazanilan_maclar', on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Kazanan")
     
     tarih = models.DateField(blank=True, null=True, verbose_name="Maç Tarihi")
     saat = models.TimeField(blank=True, null=True, verbose_name="Maç Saati")
@@ -131,8 +132,23 @@ class Mac(models.Model):
     
     durum = models.CharField(max_length=20, choices=DURUM_SECENEKLERI, default='planlaniyor', verbose_name="Maç Durumu")
     
-    skor1 = models.CharField(max_length=10, blank=True, null=True, verbose_name="1. Oyuncu Skoru (Setler)")
-    skor2 = models.CharField(max_length=10, blank=True, null=True, verbose_name="2. Oyuncu Skoru (Setler)")
+    # DETAYLI SKOR ALANLARI
+    set1_oyuncu1 = models.PositiveIntegerField(null=True, blank=True)
+    set1_oyuncu2 = models.PositiveIntegerField(null=True, blank=True)
+    set1_tb_oyuncu1 = models.PositiveIntegerField(null=True, blank=True) # Tie-break
+    set1_tb_oyuncu2 = models.PositiveIntegerField(null=True, blank=True)
+    
+    set2_oyuncu1 = models.PositiveIntegerField(null=True, blank=True)
+    set2_oyuncu2 = models.PositiveIntegerField(null=True, blank=True)
+    set2_tb_oyuncu1 = models.PositiveIntegerField(null=True, blank=True)
+    set2_tb_oyuncu2 = models.PositiveIntegerField(null=True, blank=True)
+    
+    set3_oyuncu1 = models.PositiveIntegerField(null=True, blank=True) # Süper Tie-break
+    set3_oyuncu2 = models.PositiveIntegerField(null=True, blank=True)
+    
+    # Skorları özetlemek için (opsiyonel, views'da otomatik doldurabiliriz)
+    skor1 = models.CharField(max_length=20, blank=True, null=True) 
+    skor2 = models.CharField(max_length=20, blank=True, null=True)
     
     olusturulma_tarihi = models.DateTimeField(auto_now_add=True)
 
@@ -142,11 +158,13 @@ class Mac(models.Model):
     @property
     def tarih_saat(self):
         if self.tarih and self.saat:
-            # datetime.combine kullanmak için dosyanın en üstüne import eklememiz lazım
-            from datetime import datetime
             return datetime.combine(self.tarih, self.saat)
         return None
 
     class Meta:
         verbose_name = "Maç"
         verbose_name_plural = "Maçlar"
+    
+    @property
+    def tamamlandi(self):
+        return self.durum == 'oynandi'
