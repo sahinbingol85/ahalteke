@@ -100,7 +100,7 @@
         {% endif %}
 
         {% if bekleyen_maclar %}
-            {% regroup bekleyen_maclar by kategori.isim as kategori_listesi %}
+            {% regroup bekleyen_maclar|dictsort:"kategori.isim" by kategori.isim as kategori_listesi %}
             
             <div class="accordion shadow-sm" id="accordionFikstur" style="border-radius: 15px; overflow: hidden;">
                 {% for kat in kategori_listesi %}
