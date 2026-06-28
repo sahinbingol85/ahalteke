@@ -862,11 +862,11 @@ def rezervasyon_sil(request, rez_id):
 # ==========================================
 def manifest_view(request):
     data = {
-        "id": "at-rezervasyon-v1",
+        "id": "at-rezervasyon-v2",
         "name": "AT Rezervasyon",
         "short_name": "Rezervasyon",
-        "start_url": "/rezervasyon/?pwa=1", 
-        "scope": "/",
+        "start_url": "/rezervasyon/", 
+        "scope": "/rezervasyon/",  # DEĞİŞEN KISIM (Sadece bu sayfayı kapsar)
         "display": "standalone",
         "background_color": "#f4f6f9",
         "theme_color": "#0a2342",
