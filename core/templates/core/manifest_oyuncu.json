@@ -1,9 +1,9 @@
 {
-  "id": "at-oyuncu-v1",
+  "id": "at-oyuncu-v2",
   "name": "Ahal Teke Oyuncu Paneli",
   "short_name": "AT Oyuncu",
-  "start_url": "/profil/?pwa=1",
-  "scope": "/",
+  "start_url": "/profil/",
+  "scope": "/profil/",
   "display": "standalone",
   "background_color": "#f8f9fa",
   "theme_color": "#0a2342",
