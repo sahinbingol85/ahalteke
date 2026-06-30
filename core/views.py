@@ -486,16 +486,6 @@ def fikstur_sifirla(request):
 # ==========================================
 # HAKEM SİSTEMİ: CANLI SKOR GİRİŞİ
 # ==========================================
-# ==========================================
-# HAKEM SİSTEMİ: CANLI SKOR GİRİŞİ
-# ==========================================
-@login_required(login_url='/giris/')
-# ==========================================
-# HAKEM SİSTEMİ: CANLI SKOR GİRİŞİ
-# ==========================================
-# ==========================================
-# HAKEM SİSTEMİ: CANLI SKOR GİRİŞİ
-# ==========================================
 @login_required(login_url='/giris/')
 def hakem_canli_skor(request):
     if not request.user.is_staff:
@@ -505,11 +495,36 @@ def hakem_canli_skor(request):
     aktif_turnuva = Turnuva.objects.order_by('-id').first()
     
     if request.method == 'POST':
+        
+        # YENİ EKLENEN: SKOR SIFIRLAMA / DÜZELTME MANTIĞI
+        iptal_mac_id = request.POST.get('iptal_mac_id')
+        if iptal_mac_id:
+            mac = get_object_or_404(Mac, id=iptal_mac_id)
+            # Tüm skorları temizle ve maçı tekrar "bekliyor" durumuna al
+            mac.kazanan = None
+            mac.set1_oyuncu1 = None
+            mac.set1_oyuncu2 = None
+            mac.set1_tb_oyuncu1 = None
+            mac.set1_tb_oyuncu2 = None
+            mac.set2_oyuncu1 = None
+            mac.set2_oyuncu2 = None
+            mac.set2_tb_oyuncu1 = None
+            mac.set2_tb_oyuncu2 = None
+            mac.set3_oyuncu1 = None
+            mac.set3_oyuncu2 = None
+            mac.skor1 = None
+            mac.skor2 = None
+            mac.durum = 'bekliyor'
+            mac.save()
+            
+            messages.success(request, f"{mac.oyuncu1.ad} vs {mac.oyuncu2.ad} maçının skoru sıfırlandı. Listeden tekrar girebilirsiniz.")
+            return redirect('hakem')
+
+        # MEVCUT SKOR KAYDETME MANTIĞI
         mac_id = request.POST.get('mac_id')
         if mac_id:
             mac = get_object_or_404(Mac, id=mac_id)
             
-            # 1. Hakemin seçtiği kazananı kaydet
             kazanan_id = request.POST.get('kazanan_id')
             if kazanan_id:
                 mac.kazanan_id = kazanan_id
@@ -517,7 +532,6 @@ def hakem_canli_skor(request):
             def to_int(value):
                 return int(value) if value and value.isdigit() else None
 
-            # 2. Oyun Skorlarını Ayrı Ayrı Kaydet
             mac.set1_oyuncu1 = to_int(request.POST.get('set1_o1'))
             mac.set1_oyuncu2 = to_int(request.POST.get('set1_o2'))
             mac.set1_tb_oyuncu1 = to_int(request.POST.get('set1_tb1'))
@@ -531,7 +545,6 @@ def hakem_canli_skor(request):
             mac.set3_oyuncu1 = to_int(request.POST.get('set3_o1'))
             mac.set3_oyuncu2 = to_int(request.POST.get('set3_o2'))
 
-            # 3. SET SKORUNU HESAPLA (Siyah kutucuk için Örn: 2-0)
             o1_set = 0
             o2_set = 0
             
@@ -550,17 +563,19 @@ def hakem_canli_skor(request):
             mac.skor1 = str(o1_set)
             mac.skor2 = str(o2_set)
 
-            # Maçı kapat
             mac.durum = 'oynandi'
-            
             mac.save()
             messages.success(request, f"Skor başarıyla kaydedildi: {mac.oyuncu1.ad} vs {mac.oyuncu2.ad}")
             return redirect('hakem')
 
+    # Sayfa yüklenirken gönderilecek veriler
     bekleyen_maclar = Mac.objects.filter(turnuva=aktif_turnuva, durum='bekliyor').order_by('tarih', 'saat', 'kategori')
+    # YENİ EKLENEN: Düzeltme işlemi için son oynanan 15 maç
+    tamamlanan_maclar = Mac.objects.filter(turnuva=aktif_turnuva, durum='oynandi').order_by('-tarih', '-saat')[:25]
 
     context = {
-        'bekleyen_maclar': bekleyen_maclar
+        'bekleyen_maclar': bekleyen_maclar,
+        'tamamlanan_maclar': tamamlanan_maclar
     }
     return render(request, 'core/hakem.html', context)
 
