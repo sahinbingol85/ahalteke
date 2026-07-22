@@ -453,6 +453,12 @@ def fikstur_yonetimi(request):
     if secilen_kat:
         maclar = maclar.filter(kategori__id=secilen_kat)
         
+    # YENİ EKLENEN: Günlük Tarih Filtresi
+    secilen_tarih = request.GET.get('tarih_filtre')
+    gunun_maclari = []
+    if secilen_tarih:
+        gunun_maclari = Mac.objects.filter(turnuva=aktif_turnuva, tarih=secilen_tarih).order_by('saat', 'kort')
+        
     planlanmamis_maclar = maclar.filter(durum='planlaniyor')
     planlanmis_maclar = maclar.filter(durum__in=['bekliyor', 'oynandi'])
         
@@ -461,7 +467,9 @@ def fikstur_yonetimi(request):
         'planlanmamis_maclar': planlanmamis_maclar,
         'planlanmis_maclar': planlanmis_maclar,
         'kategoriler': kategoriler,
-        'secilen_kat': int(secilen_kat) if secilen_kat else ''
+        'secilen_kat': int(secilen_kat) if secilen_kat else '',
+        'secilen_tarih': secilen_tarih,
+        'gunun_maclari': gunun_maclari,
     }
     return render(request, 'core/fikstur_yonetimi.html', context)
 
