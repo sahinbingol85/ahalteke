@@ -576,6 +576,7 @@ def eleme_tablosu_sifirla(request):
 def fikstur_yonetimi(request):
     if not request.user.is_staff: return redirect('profil')
     aktif_turnuva = Turnuva.objects.order_by('-id').first()
+    eleme_sirasi = ["Son 128", "Son 64", "Son 32", "Son 16", "Çeyrek Final", "Yarı Final", "Final"]
     
     if request.method == 'POST' and request.headers.get('x-requested-with') == 'XMLHttpRequest':
         try:
@@ -604,13 +605,28 @@ def fikstur_yonetimi(request):
     kategoriler = Kategori.objects.all()
     
     secilen_kat = request.GET.get('kategori_filtre')
-    if secilen_kat: maclar = maclar.filter(kategori__id=secilen_kat)
+    secilen_grup = request.GET.get('grup_filtre')
+    
+    # Mevcut tüm grup ve aşama isimleri (Filtreleme dropdown için)
+    mevcut_gruplar = maclar.values_list('grup', flat=True).distinct()
+    
+    if secilen_kat: 
+        maclar = maclar.filter(kategori__id=secilen_kat)
+        
+    if secilen_grup:
+        maclar = maclar.filter(grup=secilen_grup)
         
     secilen_tarih = request.GET.get('tarih_filtre')
     gunun_maclari = Mac.objects.filter(turnuva=aktif_turnuva, tarih=secilen_tarih).order_by('saat', 'kort') if secilen_tarih else []
         
     planlanmamis_maclar = maclar.filter(durum='planlaniyor')
     planlanmis_maclar = maclar.filter(durum__in=['bekliyor', 'oynandi'])
+
+    # Ana Tablo (Ağaç) Maçları
+    eleme_maclari = Mac.objects.filter(turnuva=aktif_turnuva, grup__in=eleme_sirasi)
+    if secilen_kat:
+        eleme_maclari = eleme_maclari.filter(kategori__id=secilen_kat)
+    eleme_maclari = eleme_maclari.order_by('id')
         
     return render(request, 'core/fikstur_yonetimi.html', {
         'aktif_turnuva': aktif_turnuva,
@@ -618,8 +634,11 @@ def fikstur_yonetimi(request):
         'planlanmis_maclar': planlanmis_maclar,
         'kategoriler': kategoriler,
         'secilen_kat': int(secilen_kat) if secilen_kat else '',
+        'secilen_grup': secilen_grup if secilen_grup else '',
+        'mevcut_gruplar': mevcut_gruplar,
         'secilen_tarih': secilen_tarih,
         'gunun_maclari': gunun_maclari,
+        'eleme_maclari': eleme_maclari,
     })
 
 
