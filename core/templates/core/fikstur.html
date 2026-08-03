@@ -94,7 +94,7 @@
                     <li class="nav-item"><a class="nav-link" href="{% url 'index' %}#hakkimizda">Kulüp</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'index' %}#galeri">Kortlar</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'turnuvalar' %}">Turnuvalar</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'fikstur' %}">Fikstür & Sonuçlar</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="{% url 'fikstur' %}">Fikstür & Sonuçlar</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'index' %}#iletisim">İletişim</a></li>
                     
                     {% if request.user.is_authenticated %}
@@ -222,130 +222,149 @@
 
             <h3 class="fw-bold mb-4 text-center mt-5 pt-4 border-top text-uppercase dyn-text-primary"><i class="fa-solid fa-sitemap text-danger"></i> {{ secili_kategori.isim }} - ANA TABLO</h3>
             
-            {% if eleme_maclari %}
-                {% regroup eleme_maclari by asama as asama_list %}
-                <div class="bracket-container shadow-sm mb-5" style="background-color: white; border-radius: 15px; border: 1px solid #eee;">
-                    <div class="bracket">
-                        {% for asama_grup in asama_list %}
+            {% if aktif_turnuva.eleme_yayinlandi %}
+                {% if eleme_maclari %}
+                    {% regroup eleme_maclari by grup as asama_list %}
+                    <div class="bracket-container shadow-sm mb-5" style="background-color: white; border-radius: 15px; border: 1px solid #eee;">
+                        <div class="bracket">
+                            {% for asama_grup in asama_list %}
+                                <div class="bracket-column">
+                                    <div class="bracket-header dyn-bg-primary">{{ asama_grup.grouper }}</div>
+                                    
+                                    <div class="bracket-matches">
+                                        {% for mac in asama_grup.list %}
+                                            <div class="bracket-item">
+                                                <div class="bracket-match dyn-border-left">
+                                                    
+                                                    {% if mac.oyuncu1 and 'BAY' in mac.oyuncu1.ad|upper or mac.oyuncu2 and 'BAY' in mac.oyuncu2.ad|upper %}
+                                                        <div class="d-flex justify-content-between align-items-center px-3 py-2" style="background-color: #f8f9fa; border-radius: 8px;">
+                                                            <div class="fw-bold dyn-text-primary" style="font-size: 0.95rem;">
+                                                                {% if mac.oyuncu2 and 'BAY' in mac.oyuncu2.ad|upper %}
+                                                                    {% if request.user.is_authenticated %}
+                                                                        {{ mac.oyuncu1.ad }} {{ mac.oyuncu1.soyad }}
+                                                                        {% if mac.oyuncu1.partner_adi %}<br><span class="bracket-partner">& {{ mac.oyuncu1.partner_adi }}</span>{% endif %}
+                                                                    {% else %}
+                                                                        {{ mac.oyuncu1.ad|slice:":1"|upper }}*** {{ mac.oyuncu1.soyad|slice:":1"|upper }}***
+                                                                        {% if mac.oyuncu1.partner_adi %}<br><span class="bracket-partner">& {{ mac.oyuncu1.partner_adi|slice:":1"|upper }}***</span>{% endif %}
+                                                                    {% endif %}
+                                                                {% else %}
+                                                                    {% if request.user.is_authenticated %}
+                                                                        {{ mac.oyuncu2.ad }} {{ mac.oyuncu2.soyad }}
+                                                                        {% if mac.oyuncu2.partner_adi %}<br><span class="bracket-partner">& {{ mac.oyuncu2.partner_adi }}</span>{% endif %}
+                                                                    {% else %}
+                                                                        {{ mac.oyuncu2.ad|slice:":1"|upper }}*** {{ mac.oyuncu2.soyad|slice:":1"|upper }}***
+                                                                        {% if mac.oyuncu2.partner_adi %}<br><span class="bracket-partner">& {{ mac.oyuncu2.partner_adi|slice:":1"|upper }}***</span>{% endif %}
+                                                                    {% endif %}
+                                                                {% endif %}
+                                                            </div>
+                                                            <div class="text-muted fst-italic ms-3" style="font-size: 0.85rem;"><i class="fa-solid fa-forward-fast me-1 text-warning"></i> BAY GEÇTİ</div>
+                                                        </div>
+                                                    
+                                                    {% else %}
+                                                        <div class="d-flex justify-content-between align-items-center px-3 py-2" style="font-size: 0.75rem; background-color: #f8f9fa; border-bottom: 1px solid #eee; border-radius: 8px 8px 0 0;">
+                                                            <span class="text-muted"><i class="fa-regular fa-calendar-days"></i> 
+                                                                {% if request.user.is_authenticated %}
+                                                                    {% if mac.tarih %}{{ mac.tarih|date:"d M" }} {{ mac.saat|default:"" }}{% else %}Belirsiz{% endif %}
+                                                                {% else %}**:**{% endif %}
+                                                            </span>
+                                                            <span class="text-muted"><i class="fa-solid fa-location-dot"></i> 
+                                                                {% if request.user.is_authenticated %}
+                                                                    {% if mac.kort %}{{ mac.kort }}{% else %}Belirsiz{% endif %}
+                                                                {% else %}***{% endif %}
+                                                            </span>
+                                                        </div>
+                                                        
+                                                        <div class="p-0">
+                                                            <div class="d-flex justify-content-between align-items-center px-3 py-2" style="border-bottom: 1px solid #f0f0f0;">
+                                                                <div class="fw-bold {% if mac.tamamlandi and mac.kazanan == mac.oyuncu1 %}dyn-text-accent{% else %}text-dark{% endif %}" style="font-size: 0.9rem;">
+                                                                    {% if mac.oyuncu1 %}
+                                                                        {% if request.user.is_authenticated %}
+                                                                            {{ mac.oyuncu1.ad }} {{ mac.oyuncu1.soyad }}
+                                                                            {% if mac.oyuncu1.partner_adi %}<br><span class="bracket-partner" style="color: #666;">& {{ mac.oyuncu1.partner_adi }}</span>{% endif %}
+                                                                        {% else %}
+                                                                            {{ mac.oyuncu1.ad|slice:":1"|upper }}*** {{ mac.oyuncu1.soyad|slice:":1"|upper }}***
+                                                                            {% if mac.oyuncu1.partner_adi %}<br><span class="bracket-partner" style="color: #666;">& {{ mac.oyuncu1.partner_adi|slice:":1"|upper }}***</span>{% endif %}
+                                                                        {% endif %}
+                                                                    {% else %}
+                                                                        <span class="text-muted fst-italic fw-normal">Bekleniyor...</span>
+                                                                    {% endif %}
+                                                                </div>
+                                                                {% if mac.tamamlandi and mac.kazanan == mac.oyuncu1 %}<i class="fa-solid fa-check dyn-text-accent ms-2"></i>{% endif %}
+                                                            </div>
+
+                                                            <div class="d-flex justify-content-between align-items-center px-3 py-2">
+                                                                <div class="fw-bold {% if mac.tamamlandi and mac.kazanan == mac.oyuncu2 %}dyn-text-accent{% else %}text-dark{% endif %}" style="font-size: 0.9rem;">
+                                                                    {% if mac.oyuncu2 %}
+                                                                        {% if request.user.is_authenticated %}
+                                                                            {{ mac.oyuncu2.ad }} {{ mac.oyuncu2.soyad }}
+                                                                            {% if mac.oyuncu2.partner_adi %}<br><span class="bracket-partner" style="color: #666;">& {{ mac.oyuncu2.partner_adi }}</span>{% endif %}
+                                                                        {% else %}
+                                                                            {{ mac.oyuncu2.ad|slice:":1"|upper }}*** {{ mac.oyuncu2.soyad|slice:":1"|upper }}***
+                                                                            {% if mac.oyuncu2.partner_adi %}<br><span class="bracket-partner" style="color: #666;">& {{ mac.oyuncu2.partner_adi|slice:":1"|upper }}***</span>{% endif %}
+                                                                        {% endif %}
+                                                                    {% else %}
+                                                                        <span class="text-muted fst-italic fw-normal">Bekleniyor...</span>
+                                                                    {% endif %}
+                                                                </div>
+                                                                {% if mac.tamamlandi and mac.kazanan == mac.oyuncu2 %}<i class="fa-solid fa-check dyn-text-accent ms-2"></i>{% endif %}
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        {% if mac.tamamlandi %}
+                                                        <div class="text-center py-2 fw-bold" style="background-color: #f8f9fa; font-size: 0.9rem; color: #dc3545; border-top: 1px solid #eee; border-radius: 0 0 8px 8px;">
+                                                            {% if mac.set1_oyuncu1 is not None %}{{ mac.set1_oyuncu1 }}-{{ mac.set1_oyuncu2 }}{% if mac.set1_tb_oyuncu1 or mac.set1_tb_oyuncu2 %}<sup>({{ mac.set1_tb_oyuncu1|default:"0" }})</sup>{% endif %}{% endif %}
+                                                            {% if mac.set2_oyuncu1 is not None %}, {{ mac.set2_oyuncu1 }}-{{ mac.set2_oyuncu2 }}{% if mac.set2_tb_oyuncu1 or mac.set2_tb_oyuncu2 %}<sup>({{ mac.set2_tb_oyuncu1|default:"0" }})</sup>{% endif %}{% endif %}
+                                                            {% if mac.set3_oyuncu1 is not None %}, [{{ mac.set3_oyuncu1 }}-{{ mac.set3_oyuncu2 }}]{% endif %}
+                                                        </div>
+                                                        {% endif %}
+                                                    {% endif %}
+                                                </div>
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            {% endfor %}
+
                             <div class="bracket-column">
-                                <div class="bracket-header dyn-bg-primary">{{ asama_grup.grouper }}</div>
-                                
+                                <div class="bracket-header text-dark" style="background-color: #ffc107;"><i class="fa-solid fa-trophy"></i> ŞAMPİYON</div>
                                 <div class="bracket-matches">
-                                    {% for mac in asama_grup.list %}
-                                        <div class="bracket-item">
-                                            <div class="bracket-match dyn-border-left">
-                                                
-                                                {% if 'BAY' in mac.oyuncu1.ad|upper or 'BAY' in mac.oyuncu2.ad|upper %}
-                                                    <div class="d-flex justify-content-between align-items-center px-3 py-2" style="background-color: #f8f9fa; border-radius: 8px;">
-                                                        <div class="fw-bold dyn-text-primary" style="font-size: 0.95rem;">
-                                                            {% if 'BAY' in mac.oyuncu2.ad|upper %}
-                                                                {% if request.user.is_authenticated %}
-                                                                    {{ mac.oyuncu1.ad }} {{ mac.oyuncu1.soyad }}
-                                                                    {% if mac.oyuncu1.partner_adi %}<br><span class="bracket-partner">& {{ mac.oyuncu1.partner_adi }}</span>{% endif %}
-                                                                {% else %}
-                                                                    {{ mac.oyuncu1.ad|slice:":1"|upper }}*** {{ mac.oyuncu1.soyad|slice:":1"|upper }}***
-                                                                    {% if mac.oyuncu1.partner_adi %}<br><span class="bracket-partner">& {{ mac.oyuncu1.partner_adi|slice:":1"|upper }}***</span>{% endif %}
-                                                                {% endif %}
+                                    <div class="bracket-item">
+                                        <div class="bracket-match text-center p-4 d-flex flex-column justify-content-center align-items-center" style="border-left: 5px solid #ffc107; background-color: #fffdf5; min-height: 160px;">
+                                            {% with last_asama=asama_list|last %}
+                                                {% with final_mac=last_asama.list|first %}
+                                                    {% if final_mac.tamamlandi and final_mac.kazanan %}
+                                                        <i class="fa-solid fa-trophy fa-3x text-warning mb-3"></i>
+                                                        <div class="fw-bold dyn-text-primary" style="font-size: 1.15rem; line-height: 1.4;">
+                                                            {% if request.user.is_authenticated %}
+                                                                {{ final_mac.kazanan.ad }} {{ final_mac.kazanan.soyad }}
+                                                                {% if final_mac.kazanan.partner_adi %}<br><span style="color: inherit; font-size:0.9rem;">& {{ final_mac.kazanan.partner_adi }}</span>{% endif %}
                                                             {% else %}
-                                                                {% if request.user.is_authenticated %}
-                                                                    {{ mac.oyuncu2.ad }} {{ mac.oyuncu2.soyad }}
-                                                                    {% if mac.oyuncu2.partner_adi %}<br><span class="bracket-partner">& {{ mac.oyuncu2.partner_adi }}</span>{% endif %}
-                                                                {% else %}
-                                                                    {{ mac.oyuncu2.ad|slice:":1"|upper }}*** {{ mac.oyuncu2.soyad|slice:":1"|upper }}***
-                                                                    {% if mac.oyuncu2.partner_adi %}<br><span class="bracket-partner">& {{ mac.oyuncu2.partner_adi|slice:":1"|upper }}***</span>{% endif %}
-                                                                {% endif %}
+                                                                {{ final_mac.kazanan.ad|slice:":1"|upper }}*** {{ final_mac.kazanan.soyad|slice:":1"|upper }}***
+                                                                {% if final_mac.kazanan.partner_adi %}<br><span style="color: inherit; font-size:0.9rem;">& {{ final_mac.kazanan.partner_adi|slice:":1"|upper }}***</span>{% endif %}
                                                             {% endif %}
                                                         </div>
-                                                        <div class="text-muted fst-italic ms-3" style="font-size: 0.85rem;"><i class="fa-solid fa-forward-fast me-1 text-warning"></i> BAY GEÇTİ</div>
-                                                    </div>
-                                                
-                                                {% else %}
-                                                    <div class="d-flex justify-content-between align-items-center px-3 py-2" style="font-size: 0.75rem; background-color: #f8f9fa; border-bottom: 1px solid #eee; border-radius: 8px 8px 0 0;">
-                                                        <span class="text-muted"><i class="fa-regular fa-calendar-days"></i> 
-                                                            {% if request.user.is_authenticated %}
-                                                                {% if mac.tarih_saat %}{{ mac.tarih_saat|date:"d M H:i" }}{% else %}Belirsiz{% endif %}
-                                                            {% else %}**:**{% endif %}
-                                                        </span>
-                                                        <span class="text-muted"><i class="fa-solid fa-location-dot"></i> 
-                                                            {% if request.user.is_authenticated %}
-                                                                {% if mac.kort %}{{ mac.kort }}{% else %}Belirsiz{% endif %}
-                                                            {% else %}***{% endif %}
-                                                        </span>
-                                                    </div>
-                                                    
-                                                    <div class="p-0">
-                                                        <div class="d-flex justify-content-between align-items-center px-3 py-2" style="border-bottom: 1px solid #f0f0f0;">
-                                                            <div class="fw-bold {% if mac.tamamlandi and mac.kazanan == mac.oyuncu1 %}dyn-text-accent{% else %}text-dark{% endif %}" style="font-size: 0.9rem;">
-                                                                {% if request.user.is_authenticated %}
-                                                                    {{ mac.oyuncu1.ad }} {{ mac.oyuncu1.soyad }}
-                                                                    {% if mac.oyuncu1.partner_adi %}<br><span class="bracket-partner" style="color: #666;">& {{ mac.oyuncu1.partner_adi }}</span>{% endif %}
-                                                                {% else %}
-                                                                    {{ mac.oyuncu1.ad|slice:":1"|upper }}*** {{ mac.oyuncu1.soyad|slice:":1"|upper }}***
-                                                                    {% if mac.oyuncu1.partner_adi %}<br><span class="bracket-partner" style="color: #666;">& {{ mac.oyuncu1.partner_adi|slice:":1"|upper }}***</span>{% endif %}
-                                                                {% endif %}
-                                                            </div>
-                                                            {% if mac.tamamlandi and mac.kazanan == mac.oyuncu1 %}<i class="fa-solid fa-check dyn-text-accent ms-2"></i>{% endif %}
-                                                        </div>
-
-                                                        <div class="d-flex justify-content-between align-items-center px-3 py-2">
-                                                            <div class="fw-bold {% if mac.tamamlandi and mac.kazanan == mac.oyuncu2 %}dyn-text-accent{% else %}text-dark{% endif %}" style="font-size: 0.9rem;">
-                                                                {% if request.user.is_authenticated %}
-                                                                    {{ mac.oyuncu2.ad }} {{ mac.oyuncu2.soyad }}
-                                                                    {% if mac.oyuncu2.partner_adi %}<br><span class="bracket-partner" style="color: #666;">& {{ mac.oyuncu2.partner_adi }}</span>{% endif %}
-                                                                {% else %}
-                                                                    {{ mac.oyuncu2.ad|slice:":1"|upper }}*** {{ mac.oyuncu2.soyad|slice:":1"|upper }}***
-                                                                    {% if mac.oyuncu2.partner_adi %}<br><span class="bracket-partner" style="color: #666;">& {{ mac.oyuncu2.partner_adi|slice:":1"|upper }}***</span>{% endif %}
-                                                                {% endif %}
-                                                            </div>
-                                                            {% if mac.tamamlandi and mac.kazanan == mac.oyuncu2 %}<i class="fa-solid fa-check dyn-text-accent ms-2"></i>{% endif %}
-                                                        </div>
-                                                    </div>
-                                                    
-                                                    {% if mac.tamamlandi %}
-                                                    <div class="text-center py-2 fw-bold" style="background-color: #f8f9fa; font-size: 0.9rem; color: #dc3545; border-top: 1px solid #eee; border-radius: 0 0 8px 8px;">
-                                                        {% if mac.set1_oyuncu1 is not None %}{{ mac.set1_oyuncu1 }}-{{ mac.set1_oyuncu2 }}{% if mac.set1_tb_oyuncu1 or mac.set1_tb_oyuncu2 %}<sup>({{ mac.set1_tb_oyuncu1|default:"0" }})</sup>{% endif %}{% endif %}
-                                                        {% if mac.set2_oyuncu1 is not None %}, {{ mac.set2_oyuncu1 }}-{{ mac.set2_oyuncu2 }}{% if mac.set2_tb_oyuncu1 or mac.set2_tb_oyuncu2 %}<sup>({{ mac.set2_tb_oyuncu1|default:"0" }})</sup>{% endif %}{% endif %}
-                                                        {% if mac.set3_oyuncu1 is not None %}, [{{ mac.set3_oyuncu1 }}-{{ mac.set3_oyuncu2 }}]{% endif %}
-                                                    </div>
+                                                        <span class="badge bg-warning text-dark mt-3 px-3 py-2">TURNUVA BİRİNCİSİ</span>
+                                                    {% else %}
+                                                        <i class="fa-solid fa-trophy fa-3x text-muted mb-3" style="opacity: 0.3;"></i>
+                                                        <h6 class="fw-bold text-muted mb-0">Şampiyon Bekleniyor...</h6>
                                                     {% endif %}
-                                                {% endif %}
-                                            </div>
-                                        </div>
-                                    {% endfor %}
-                                </div>
-                            </div>
-                        {% endfor %}
-
-                        <div class="bracket-column">
-                            <div class="bracket-header text-dark" style="background-color: #ffc107;"><i class="fa-solid fa-trophy"></i> ŞAMPİYON</div>
-                            <div class="bracket-matches">
-                                <div class="bracket-item">
-                                    <div class="bracket-match text-center p-4 d-flex flex-column justify-content-center align-items-center" style="border-left: 5px solid #ffc107; background-color: #fffdf5; min-height: 160px;">
-                                        {% with last_asama=asama_list|last %}
-                                            {% with final_mac=last_asama.list|first %}
-                                                {% if final_mac.tamamlandi and final_mac.kazanan %}
-                                                    <i class="fa-solid fa-trophy fa-3x text-warning mb-3"></i>
-                                                    <div class="fw-bold dyn-text-primary" style="font-size: 1.15rem; line-height: 1.4;">
-                                                        {% if request.user.is_authenticated %}
-                                                            {{ final_mac.kazanan.ad }} {{ final_mac.kazanan.soyad }}
-                                                            {% if final_mac.kazanan.partner_adi %}<br><span style="color: inherit;">& {{ final_mac.kazanan.partner_adi }}</span>{% endif %}
-                                                        {% else %}
-                                                            {{ final_mac.kazanan.ad|slice:":1"|upper }}*** {{ final_mac.kazanan.soyad|slice:":1"|upper }}***
-                                                            {% if final_mac.kazanan.partner_adi %}<br><span style="color: inherit;">& {{ final_mac.kazanan.partner_adi|slice:":1"|upper }}***</span>{% endif %}
-                                                        {% endif %}
-                                                    </div>
-                                                    <span class="badge bg-warning text-dark mt-3 px-3 py-2">TURNUVA BİRİNCİSİ</span>
-                                                {% else %}
-                                                    <i class="fa-solid fa-trophy fa-3x text-muted mb-3" style="opacity: 0.3;"></i>
-                                                    <h6 class="fw-bold text-muted mb-0">Şampiyon Bekleniyor...</h6>
-                                                {% endif %}
+                                                {% endwith %}
                                             {% endwith %}
-                                        {% endwith %}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
-                        </div>
+                    </div>
+                {% else %}
+                    <div class="text-center py-4 bg-white rounded-4 shadow-sm border mb-5">
+                        <p class="text-muted mb-0">Bu kategoride henüz Ana Tablo oluşturulmamış.</p>
+                    </div>
+                {% endif %}
+            {% else %}
+                <div class="alert alert-info text-center py-4 my-4 shadow-sm border-0" style="border-radius: 15px; background-color: white;">
+                    <h5 class="fw-bold text-dark mb-1"><i class="fa-solid fa-clock-rotate-left text-warning me-2"></i> Ana Tablo Hazırlanıyor</h5>
+                    <p class="mb-0 text-muted small">Grup maçlarının tamamlanmasının ardından Ana Tablo (Eleme Ağacı) yayınlanacaktır.</p>
                 </div>
             {% endif %}
 
@@ -364,7 +383,7 @@
                                         {% if mac.durum == 'oynandi' %}
                                             <div class="card mb-3 border-0 shadow-sm" style="border-radius: 12px; border-left: 5px solid #800020 !important; background-color: #fffafb;">
                                                 <div class="card-header bg-transparent py-2 px-3 d-flex justify-content-between align-items-center" style="font-size: 0.85rem; border-bottom: 1px solid #f0e6e6;">
-                                                    <span class="fw-bold" style="color: #007b5e;"><i class="fa-regular fa-calendar-days"></i> {{ mac.tarih|date:"d M" }} {{ mac.saat|time:"H:i" }}</span>
+                                                    <span class="fw-bold" style="color: #007b5e;"><i class="fa-regular fa-calendar-days"></i> {{ mac.tarih|date:"d M" }} {{ mac.saat|default:"" }}</span>
                                                     <span class="text-muted"><i class="fa-solid fa-location-dot"></i> {{ mac.kort|default:"?" }}</span>
                                                 </div>
                                                 <div class="card-body p-3 text-center">
@@ -390,7 +409,7 @@
                                         {% if mac.tarih and mac.durum != 'oynandi' %}
                                             <div class="card mb-3 border-0 shadow-sm dyn-border-left" style="border-radius: 12px;">
                                                 <div class="card-header bg-white py-2 px-3 d-flex justify-content-between align-items-center" style="font-size: 0.85rem; border-bottom: 1px solid #eee;">
-                                                    <span class="text-success fw-bold"><i class="fa-regular fa-calendar-days"></i> {{ mac.tarih|date:"d M" }} {{ mac.saat|time:"H:i" }}</span>
+                                                    <span class="text-success fw-bold"><i class="fa-regular fa-calendar-days"></i> {{ mac.tarih|date:"d M" }} {{ mac.saat|default:"" }}</span>
                                                     <span class="text-muted"><i class="fa-solid fa-location-dot"></i> {{ mac.kort|default:"Kort Yok" }}</span>
                                                 </div>
                                                 <div class="card-body p-3 text-center">

@@ -42,11 +42,23 @@
         .nav-pills .nav-link.active { background-color: var(--accent-green); color: white; border-color: var(--accent-green); box-shadow: 0 4px 10px rgba(40,167,69,0.2); }
 
         .match-order-badge { font-size: 0.7rem; font-weight: 700; padding: 3px 8px; border-radius: 12px; background-color: #e9ecef; color: #6c757d; border: 1px solid #ced4da; }
+
+        /* YAZDIRMA (PRINT / PDF / WHATSAPP) MODU AYARLARI */
+        @media print {
+            body { background-color: white !important; padding-top: 0 !important; }
+            .navbar, .admin-header, .d-print-none, .nav-pills, .tab-content { display: none !important; }
+            .printable-card { border: none !important; box-shadow: none !important; margin: 0 !important; padding: 0 !important; }
+            .printable-card .card-body { padding: 0 !important; }
+            #whatsappRaporAlani { display: block !important; width: 100% !important; }
+            table { width: 100% !important; border-collapse: collapse !important; }
+            th, td { border: 1px solid #dee2e6 !important; padding: 8px !important; font-size: 11pt !important; }
+            .badge { border: 1px solid #000; color: #000 !important; background: transparent !important; }
+        }
     </style>
 </head>
 <body>
 
-    <nav class="navbar navbar-expand-lg fixed-top navbar-dark">
+    <nav class="navbar navbar-expand-lg fixed-top navbar-dark d-print-none">
         <div class="container d-flex justify-content-between align-items-center">
             <div class="navbar-brand m-0">
                 <img src="https://i.ibb.co/HTPhptVQ/logo.png" alt="Ahal Teke Logo" class="brand-logo">
@@ -56,49 +68,99 @@
         </div>
     </nav>
 
-    <div class="admin-header mb-4">
+    <div class="admin-header mb-4 d-print-none">
         <div class="container">
             <h3 class="mb-2"><i class="fa-solid fa-calendar-days text-warning me-2"></i>EŞLEŞMELERİ PLANLA</h3>
-            <p class="mb-3 text-white-50 small">Sistemin otomatik oluşturduğu maçlara tarih, saat ve kort atayın.</p>
+            <p class="mb-3 text-white-50 small">Grup maçlarını çekin, bitince Ana Tablo (Eleme) ağacını oluşturun.</p>
             
-            <div class="d-flex justify-content-center flex-wrap gap-3 mt-4">
-                <form method="POST" action="{% url 'fikstur_olustur' %}" onsubmit="return confirm('Gruplardaki oyuncuları birbiriyle eşleştirmek üzeresiniz. Devam edilsin mi?')">
-                    {% csrf_token %}
-                    {% if planlanmamis_maclar.count > 0 or planlanmis_maclar.count > 0 %}
-                        <button type="button" class="btn btn-secondary fw-bold shadow px-4" disabled title="Eşleşmeler zaten oluşturuldu. Tekrar oluşturmak için sıfırlamanız gerekir.">
-                            <i class="fa-solid fa-lock me-2"></i>EŞLEŞMELER OLUŞTURULDU
-                        </button>
-                    {% else %}
-                        <button type="submit" class="btn btn-warning fw-bold shadow px-4">
-                            <i class="fa-solid fa-wand-magic-sparkles me-2"></i>EŞLEŞMELERİ OTOMATİK OLUŞTUR
-                        </button>
-                    {% endif %}
-                </form>
+            <div class="row mt-4 g-4 justify-content-center">
+                <div class="col-md-6 col-lg-5">
+                    <div class="card bg-white text-dark shadow-sm border-0 h-100" style="border-radius: 15px;">
+                        <div class="card-body text-center p-4">
+                            <h5 class="fw-bold mb-3"><i class="fa-solid fa-users text-primary me-2"></i>1. Aşama: Grup Maçları</h5>
+                            <p class="small text-muted mb-4">Gruplardaki tüm oyuncuları birbiriyle eşleştirin.</p>
+                            <div class="d-flex justify-content-center gap-2">
+                                <form method="POST" action="{% url 'fikstur_olustur' %}" onsubmit="return confirm('Gruplardaki oyuncuları birbiriyle eşleştirmek üzeresiniz. Devam edilsin mi?')">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-warning fw-bold"><i class="fa-solid fa-wand-magic-sparkles me-1"></i>Grupları Çek</button>
+                                </form>
+                                <form method="POST" action="{% url 'fikstur_sifirla' %}" onsubmit="return confirm('DİKKAT! Tüm GRUP eşleşmeleri silinecek. Emin misiniz?')">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-outline-danger fw-bold" title="Sıfırla"><i class="fa-solid fa-trash-can"></i></button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
-                <form method="POST" action="{% url 'fikstur_sifirla' %}" onsubmit="return confirm('DİKKAT! Bu işlem turnuvadaki tüm eşleşmeleri (ve daha önce girdiğiniz tarihleri) kalıcı olarak silecektir. Emin misiniz?')">
-                    {% csrf_token %}
-                    <button type="submit" class="btn btn-danger fw-bold shadow px-4"><i class="fa-solid fa-trash-can me-2"></i>FİKSTÜRÜ SIFIRLA</button>
-                </form>
+                <div class="col-md-6 col-lg-6">
+                    <div class="card bg-white text-dark shadow-sm border-0 h-100" style="border-radius: 15px; border-left: 5px solid #dc3545;">
+                        <div class="card-body text-center p-4">
+                            <h5 class="fw-bold mb-3"><i class="fa-solid fa-trophy text-danger me-2"></i>2. Aşama: Ana Tablo (Eleme)</h5>
+                            <p class="small text-muted mb-3">1. ve 2.'lerle kura çekin. Skorlar girildikçe üst turlar otomatik ilerler.</p>
+                            
+                            <div class="d-flex justify-content-center flex-wrap gap-2 mb-3">
+                                <form method="POST" action="{% url 'eleme_olustur' %}" onsubmit="return confirm('Gruplardan çıkan oyuncularla Ana Tablo Kurası çekilecek. Devam edilsin mi?')">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-danger fw-bold"><i class="fa-solid fa-sitemap me-1"></i>Ana Tabloyu Çek</button>
+                                </form>
+                                
+                                <form method="POST" action="{% url 'eleme_yayinla_toggle' %}">
+                                    {% csrf_token %}
+                                    {% if aktif_turnuva.eleme_yayinlandi %}
+                                        <button type="submit" class="btn btn-success fw-bold"><i class="fa-solid fa-eye-slash me-1"></i>Yayından Kaldır</button>
+                                    {% else %}
+                                        <button type="submit" class="btn btn-outline-success fw-bold"><i class="fa-solid fa-check-double me-1"></i>Kesinleştir ve Yayınla</button>
+                                    {% endif %}
+                                </form>
+                                
+                                <form method="POST" action="{% url 'eleme_sifirla' %}" onsubmit="return confirm('DİKKAT! Tüm ANA TABLO kurası sıfırlanacak. Emin misiniz?')">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-outline-danger fw-bold" title="Sıfırla"><i class="fa-solid fa-trash-can"></i></button>
+                                </form>
+                            </div>
+                            
+                            <div class="small">
+                                {% if aktif_turnuva.eleme_yayinlandi %}
+                                    <span class="badge bg-success p-2"><i class="fa-solid fa-globe me-1"></i>Sitede (fikstur.html) Görünüyor</span>
+                                {% else %}
+                                    <span class="badge bg-secondary p-2"><i class="fa-solid fa-eye-slash me-1"></i>Sitede Gizli (Taslak)</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
+
         </div>
     </div>
 
-    <div class="container">
+    <div class="container printable-container">
         
         {% if messages %}
+            <div class="d-print-none">
             {% for message in messages %}
                 <div class="alert alert-success alert-dismissible fade show shadow-sm text-center fw-bold rounded-4" role="alert">
                     <i class="fa-solid fa-circle-check me-2"></i>{{ message }}
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             {% endfor %}
+            </div>
         {% endif %}
 
-        <div class="card shadow-sm border-0 mb-4" style="border-radius: 15px; border-left: 5px solid #28a745;">
+        <div class="card shadow-sm border-0 mb-4 printable-card" style="border-radius: 15px; border-left: 5px solid #28a745;">
             <div class="card-body">
-                <h5 class="fw-bold mb-3"><i class="fa-solid fa-calendar-day me-2 text-success"></i>Günlük Maç Programı Sorgula</h5>
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3 d-print-none">
+                    <h5 class="fw-bold mb-0"><i class="fa-solid fa-calendar-day me-2 text-success"></i>Günlük Maç Programı Sorgula</h5>
+                    
+                    {% if secilen_tarih and gunun_maclari %}
+                    <button onclick="gunlukRaporYazdir()" class="btn btn-outline-success btn-sm fw-bold shadow-sm">
+                        <i class="fa-solid fa-print me-1"></i> WhatsApp / PDF Çıktısı Al
+                    </button>
+                    {% endif %}
+                </div>
                 
-                <form method="GET" action="" class="row g-3 align-items-center">
+                <form method="GET" action="" class="row g-3 align-items-center d-print-none">
                     <div class="col-md-4">
                         <label class="form-label small fw-bold text-muted">Tarih Seçin</label>
                         <input type="date" name="tarih_filtre" class="form-control" value="{{ secilen_tarih }}" required>
@@ -114,50 +176,64 @@
                 </form>
 
                 {% if secilen_tarih %}
-                    <hr class="my-4">
-                    <h6 class="fw-bold text-primary mb-3">Seçilen Tarih ({{ secilen_tarih }}) Oynanacak / Oynanan Maçlar:</h6>
+                    <hr class="my-4 d-print-none">
                     
-                    {% if gunun_maclari %}
-                        <div class="table-responsive">
-                            <table class="table table-bordered align-middle bg-white">
-                                <thead class="table-dark">
-                                    <tr>
-                                        <th>Saat</th>
-                                        <th>Kort</th>
-                                        <th>Kategori / Grup</th>
-                                        <th>Oyuncular</th>
-                                        <th>Durum / Skor</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for mac in gunun_maclari %}
-                                    <tr>
-                                        <td class="fw-bold text-success">{{ mac.saat|default:"Saat Yok" }}</td>
-                                        <td><span class="badge bg-secondary">Kort {{ mac.kort|default:"-" }}</span></td>
-                                        <td>{{ mac.kategori.isim }} <br><span class="badge bg-info text-dark">{{ mac.grup }}</span></td>
-                                        <td class="fw-bold">{{ mac.oyuncu1.ad }} {{ mac.oyuncu1.soyad }} <span class="text-muted fw-normal">vs</span> {{ mac.oyuncu2.ad }} {{ mac.oyuncu2.soyad }}</td>
-                                        <td>
-                                            {% if mac.durum == 'oynandi' %}
-                                                <span class="badge bg-success">Tamamlandı</span> ({{ mac.skor1 }} - {{ mac.skor2 }})
-                                            {% else %}
-                                                <span class="badge bg-warning text-dark">Bekliyor</span>
-                                            {% endif %}
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
+                    <div id="whatsappRaporAlani">
+                        <div class="text-center mb-3 d-none d-print-block">
+                            <h4 style="color: #0a2342; font-weight: 800; margin-bottom: 5px;">AHAL TEKE TENİS KULÜBÜ</h4>
+                            <h5 style="color: #28a745; font-weight: 700;">GÜNLÜK MAÇ PROGRAMI</h5>
+                            <p class="text-muted small">Tarih: <strong>{{ secilen_tarih }}</strong></p>
+                            <hr style="width: 50%; margin: 10px auto;">
                         </div>
-                    {% else %}
-                        <div class="alert alert-warning mb-0 text-center">
-                            <i class="fa-solid fa-circle-info me-1"></i> Bu tarihe planlanmış herhangi bir maç bulunmuyor.
-                        </div>
-                    {% endif %}
+
+                        <h6 class="fw-bold text-primary mb-3 d-print-none">Seçilen Tarih ({{ secilen_tarih }}) Oynanacak / Oynanan Maçlar:</h6>
+                        
+                        {% if gunun_maclari %}
+                            <div class="table-responsive">
+                                <table class="table table-bordered align-middle bg-white">
+                                    <thead class="table-dark" style="background-color: #0a2342 !important; color: white !important;">
+                                        <tr>
+                                            <th>Saat</th>
+                                            <th>Kort</th>
+                                            <th>Kategori / Grup</th>
+                                            <th>Oyuncular</th>
+                                            <th>Durum / Skor</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for mac in gunun_maclari %}
+                                        <tr>
+                                            <td class="fw-bold text-success">{{ mac.saat|default:"Saat Yok" }}</td>
+                                            <td><span class="badge bg-secondary">Kort {{ mac.kort|default:"-" }}</span></td>
+                                            <td>{{ mac.kategori.isim }} <br><span class="badge bg-info text-dark">{{ mac.grup }}</span></td>
+                                            <td class="fw-bold">{{ mac.oyuncu1.ad }} {{ mac.oyuncu1.soyad }} <span class="text-muted fw-normal">vs</span> {{ mac.oyuncu2.ad }} {{ mac.oyuncu2.soyad }}</td>
+                                            <td>
+                                                {% if mac.durum == 'oynandi' %}
+                                                    <span class="badge bg-success">Tamamlandı</span> ({{ mac.skor1 }} - {{ mac.skor2 }})
+                                                {% else %}
+                                                    <span class="badge bg-warning text-dark">Bekliyor</span>
+                                                {% endif %}
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="text-center mt-3 d-none d-print-block small text-muted">
+                                🎾 Başarılar dileriz! | Ahal Teke Tenis Kulübü Yönetimi
+                            </div>
+                        {% else %}
+                            <div class="alert alert-warning mb-0 text-center d-print-none">
+                                <i class="fa-solid fa-circle-info me-1"></i> Bu tarihe planlanmış herhangi bir maç bulunmuyor.
+                            </div>
+                        {% endif %}
+                    </div>
                 {% endif %}
             </div>
         </div>
 
-        <div class="card shadow-sm border-0 mb-4" style="border-radius: 15px;">
+        <div class="card shadow-sm border-0 mb-4 d-print-none" style="border-radius: 15px;">
             <div class="card-body p-3 d-flex flex-wrap align-items-center justify-content-between gap-3">
                 
                 <form method="GET" action="" class="d-flex align-items-center gap-2 m-0">
@@ -185,7 +261,7 @@
             </div>
         </div>
 
-        <ul class="nav nav-pills mb-4 justify-content-center" id="fiksturTabs" role="tablist">
+        <ul class="nav nav-pills mb-4 justify-content-center d-print-none" id="fiksturTabs" role="tablist">
             <li class="nav-item" role="presentation">
                 <button class="nav-link active" id="planlanacak-tab" data-bs-toggle="pill" data-bs-target="#planlanacak" type="button" role="tab">
                     <i class="fa-solid fa-hourglass-start me-1"></i> Planlanacaklar 
@@ -200,7 +276,7 @@
             </li>
         </ul>
 
-        <div class="tab-content" id="fiksturTabsContent">
+        <div class="tab-content d-print-none" id="fiksturTabsContent">
             
             <div class="tab-pane fade show active" id="planlanacak" role="tabpanel" tabindex="0">
                 {% if planlanmamis_maclar %}
@@ -214,16 +290,16 @@
                                     <div class="group-header fw-bold">{{ grup.grouper }} Eşleşmeleri</div>
                                     <div class="p-3" style="background-color: white; border: 1px solid #dee2e6; border-top: none; border-radius: 0 0 10px 10px;">
                                         {% for mac in grup.list %}
-                                            <div class="match-card match-item" id="mac-card-{{ mac.id }}" data-match-id="{{ mac.id }}" data-p1-id="{{ mac.oyuncu1.id }}" data-p2-id="{{ mac.oyuncu2.id }}">
+                                            <div class="match-card match-item" id="mac-card-{{ mac.id }}" data-match-id="{{ mac.id }}" data-p1-id="{{ mac.oyuncu1|default:'0' }}" data-p2-id="{{ mac.oyuncu2|default:'0' }}">
                                                 <div class="player-vs">
                                                     <span class="text-truncate d-flex align-items-center gap-2">
-                                                        {{ mac.oyuncu1.ad }} {{ mac.oyuncu1.soyad }}
+                                                        {% if mac.oyuncu1 %}{{ mac.oyuncu1.ad }} {{ mac.oyuncu1.soyad }}{% else %}<i>Belli Değil</i>{% endif %}
                                                         <span class="p1-badge match-order-badge"></span>
                                                     </span>
                                                     <span class="vs-badge mx-2">VS</span>
                                                     <span class="text-truncate text-end d-flex align-items-center justify-content-end gap-2">
                                                         <span class="p2-badge match-order-badge"></span>
-                                                        {{ mac.oyuncu2.ad }} {{ mac.oyuncu2.soyad }}
+                                                        {% if mac.oyuncu2 %}{{ mac.oyuncu2.ad }} {{ mac.oyuncu2.soyad }}{% else %}<i>Belli Değil</i>{% endif %}
                                                     </span>
                                                 </div>
                                                 <div class="planning-form">
@@ -289,16 +365,16 @@
                                     <div class="group-header group-header-success fw-bold">{{ grup.grouper }} Planlanmış Maçlar</div>
                                     <div class="p-3" style="background-color: white; border: 1px solid #dee2e6; border-top: none; border-radius: 0 0 10px 10px;">
                                         {% for mac in grup.list %}
-                                            <div class="match-card match-item" id="mac-card-{{ mac.id }}" data-match-id="{{ mac.id }}" data-p1-id="{{ mac.oyuncu1.id }}" data-p2-id="{{ mac.oyuncu2.id }}" style="border-left: 4px solid var(--accent-green);">
+                                            <div class="match-card match-item" id="mac-card-{{ mac.id }}" data-match-id="{{ mac.id }}" data-p1-id="{{ mac.oyuncu1|default:'0' }}" data-p2-id="{{ mac.oyuncu2|default:'0' }}" style="border-left: 4px solid var(--accent-green);">
                                                 <div class="player-vs">
                                                     <span class="text-truncate d-flex align-items-center gap-2">
-                                                        {{ mac.oyuncu1.ad }} {{ mac.oyuncu1.soyad }}
+                                                        {% if mac.oyuncu1 %}{{ mac.oyuncu1.ad }} {{ mac.oyuncu1.soyad }}{% else %}<i>Belli Değil</i>{% endif %}
                                                         <span class="p1-badge match-order-badge"></span>
                                                     </span>
                                                     <span class="vs-badge mx-2">VS</span>
                                                     <span class="text-truncate text-end d-flex align-items-center justify-content-end gap-2">
                                                         <span class="p2-badge match-order-badge"></span>
-                                                        {{ mac.oyuncu2.ad }} {{ mac.oyuncu2.soyad }}
+                                                        {% if mac.oyuncu2 %}{{ mac.oyuncu2.ad }} {{ mac.oyuncu2.soyad }}{% else %}<i>Belli Değil</i>{% endif %}
                                                     </span>
                                                 </div>
                                                 <div class="planning-form">
@@ -361,6 +437,10 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        function gunlukRaporYazdir() {
+            window.print();
+        }
+
         document.addEventListener("DOMContentLoaded", function() {
             let activeTab = localStorage.getItem('activeFiksturTab');
             if (activeTab) {
@@ -382,8 +462,8 @@
                 let p1Id = card.getAttribute('data-p1-id');
                 let p2Id = card.getAttribute('data-p2-id');
                 
-                playerMatchCounters[p1Id] = (playerMatchCounters[p1Id] || 0) + 1;
-                playerMatchCounters[p2Id] = (playerMatchCounters[p2Id] || 0) + 1;
+                if(p1Id && p1Id !== '0') playerMatchCounters[p1Id] = (playerMatchCounters[p1Id] || 0) + 1;
+                if(p2Id && p2Id !== '0') playerMatchCounters[p2Id] = (playerMatchCounters[p2Id] || 0) + 1;
                 
                 let p1Order = playerMatchCounters[p1Id];
                 let p2Order = playerMatchCounters[p2Id];
@@ -394,8 +474,8 @@
                 let badge1 = card.querySelector('.p1-badge');
                 let badge2 = card.querySelector('.p2-badge');
                 
-                if(badge1) badge1.innerText = p1Order + ". Maçı";
-                if(badge2) badge2.innerText = p2Order + ". Maçı";
+                if(badge1 && p1Order) badge1.innerText = p1Order + ". Maçı";
+                if(badge2 && p2Order) badge2.innerText = p2Order + ". Maçı";
             });
 
             let savedFilter = localStorage.getItem('aktifMacSirasiFiltre');
@@ -418,7 +498,7 @@
                     let p1Ord = card.getAttribute('data-p1-order');
                     let p2Ord = card.getAttribute('data-p2-order');
                     
-                    if (p1Ord === filterVal || p2Ord === filterVal) {
+                    if (p1Ord == filterVal || p2Ord == filterVal) {
                         card.style.display = "block";
                     } else {
                         card.style.display = "none";
