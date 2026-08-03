@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-from datetime import datetime # Bunu ekleyin!
+from datetime import datetime
 
 # ==========================================
 # KORT REZERVASYON SİSTEMİ (SADECE PERSONEL)
@@ -65,6 +65,7 @@ class Turnuva(models.Model):
     isim = models.CharField(max_length=100, verbose_name="Turnuva Adı")
     baslangic_tarihi = models.DateField(verbose_name="Başlangıç Tarihi")
     kayit_acik_mi = models.BooleanField(default=True, verbose_name="Kayıtlar Açık mı?")
+    eleme_yayinlandi = models.BooleanField(default=False, verbose_name="Ana Tablo Yayınlandı mı?") # YENİ EKLENDİ
 
     def __str__(self):
         return self.isim
@@ -94,7 +95,7 @@ class Kayit(models.Model):
     ad = models.CharField(max_length=50, verbose_name="Ad")
     soyad = models.CharField(max_length=50, verbose_name="Soyad")
     telefon = models.CharField(max_length=15, verbose_name="Telefon Numarası")
-    grup = models.CharField(max_length=10, blank=True, null=True, verbose_name="Grup")
+    grup = models.CharField(max_length=20, blank=True, null=True, verbose_name="Grup") # Max length 20 yapıldı
     
     odeme_durumu = models.CharField(max_length=20, choices=ODEME_DURUMU, default='bekliyor', verbose_name="Ödeme Durumu")
     kayit_tarihi = models.DateTimeField(auto_now_add=True, verbose_name="Kayıt Tarihi")
@@ -120,14 +121,16 @@ class Mac(models.Model):
 
     turnuva = models.ForeignKey(Turnuva, on_delete=models.CASCADE, verbose_name="Turnuva")
     kategori = models.ForeignKey(Kategori, on_delete=models.CASCADE, verbose_name="Kategori")
-    grup = models.CharField(max_length=10, verbose_name="Grup")
+    grup = models.CharField(max_length=50, verbose_name="Grup veya Aşama Adı") # Max length 50 yapıldı (Son 128 vs için)
     
-    oyuncu1 = models.ForeignKey(Kayit, related_name='mac_oyuncu1', on_delete=models.CASCADE, verbose_name="1. Oyuncu")
-    oyuncu2 = models.ForeignKey(Kayit, related_name='mac_oyuncu2', on_delete=models.CASCADE, verbose_name="2. Oyuncu")
+    # Gelecek turlarda oyuncular henüz belli olmayabileceği için null=True, blank=True EKLENDİ
+    oyuncu1 = models.ForeignKey(Kayit, related_name='mac_oyuncu1', on_delete=models.CASCADE, null=True, blank=True, verbose_name="1. Oyuncu")
+    oyuncu2 = models.ForeignKey(Kayit, related_name='mac_oyuncu2', on_delete=models.CASCADE, null=True, blank=True, verbose_name="2. Oyuncu")
+    
     kazanan = models.ForeignKey(Kayit, related_name='kazanilan_maclar', on_delete=models.SET_NULL, null=True, blank=True, verbose_name="Kazanan")
     
     tarih = models.DateField(blank=True, null=True, verbose_name="Maç Tarihi")
-    saat = models.TimeField(blank=True, null=True, verbose_name="Maç Saati")
+    saat = models.CharField(max_length=10, blank=True, null=True, verbose_name="Maç Saati") # TimeField yerine CharField yapıldı
     kort = models.CharField(max_length=20, blank=True, null=True, verbose_name="Kort Seçimi")
     
     durum = models.CharField(max_length=20, choices=DURUM_SECENEKLERI, default='planlaniyor', verbose_name="Maç Durumu")
@@ -146,19 +149,22 @@ class Mac(models.Model):
     set3_oyuncu1 = models.PositiveIntegerField(null=True, blank=True) # Süper Tie-break
     set3_oyuncu2 = models.PositiveIntegerField(null=True, blank=True)
     
-    # Skorları özetlemek için (opsiyonel, views'da otomatik doldurabiliriz)
+    # Skorları özetlemek için
     skor1 = models.CharField(max_length=20, blank=True, null=True) 
     skor2 = models.CharField(max_length=20, blank=True, null=True)
     
     olusturulma_tarihi = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.grup}: {self.oyuncu1.ad} vs {self.oyuncu2.ad}"
+        p1 = f"{self.oyuncu1.ad} {self.oyuncu1.soyad}" if self.oyuncu1 else "TBD"
+        p2 = f"{self.oyuncu2.ad} {self.oyuncu2.soyad}" if self.oyuncu2 else "TBD"
+        return f"{self.grup}: {p1} vs {p2}"
     
     @property
     def tarih_saat(self):
+        # Saat artık CharField olduğu için (örn "18:00") datetime.combine işlemi patlamaması için basitçe metin dönüyoruz
         if self.tarih and self.saat:
-            return datetime.combine(self.tarih, self.saat)
+            return f"{self.tarih.strftime('%d.%m.%Y')} {self.saat}"
         return None
 
     class Meta:
