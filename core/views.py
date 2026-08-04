@@ -315,7 +315,8 @@ def yonetim_paneli(request):
     tum_kategoriler = Kategori.objects.all()
     secilen_kategoriler = request.GET.getlist('kategori_filtre')
     
-    genel_kayitlar = Kayit.objects.filter(turnuva=aktif_turnuva) if aktif_turnuva else []
+    # BAY olanları yönetim panelinde listelemiyoruz
+    genel_kayitlar = Kayit.objects.filter(turnuva=aktif_turnuva).exclude(grup='BAY') if aktif_turnuva else []
     kayitlar = genel_kayitlar.order_by('-kayit_tarihi')
     
     if secilen_kategoriler:
@@ -350,7 +351,8 @@ def kayit_sil(request, kayit_id):
 def kura_cekimi(request):
     if not request.user.is_staff: return redirect('profil')
     aktif_turnuva = Turnuva.objects.order_by('-id').first()
-    onayli_kayitlar = Kayit.objects.filter(turnuva=aktif_turnuva, odeme_durumu='onaylandi')
+    # BAY'lar kura ekranında görünmesin
+    onayli_kayitlar = Kayit.objects.filter(turnuva=aktif_turnuva, odeme_durumu='onaylandi').exclude(grup='BAY')
     kategori_oyunculari = {}
     kategoriler = Kategori.objects.all()
     
@@ -394,7 +396,8 @@ def fikstur_olustur(request):
     olusturulan_mac_sayisi = 0
 
     for kat in kategoriler:
-        oyuncular = Kayit.objects.filter(turnuva=aktif_turnuva, kategori=kat, odeme_durumu='onaylandi').exclude(grup__isnull=True).exclude(grup='')
+        # BAY grubunu grup maçlarından hariç tutuyoruz
+        oyuncular = Kayit.objects.filter(turnuva=aktif_turnuva, kategori=kat, odeme_durumu='onaylandi').exclude(grup__isnull=True).exclude(grup='').exclude(grup='BAY')
         gruplar_dict = {}
         for o in oyuncular:
             if o.grup not in gruplar_dict: gruplar_dict[o.grup] = []
@@ -449,9 +452,10 @@ def eleme_tablosu_olustur(request):
         if Mac.objects.filter(turnuva=aktif_turnuva, kategori=kat, grup__in=eleme_sirasi).exists():
             continue
             
+        # BURASI ÇOK ÖNEMLİ: exclude(grup='BAY') ekleyerek sahte grubu oyuncu tablosu sayımından çıkardık!
         kategori_gruplari = Kayit.objects.filter(
             turnuva=aktif_turnuva, kategori=kat
-        ).exclude(grup__isnull=True).exclude(grup='').exclude(grup__in=eleme_sirasi).values_list('grup', flat=True).distinct()
+        ).exclude(grup__isnull=True).exclude(grup='').exclude(grup__in=eleme_sirasi).exclude(grup='BAY').values_list('grup', flat=True).distinct()
         
         all_advancing = []
         for g in kategori_gruplari:
@@ -505,8 +509,8 @@ def eleme_tablosu_olustur(request):
             p1 = players[seeds[2*i] - 1]
             p2 = players[seeds[2*i + 1] - 1]
             
-            is_p1_bay = 'BAY' in p1.ad.upper()
-            is_p2_bay = 'BAY' in p2.ad.upper()
+            is_p1_bay = ('BAY' in p1.ad.upper())
+            is_p2_bay = ('BAY' in p2.ad.upper())
             
             mac = Mac.objects.create(
                 turnuva=aktif_turnuva, kategori=kat, grup=first_round_name,
@@ -539,7 +543,7 @@ def eleme_tablosu_olustur(request):
                 ileri_turu_guncelle(m)
 
     if olusturulan_mac > 0:
-        messages.success(request, f"Harika! Ana Tablo Kurası çekildi ve ağaç eşleşmeleri oluşturuldu.")
+        messages.success(request, f"Harika! Gerçek oyuncu sayısına göre (Tam kural) Ana Tablo Kurası çekildi.")
     else:
         messages.warning(request, "Ana tablo kurası zaten çekilmiş.")
         
@@ -607,7 +611,6 @@ def fikstur_yonetimi(request):
     secilen_kat = request.GET.get('kategori_filtre')
     secilen_grup = request.GET.get('grup_filtre')
     
-    # Mevcut tüm grup ve aşama isimleri (Filtreleme dropdown için)
     mevcut_gruplar = maclar.values_list('grup', flat=True).distinct()
     
     if secilen_kat: 
@@ -622,7 +625,6 @@ def fikstur_yonetimi(request):
     planlanmamis_maclar = maclar.filter(durum='planlaniyor')
     planlanmis_maclar = maclar.filter(durum__in=['bekliyor', 'oynandi'])
 
-    # Ana Tablo (Ağaç) Maçları
     eleme_maclari = Mac.objects.filter(turnuva=aktif_turnuva, grup__in=eleme_sirasi)
     if secilen_kat:
         eleme_maclari = eleme_maclari.filter(kategori__id=secilen_kat)
@@ -745,7 +747,7 @@ def fikstur(request):
     if secili_kategori and aktif_turnuva:
         grup_isimleri = Mac.objects.filter(
             turnuva=aktif_turnuva, kategori=secili_kategori
-        ).exclude(grup__in=eleme_sirasi).values_list('grup', flat=True).distinct()
+        ).exclude(grup__in=eleme_sirasi).exclude(grup='BAY').values_list('grup', flat=True).distinct()
         
         for grup_adi in grup_isimleri:
             istatistikler = puan_durumu_hesapla(grup_adi, secili_kategori, aktif_turnuva)
@@ -785,10 +787,8 @@ def profil(request):
     if not oyuncu:
         return render(request, 'core/oyuncu_paneli.html', {'mesaj': 'Henüz bir turnuvaya kayıtlı değilsiniz.'})
 
-    # 2. Maçları çek
     oyuncu_maclari = Mac.objects.filter(Q(oyuncu1=oyuncu) | Q(oyuncu2=oyuncu))
     
-    # EĞER KURA YAYINLANMADIYSA, OYUNCUDAN ANA TABLO MAÇLARINI GİZLE
     if oyuncu.turnuva and not oyuncu.turnuva.eleme_yayinlandi:
         eleme_sirasi = ["Son 128", "Son 64", "Son 32", "Son 16", "Çeyrek Final", "Yarı Final", "Final"]
         oyuncu_maclari = oyuncu_maclari.exclude(grup__in=eleme_sirasi)
@@ -798,7 +798,10 @@ def profil(request):
     
     tum_gruplar_verisi = []
     if oyuncu.kategori and oyuncu.turnuva:
-        grup_isimleri = Kayit.objects.filter(turnuva=oyuncu.turnuva, kategori=oyuncu.kategori).exclude(grup__isnull=True).exclude(grup='').values_list('grup', flat=True).distinct()
+        grup_isimleri = Kayit.objects.filter(
+            turnuva=oyuncu.turnuva, kategori=oyuncu.kategori
+        ).exclude(grup__isnull=True).exclude(grup='').exclude(grup='BAY').values_list('grup', flat=True).distinct()
+        
         for grup_adi in grup_isimleri:
             istatistikler = puan_durumu_hesapla(grup_adi, oyuncu.kategori, oyuncu.turnuva)
             grup_maclari = Mac.objects.filter(turnuva=oyuncu.turnuva, kategori=oyuncu.kategori, grup=grup_adi).order_by('tarih', 'saat')
