@@ -153,8 +153,8 @@ def ileri_turu_guncelle(mac):
             next_mac.save()
             
             if next_mac.oyuncu1 and next_mac.oyuncu2:
-                p1_bay = 'BAY' in next_mac.oyuncu1.ad.upper()
-                p2_bay = 'BAY' in next_mac.oyuncu2.ad.upper()
+                p1_bay = next_mac.oyuncu1.ad == 'BAY'
+                p2_bay = next_mac.oyuncu2.ad == 'BAY'
                 if p1_bay and not p2_bay:
                     next_mac.kazanan = next_mac.oyuncu2
                     next_mac.durum = 'oynandi'
@@ -315,7 +315,6 @@ def yonetim_paneli(request):
     tum_kategoriler = Kategori.objects.all()
     secilen_kategoriler = request.GET.getlist('kategori_filtre')
     
-    # BAY olanları yönetim panelinde listelemiyoruz
     genel_kayitlar = Kayit.objects.filter(turnuva=aktif_turnuva).exclude(grup='BAY') if aktif_turnuva else []
     kayitlar = genel_kayitlar.order_by('-kayit_tarihi')
     
@@ -351,7 +350,6 @@ def kayit_sil(request, kayit_id):
 def kura_cekimi(request):
     if not request.user.is_staff: return redirect('profil')
     aktif_turnuva = Turnuva.objects.order_by('-id').first()
-    # BAY'lar kura ekranında görünmesin
     onayli_kayitlar = Kayit.objects.filter(turnuva=aktif_turnuva, odeme_durumu='onaylandi').exclude(grup='BAY')
     kategori_oyunculari = {}
     kategoriler = Kategori.objects.all()
@@ -396,7 +394,6 @@ def fikstur_olustur(request):
     olusturulan_mac_sayisi = 0
 
     for kat in kategoriler:
-        # BAY grubunu grup maçlarından hariç tutuyoruz
         oyuncular = Kayit.objects.filter(turnuva=aktif_turnuva, kategori=kat, odeme_durumu='onaylandi').exclude(grup__isnull=True).exclude(grup='').exclude(grup='BAY')
         gruplar_dict = {}
         for o in oyuncular:
@@ -452,7 +449,6 @@ def eleme_tablosu_olustur(request):
         if Mac.objects.filter(turnuva=aktif_turnuva, kategori=kat, grup__in=eleme_sirasi).exists():
             continue
             
-        # BURASI ÇOK ÖNEMLİ: exclude(grup='BAY') ekleyerek sahte grubu oyuncu tablosu sayımından çıkardık!
         kategori_gruplari = Kayit.objects.filter(
             turnuva=aktif_turnuva, kategori=kat
         ).exclude(grup__isnull=True).exclude(grup='').exclude(grup__in=eleme_sirasi).exclude(grup='BAY').values_list('grup', flat=True).distinct()
@@ -505,12 +501,32 @@ def eleme_tablosu_olustur(request):
         first_round_name = turlar[0]
         seeds = get_seeding(P)
         
+        # 1. EŞLEŞMELERİ LİSTEYE AL
+        pairs = []
         for i in range(P // 2):
             p1 = players[seeds[2*i] - 1]
             p2 = players[seeds[2*i + 1] - 1]
+            pairs.append([p1, p2])
             
-            is_p1_bay = ('BAY' in p1.ad.upper())
-            is_p2_bay = ('BAY' in p2.ad.upper())
+        # 2. AYNI GRUP ÇAKIŞMA ÖNLEYİCİ
+        def ayni_grupta_mi(oyuncu1, oyuncu2):
+            if not oyuncu1 or not oyuncu2: return False
+            if oyuncu1.ad == 'BAY' or oyuncu2.ad == 'BAY': return False
+            if not oyuncu1.grup or not oyuncu2.grup: return False
+            return oyuncu1.grup == oyuncu2.grup
+
+        for i in range(len(pairs)):
+            if ayni_grupta_mi(pairs[i][0], pairs[i][1]):
+                for j in range(len(pairs)):
+                    if i == j: continue
+                    if not ayni_grupta_mi(pairs[i][0], pairs[j][1]) and not ayni_grupta_mi(pairs[j][0], pairs[i][1]):
+                        pairs[i][1], pairs[j][1] = pairs[j][1], pairs[i][1] # Takas
+                        break
+        
+        # 3. VERİTABANINA KAYDET
+        for p1, p2 in pairs:
+            is_p1_bay = (p1.ad == 'BAY')
+            is_p2_bay = (p2.ad == 'BAY')
             
             mac = Mac.objects.create(
                 turnuva=aktif_turnuva, kategori=kat, grup=first_round_name,
@@ -543,7 +559,7 @@ def eleme_tablosu_olustur(request):
                 ileri_turu_guncelle(m)
 
     if olusturulan_mac > 0:
-        messages.success(request, f"Harika! Gerçek oyuncu sayısına göre (Tam kural) Ana Tablo Kurası çekildi.")
+        messages.success(request, f"Harika! Gerçek oyuncu sayısına göre ve Çakışmalar önlenerek Ana Tablo çekildi.")
     else:
         messages.warning(request, "Ana tablo kurası zaten çekilmiş.")
         
@@ -739,6 +755,8 @@ def fikstur(request):
     secili_kategori = None
     gruplar_verisi = []
     eleme_maclari = []
+    sampiyon = None
+    final_group_exists = "no"
     
     kat_id = request.GET.get('kategori')
     if kat_id: secili_kategori = Kategori.objects.filter(id=kat_id).first()
@@ -764,13 +782,21 @@ def fikstur(request):
         eleme_maclari = Mac.objects.filter(
             turnuva=aktif_turnuva, kategori=secili_kategori, grup__in=eleme_sirasi
         ).order_by('id')
+        
+        final_maci = eleme_maclari.filter(grup='Final').first()
+        if final_maci:
+            final_group_exists = "yes"
+            if final_maci.durum == 'oynandi' and final_maci.kazanan:
+                sampiyon = final_maci.kazanan
             
     return render(request, 'core/fikstur.html', {
         'aktif_turnuva': aktif_turnuva,
         'kategoriler': kategoriler,
         'secili_kategori': secili_kategori,
         'gruplar_verisi': gruplar_verisi,
-        'eleme_maclari': eleme_maclari
+        'eleme_maclari': eleme_maclari,
+        'sampiyon': sampiyon,
+        'final_group_exists': final_group_exists
     })
 
 
