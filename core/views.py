@@ -432,9 +432,6 @@ def eleme_tablosu_olustur(request):
     aktif_turnuva = Turnuva.objects.order_by('-id').first()
     if not aktif_turnuva: return redirect('yonetim_paneli')
 
-    # TTF / ATP STANDART SERİBAŞI ALGORİTMASI (Yeni)
-    # Bu sistem en iyi oyuncuları zıt köşelere (1 numara en üst, 2 numara en alt) koyar.
-    # BAY'lar da adil şekilde yukarıdan ve aşağıdan dağıtılır (Örn: Çeyrek finalde 2. ve 7. sıraya).
     def get_seeding(p):
         if p == 1: return [1]
         seeds = [1]
@@ -442,7 +439,6 @@ def eleme_tablosu_olustur(request):
             current_p = len(seeds) * 2
             next_seeds = []
             for i, seed in enumerate(seeds):
-                # Çift indexleri düz, tek indexleri ters ekle (ATP Standart Kuralı)
                 if i % 2 == 0:
                     next_seeds.extend([seed, current_p + 1 - seed])
                 else:
@@ -510,14 +506,13 @@ def eleme_tablosu_olustur(request):
         first_round_name = turlar[0]
         seeds = get_seeding(P)
         
-        # 1. EŞLEŞMELERİ LİSTEYE AL
         pairs = []
         for i in range(P // 2):
             p1 = players[seeds[2*i] - 1]
             p2 = players[seeds[2*i + 1] - 1]
             pairs.append([p1, p2])
             
-        # 2. AYNI GRUP ÇAKIŞMA ÖNLEYİCİ (Grup Arkadaşları İlk Turda Eşleşemez)
+        # AYNI GRUP ÇAKIŞMA ÖNLEYİCİ (GÜNCELLENDİ: BAY'LARA DOKUNULMAZ)
         def ayni_grupta_mi(oyuncu1, oyuncu2):
             if not oyuncu1 or not oyuncu2: return False
             if oyuncu1.ad == 'BAY' or oyuncu2.ad == 'BAY': return False
@@ -528,11 +523,13 @@ def eleme_tablosu_olustur(request):
             if ayni_grupta_mi(pairs[i][0], pairs[i][1]):
                 for j in range(len(pairs)):
                     if i == j: continue
+                    # DİKKAT: Seribaşlarının BAY haklarını korumak için BAY'ları takas etmiyoruz!
+                    if pairs[j][1].ad == 'BAY' or pairs[i][1].ad == 'BAY': continue
+                    
                     if not ayni_grupta_mi(pairs[i][0], pairs[j][1]) and not ayni_grupta_mi(pairs[j][0], pairs[i][1]):
                         pairs[i][1], pairs[j][1] = pairs[j][1], pairs[i][1] # Takas
                         break
         
-        # 3. VERİTABANINA KAYDET
         for p1, p2 in pairs:
             is_p1_bay = (p1.ad == 'BAY')
             is_p2_bay = (p2.ad == 'BAY')
