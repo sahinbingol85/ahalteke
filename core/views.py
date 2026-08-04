@@ -432,14 +432,23 @@ def eleme_tablosu_olustur(request):
     aktif_turnuva = Turnuva.objects.order_by('-id').first()
     if not aktif_turnuva: return redirect('yonetim_paneli')
 
+    # TTF / ATP STANDART SERİBAŞI ALGORİTMASI (Yeni)
+    # Bu sistem en iyi oyuncuları zıt köşelere (1 numara en üst, 2 numara en alt) koyar.
+    # BAY'lar da adil şekilde yukarıdan ve aşağıdan dağıtılır (Örn: Çeyrek finalde 2. ve 7. sıraya).
     def get_seeding(p):
         if p == 1: return [1]
-        half = get_seeding(p // 2)
-        res = []
-        for seed in half:
-            res.append(seed)
-            res.append(p - seed + 1)
-        return res
+        seeds = [1]
+        while len(seeds) < p:
+            current_p = len(seeds) * 2
+            next_seeds = []
+            for i, seed in enumerate(seeds):
+                # Çift indexleri düz, tek indexleri ters ekle (ATP Standart Kuralı)
+                if i % 2 == 0:
+                    next_seeds.extend([seed, current_p + 1 - seed])
+                else:
+                    next_seeds.extend([current_p + 1 - seed, seed])
+            seeds = next_seeds
+        return seeds
 
     kategoriler = Kategori.objects.all()
     olusturulan_mac = 0
@@ -508,7 +517,7 @@ def eleme_tablosu_olustur(request):
             p2 = players[seeds[2*i + 1] - 1]
             pairs.append([p1, p2])
             
-        # 2. AYNI GRUP ÇAKIŞMA ÖNLEYİCİ
+        # 2. AYNI GRUP ÇAKIŞMA ÖNLEYİCİ (Grup Arkadaşları İlk Turda Eşleşemez)
         def ayni_grupta_mi(oyuncu1, oyuncu2):
             if not oyuncu1 or not oyuncu2: return False
             if oyuncu1.ad == 'BAY' or oyuncu2.ad == 'BAY': return False
@@ -559,7 +568,7 @@ def eleme_tablosu_olustur(request):
                 ileri_turu_guncelle(m)
 
     if olusturulan_mac > 0:
-        messages.success(request, f"Harika! Gerçek oyuncu sayısına göre ve Çakışmalar önlenerek Ana Tablo çekildi.")
+        messages.success(request, f"Harika! Gerçek oyuncu sayısına göre, BAY kuralları gözetilerek (TTF) ve Grup çakışmaları önlenerek Ana Tablo çekildi.")
     else:
         messages.warning(request, "Ana tablo kurası zaten çekilmiş.")
         
