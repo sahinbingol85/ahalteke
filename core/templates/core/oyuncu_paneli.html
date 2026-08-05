@@ -51,6 +51,39 @@
         .nav-item.active { color: var(--main-navy); }
         .nav-item i { font-size: 1.4rem; transition: 0.3s; }
         .nav-item.active i { color: var(--accent-green); transform: scale(1.15); }
+
+        /* AĞAÇ (BRACKET) STİLLERİ - OYUNCU PANELİ İÇİN (MOBİL UYUMLU) */
+        .bracket-container { overflow-x: auto; padding: 20px 10px; cursor: grab; background-color: white; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.05); margin-bottom: 25px; border: 1px solid #dee2e6; }
+        .bracket { display: flex; flex-direction: row; min-width: max-content; align-items: stretch; position: relative; }
+        .bracket-column { display: flex; flex-direction: column; width: 240px; margin-right: 25px; position: relative; justify-content: space-around; }
+        .bracket-column:last-child { margin-right: 0; }
+        
+        .asama-header { text-align: center; font-weight: 800; padding: 6px; border-radius: 6px; margin-bottom: 12px; background-color: var(--main-navy); color: white; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 1px;}
+        .bracket-item { display: flex; flex-direction: column; justify-content: center; flex: 1; position: relative; padding: 8px 0; }
+        .bracket-match { background: white; border-radius: 8px; border: 1px solid #dee2e6; box-shadow: 0 3px 8px rgba(0,0,0,0.05); overflow: hidden; }
+        .match-top-info { background-color: #f8f9fa; border-bottom: 1px solid #eee; padding: 4px 8px; font-size: 0.65rem; color: #6c757d; display: flex; justify-content: space-between; font-weight: 600; }
+        
+        .b-player-row { display: flex; justify-content: space-between; align-items: center; padding: 8px; font-size: 0.8rem; font-weight: 600; color: var(--main-navy); border-bottom: 1px solid #f1f1f1; }
+        .b-player-row:last-child { border-bottom: none; }
+        .bracket-match .is-winner { color: var(--accent-green) !important; font-weight: 700; }
+        .bracket-match .is-winner::after { content: '\f521'; font-family: 'Font Awesome 6 Free'; font-weight: 900; color: #ffc107; margin-left: 5px; font-size: 0.7rem; }
+        
+        .score-box { display: flex; gap: 3px; font-family: 'Montserrat', sans-serif; font-weight: 700; }
+        .score-set { width: 18px; text-align: center; color: #adb5bd; }
+        .score-box.is-winner .score-set { color: var(--accent-green); }
+        .badge-bay { background-color: #ffc107; color: #0a2342; font-weight: 700; font-size: 0.6rem; padding: 2px 5px; border-radius: 20px; text-transform: uppercase; margin-left: 4px;}
+
+        .bracket-column:not(:last-child) .bracket-item::after { content: ''; position: absolute; right: -13px; top: 50%; width: 13px; border-top: 2px solid #adb5bd; z-index: 1; }
+        .bracket-column:not(:last-child) .bracket-item:nth-child(odd):not(:only-child)::before { content: ''; position: absolute; right: -13px; top: 50%; height: 100%; border-right: 2px solid #adb5bd; z-index: 1; }
+        .bracket-column:not(:first-child) .bracket-match::before { content: ''; position: absolute; left: -13px; top: 50%; width: 13px; border-top: 2px solid #adb5bd; z-index: 1; }
+
+        .final-column .bracket-match { border: 2px solid var(--accent-green); box-shadow: 0 4px 12px rgba(40,167,69,0.15); }
+        .final-column .asama-header { background: linear-gradient(135deg, #28a745, #1e7e34); }
+        
+        .champion-box { text-align: center; padding: 12px; background: white; border-radius: 10px; border: 2px solid #ffc107; position: relative; box-shadow: 0 4px 12px rgba(255,193,7,0.1); margin-top:-10px; }
+        .champion-icon { color: #ffc107; font-size: 2rem; margin-bottom: 5px; }
+        .champion-name { font-size: 1rem; font-weight: 800; color: var(--main-navy); text-transform: uppercase; }
+        .champion-title { font-size: 0.7rem; color: var(--accent-green); font-weight: 700; text-transform: uppercase; margin-bottom: 2px; }
     </style>
 </head>
 <body>
@@ -197,10 +230,84 @@
             </div>
 
             <div id="tab-fikstur" class="tab-section">
+                
+                {% if aktif_turnuva.eleme_yayinlandi %}
+                    <h5 class="fw-bold text-muted mb-3 mt-2" style="font-size: 0.9rem;">
+                        <i class="fa-solid fa-sitemap text-warning me-2"></i>ANA TABLO (AĞAÇ)
+                    </h5>
+                    {% if eleme_maclari %}
+                        {% regroup eleme_maclari by grup as asama_list %}
+                        <div class="bracket-container" id="bracketContainer">
+                            <div class="bracket">
+                                {% for asama_grup in asama_list %}
+                                    <div class="bracket-column {% if asama_grup.grouper == 'Final' %}final-column{% endif %}">
+                                        <div class="asama-header">{{ asama_grup.grouper }}</div>
+                                        <div class="bracket-matches">
+                                            {% for mac in asama_grup.list %}
+                                                <div class="bracket-item">
+                                                    <div class="bracket-match">
+                                                        <div class="match-top-info">
+                                                            <span><i class="fa-regular fa-calendar-alt me-1"></i> {{ mac.tarih|date:"d M"|default:"Tarih Belli Değil" }}</span>
+                                                            {% if mac.saat %}<span><i class="fa-regular fa-clock me-1"></i> {{ mac.saat|time:"H:i" }}</span>{% endif %}
+                                                        </div>
+                                                        <div class="b-player-row {% if mac.kazanan == mac.oyuncu1 and mac.durum == 'oynandi' %}is-winner{% endif %}">
+                                                            <span class="text-truncate d-flex align-items-center gap-1" style="max-width: 130px;">
+                                                                {% if mac.oyuncu1 %}
+                                                                    {{ mac.oyuncu1.ad }} {{ mac.oyuncu1.soyad|slice:":1" }}.
+                                                                    {% if 'BAY' in mac.oyuncu1.ad|upper %}<span class="badge-bay">BAY</span>{% endif %}
+                                                                {% else %}
+                                                                    <i class="text-muted fw-normal">Bekleniyor...</i>
+                                                                {% endif %}
+                                                            </span>
+                                                            {% if mac.durum == 'oynandi' and 'BAY' not in mac.oyuncu1.ad|upper and 'BAY' not in mac.oyuncu2.ad|upper %}
+                                                            <div class="score-box {% if mac.kazanan == mac.oyuncu1 %}is-winner{% endif %}">
+                                                                <span class="score-set">{{ mac.set1_oyuncu1|default:"0" }}</span>
+                                                                <span class="score-set">{{ mac.set2_oyuncu1|default:"0" }}</span>
+                                                                {% if mac.set3_oyuncu1 %}<span class="score-set text-danger">{{ mac.set3_oyuncu1 }}</span>{% endif %}
+                                                            </div>
+                                                            {% endif %}
+                                                        </div>
+                                                        <div class="b-player-row {% if mac.kazanan == mac.oyuncu2 and mac.durum == 'oynandi' %}is-winner{% endif %}">
+                                                            <span class="text-truncate d-flex align-items-center gap-1" style="max-width: 130px;">
+                                                                {% if mac.oyuncu2 %}
+                                                                    {{ mac.oyuncu2.ad }} {{ mac.oyuncu2.soyad|slice:":1" }}.
+                                                                    {% if 'BAY' in mac.oyuncu2.ad|upper %}<span class="badge-bay">BAY</span>{% endif %}
+                                                                {% else %}
+                                                                    <i class="text-muted fw-normal">Bekleniyor...</i>
+                                                                {% endif %}
+                                                            </span>
+                                                            {% if mac.durum == 'oynandi' and 'BAY' not in mac.oyuncu1.ad|upper and 'BAY' not in mac.oyuncu2.ad|upper %}
+                                                            <div class="score-box {% if mac.kazanan == mac.oyuncu2 %}is-winner{% endif %}">
+                                                                <span class="score-set">{{ mac.set1_oyuncu2|default:"0" }}</span>
+                                                                <span class="score-set">{{ mac.set2_oyuncu2|default:"0" }}</span>
+                                                                {% if mac.set3_oyuncu2 %}<span class="score-set text-danger">{{ mac.set3_oyuncu2 }}</span>{% endif %}
+                                                            </div>
+                                                            {% endif %}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                                {% if sampiyon %}
+                                <div class="bracket-column" style="justify-content: center; width: 180px; margin-left: -5px;">
+                                    <div class="champion-box">
+                                        <div class="champion-icon"><i class="fa-solid fa-trophy"></i></div>
+                                        <div class="champion-title">Şampiyon</div>
+                                        <div class="champion-name">{{ sampiyon.ad }} {{ sampiyon.soyad|slice:":1" }}.</div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endif %}
+                {% endif %}
+
                 {% if tum_gruplar_verisi %}
                     {% for veri in tum_gruplar_verisi %}
-                        <h5 class="fw-bold text-muted mb-3 {% if not forloop.first %}mt-4{% endif %}" style="font-size: 0.9rem;">
-                            <i class="fa-solid fa-calendar-days me-2"></i>{{ veri.grup.isim }} MAÇLARI
+                        <h5 class="fw-bold text-muted mb-3 {% if not forloop.first or aktif_turnuva.eleme_yayinlandi %}mt-4{% endif %}" style="font-size: 0.9rem;">
+                            <i class="fa-solid fa-users me-2 text-primary"></i>{{ veri.grup.isim }} MAÇLARI
                             {% if veri.is_kendi_grubu %}<span class="badge bg-success ms-2">Senin Grubun</span>{% endif %}
                         </h5>
                         
@@ -285,6 +392,36 @@
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
                 navigator.serviceWorker.register('/sw.js');
+            });
+        }
+
+        // Ağaç Kaydırma Özelliği (Mobil Uyumlu)
+        const slider = document.getElementById('bracketContainer');
+        if (slider) {
+            let isDown = false;
+            let startX;
+            let scrollLeft;
+
+            slider.addEventListener('mousedown', (e) => {
+                isDown = true;
+                slider.classList.add('active');
+                startX = e.pageX - slider.offsetLeft;
+                scrollLeft = slider.scrollLeft;
+            });
+            slider.addEventListener('mouseleave', () => {
+                isDown = false;
+                slider.classList.remove('active');
+            });
+            slider.addEventListener('mouseup', () => {
+                isDown = false;
+                slider.classList.remove('active');
+            });
+            slider.addEventListener('mousemove', (e) => {
+                if (!isDown) return;
+                e.preventDefault();
+                const x = e.pageX - slider.offsetLeft;
+                const walk = (x - startX) * 2; 
+                slider.scrollLeft = scrollLeft - walk;
             });
         }
     </script>
