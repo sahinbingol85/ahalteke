@@ -820,15 +820,18 @@ def profil(request):
         return render(request, 'core/oyuncu_paneli.html', {'mesaj': 'Henüz bir turnuvaya kayıtlı değilsiniz.'})
 
     oyuncu_maclari = Mac.objects.filter(Q(oyuncu1=oyuncu) | Q(oyuncu2=oyuncu))
+    eleme_sirasi = ["Son 128", "Son 64", "Son 32", "Son 16", "Çeyrek Final", "Yarı Final", "Final"]
     
     if oyuncu.turnuva and not oyuncu.turnuva.eleme_yayinlandi:
-        eleme_sirasi = ["Son 128", "Son 64", "Son 32", "Son 16", "Çeyrek Final", "Yarı Final", "Final"]
         oyuncu_maclari = oyuncu_maclari.exclude(grup__in=eleme_sirasi)
         
     bekleyen_maclar = oyuncu_maclari.filter(durum__in=['planlaniyor', 'bekliyor']).order_by('tarih', 'saat')
     gecmis_maclar = oyuncu_maclari.filter(durum='oynandi').order_by('-tarih', '-saat')
     
     tum_gruplar_verisi = []
+    eleme_maclari = []
+    sampiyon = None
+    
     if oyuncu.kategori and oyuncu.turnuva:
         grup_isimleri = Kayit.objects.filter(
             turnuva=oyuncu.turnuva, kategori=oyuncu.kategori
@@ -841,14 +844,26 @@ def profil(request):
                 'grup': {'isim': grup_adi}, 'istatistikler': istatistikler, 'maclar': grup_maclari, 'is_kendi_grubu': (grup_adi == oyuncu.grup)
             })
         tum_gruplar_verisi.sort(key=lambda x: (not x['is_kendi_grubu'], x['grup']['isim']))
+        
+        # OYUNCU PANELİ İÇİN ANA TABLO (AĞAÇ) VERİSİ
+        if oyuncu.turnuva.eleme_yayinlandi:
+            eleme_maclari = Mac.objects.filter(
+                turnuva=oyuncu.turnuva, kategori=oyuncu.kategori, grup__in=eleme_sirasi
+            ).order_by('id')
+            
+            final_maci = eleme_maclari.filter(grup='Final').first()
+            if final_maci and final_maci.durum == 'oynandi' and final_maci.kazanan:
+                sampiyon = final_maci.kazanan
 
     return render(request, 'core/oyuncu_paneli.html', {
         'oyuncu': oyuncu, 'kategori': oyuncu.kategori,
         'oyuncunun_grubu': {'isim': oyuncu.grup} if oyuncu.grup else None,
         'bekleyen_maclar': bekleyen_maclar, 'gecmis_maclar': gecmis_maclar,
-        'tum_gruplar_verisi': tum_gruplar_verisi
+        'tum_gruplar_verisi': tum_gruplar_verisi,
+        'eleme_maclari': eleme_maclari,
+        'sampiyon': sampiyon,
+        'aktif_turnuva': oyuncu.turnuva
     })
-
 
 @login_required(login_url='/giris/')
 def rezervasyon_paneli(request):
