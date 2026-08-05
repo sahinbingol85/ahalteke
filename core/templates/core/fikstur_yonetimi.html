@@ -129,7 +129,7 @@
                             
                             <div class="small">
                                 {% if aktif_turnuva.eleme_yayinlandi %}
-                                    <span class="badge bg-success p-2"><i class="fa-solid fa-globe me-1"></i>Sitede (fikstur.html) Görünüyor</span>
+                                    <span class="badge bg-success p-2"><i class="fa-solid fa-globe me-1"></i>Sitede Görünüyor</span>
                                 {% else %}
                                     <span class="badge bg-secondary p-2"><i class="fa-solid fa-eye-slash me-1"></i>Sitede Gizli (Taslak)</span>
                                 {% endif %}
@@ -237,7 +237,6 @@
 
         <div class="card shadow-sm border-0 mb-4 d-print-none" style="border-radius: 15px;">
             <div class="card-body p-3 d-flex flex-wrap align-items-center justify-content-between gap-3">
-                
                 <form method="GET" action="" class="d-flex align-items-center flex-wrap gap-3 m-0">
                     <div class="d-flex align-items-center gap-2">
                         <span class="fw-bold small text-muted"><i class="fa-solid fa-filter me-1"></i>Kategori:</span>
@@ -274,7 +273,6 @@
                         <option value="4">4. Maçlar</option>
                     </select>
                 </div>
-
             </div>
         </div>
 
@@ -306,7 +304,6 @@
                     <div class="card shadow-sm border-0 mb-4" style="border-radius: 15px;">
                         <div class="card-header bg-dark text-white fw-bold d-flex justify-content-between align-items-center py-3">
                             <span><i class="fa-solid fa-sitemap text-warning me-2"></i>ANA TABLO KURA AĞACI İNCELEME & PLANLAMA</span>
-                            <small class="text-white-50">Kontrol ettikten sonra yukarıdaki "Kesinleştir ve Yayınla" butonuna basın.</small>
                         </div>
                         <div class="card-body p-0">
                             <div class="bracket-container">
@@ -321,9 +318,7 @@
                                                             
                                                             <div class="fw-bold small text-navy border-bottom pb-1 mb-1">
                                                                 {% if mac.oyuncu1 %}{{ mac.oyuncu1.ad }} {{ mac.oyuncu1.soyad }}{% else %}<i class="text-muted fw-normal">Bekleniyor...</i>{% endif %}
-                                                                <br>
-                                                                <span class="text-muted fw-normal">vs</span>
-                                                                <br>
+                                                                <br><span class="text-muted fw-normal">vs</span><br>
                                                                 {% if mac.oyuncu2 %}{{ mac.oyuncu2.ad }} {{ mac.oyuncu2.soyad }}{% else %}<i class="text-muted fw-normal">Bekleniyor...</i>{% endif %}
                                                             </div>
 
@@ -332,27 +327,28 @@
                                                             {% else %}
                                                                 <div class="row g-1 mt-1 align-items-center">
                                                                     <div class="col-6">
-                                                                        <input type="date" id="tarih_{{ mac.id }}" class="form-control form-control-sm px-1" value="{{ mac.tarih|date:'Y-m-d' }}">
+                                                                        <input type="date" id="tarih_agac_{{ mac.id }}" class="form-control form-control-sm px-1" value="{{ mac.tarih|date:'Y-m-d' }}">
                                                                     </div>
                                                                     <div class="col-6">
-                                                                        <select id="saat_{{ mac.id }}" class="form-control form-control-sm px-1">
+                                                                        <select id="saat_agac_{{ mac.id }}" class="form-control form-control-sm px-1">
                                                                             <option value="">Saat</option>
                                                                             <script>
-                                                                                let selectedSaat_{{ mac.id }} = "{{ mac.saat|time:'H:i' }}";
+                                                                            {
+                                                                                let sel = "{{ mac.saat|time:'H:i' }}";
                                                                                 for (let i = 8; i < 24; i++) {
                                                                                     let h = i.toString().padStart(2, '0');
-                                                                                    let s00 = `${h}:00`, s30 = `${h}:30`;
-                                                                                    document.write(`<option value="${s00}" ${s00 === selectedSaat_{{ mac.id }} ? 'selected':''}>${s00}</option>`);
-                                                                                    document.write(`<option value="${s30}" ${s30 === selectedSaat_{{ mac.id }} ? 'selected':''}>${s30}</option>`);
+                                                                                    document.write(`<option value="${h}:00" ${sel === h+':00' ? 'selected':''}>${h}:00</option>`);
+                                                                                    document.write(`<option value="${h}:30" ${sel === h+':30' ? 'selected':''}>${h}:30</option>`);
                                                                                 }
+                                                                            }
                                                                             </script>
                                                                         </select>
                                                                     </div>
                                                                     <div class="col-7">
-                                                                        <input type="text" id="kort_{{ mac.id }}" class="form-control form-control-sm text-center px-1" placeholder="Kort" value="{{ mac.kort|default_if_none:'' }}">
+                                                                        <input type="text" id="kort_agac_{{ mac.id }}" class="form-control form-control-sm text-center px-1" placeholder="Kort" value="{{ mac.kort|default_if_none:'' }}">
                                                                     </div>
                                                                     <div class="col-5">
-                                                                        <button onclick="maciKaydet({{ mac.id }})" id="btn-{{ mac.id }}" class="btn btn-primary btn-sm w-100 py-1" style="font-size:0.75rem;">
+                                                                        <button onclick="maciKaydet({{ mac.id }}, 'agac')" id="btn-agac-{{ mac.id }}" class="btn btn-primary btn-sm w-100 py-1" style="font-size:0.75rem;">
                                                                             <i class="fa-solid fa-save"></i>
                                                                         </button>
                                                                     </div>
@@ -373,7 +369,6 @@
                     <div class="text-center p-5 text-muted bg-white rounded-4 border">
                         <i class="fa-solid fa-sitemap fa-3x mb-3 opacity-50"></i>
                         <h5>Ana Tablo Kurası Henüz Çekilmedi</h5>
-                        <p class="small">Yukarıdaki kırmızı renkli <strong>"Ana Tabloyu Çek"</strong> butonuna basarak kurayı çekebilir ve ağacı burada görebilirsiniz.</p>
                     </div>
                 {% endif %}
             </div>
@@ -390,7 +385,7 @@
                                     <div class="group-header fw-bold">{{ grup.grouper }} Eşleşmeleri</div>
                                     <div class="p-3 bg-white border border-top-0 rounded-bottom-3">
                                         {% for mac in grup.list %}
-                                            <div class="match-card match-item" id="mac-card-{{ mac.id }}" data-match-id="{{ mac.id }}" data-p1-id="{{ mac.oyuncu1.id|default:'0' }}" data-p2-id="{{ mac.oyuncu2.id|default:'0' }}">
+                                            <div class="match-card match-item" data-match-id="{{ mac.id }}" data-p1-id="{{ mac.oyuncu1.id|default:'0' }}" data-p2-id="{{ mac.oyuncu2.id|default:'0' }}">
                                                 <div class="player-vs">
                                                     <span class="text-truncate d-flex align-items-center gap-2">
                                                         {% if mac.oyuncu1 %}{{ mac.oyuncu1.ad }} {{ mac.oyuncu1.soyad }}{% else %}<i>Belli Değil</i>{% endif %}
@@ -406,29 +401,30 @@
                                                     <div class="row g-2 align-items-end">
                                                         <div class="col-md-5">
                                                             <label class="form-label text-muted small mb-1">Tarih Seç</label>
-                                                            <input type="date" id="tarih_{{ mac.id }}" class="form-control form-control-sm">
+                                                            <input type="date" id="tarih_liste_{{ mac.id }}" class="form-control form-control-sm" value="{{ mac.tarih|date:'Y-m-d' }}">
                                                         </div>
                                                         <div class="col-md-3">
                                                             <label class="form-label text-muted small mb-1">Saat</label>
-                                                            <select id="saat_{{ mac.id }}" class="form-control form-control-sm">
+                                                            <select id="saat_liste_{{ mac.id }}" class="form-control form-control-sm">
                                                                 <option value="">Saat Seç</option>
                                                                 <script>
-                                                                    let selectedSaat_{{ mac.id }} = "{{ mac.saat|time:'H:i' }}";
+                                                                {
+                                                                    let sel = "{{ mac.saat|time:'H:i' }}";
                                                                     for (let i = 8; i < 24; i++) {
                                                                         let h = i.toString().padStart(2, '0');
-                                                                        let s00 = `${h}:00`, s30 = `${h}:30`;
-                                                                        document.write(`<option value="${s00}" ${s00 === selectedSaat_{{ mac.id }} ? 'selected':''}>${s00}</option>`);
-                                                                        document.write(`<option value="${s30}" ${s30 === selectedSaat_{{ mac.id }} ? 'selected':''}>${s30}</option>`);
+                                                                        document.write(`<option value="${h}:00" ${sel === h+':00' ? 'selected':''}>${h}:00</option>`);
+                                                                        document.write(`<option value="${h}:30" ${sel === h+':30' ? 'selected':''}>${h}:30</option>`);
                                                                     }
+                                                                }
                                                                 </script>
                                                             </select>
                                                         </div>
                                                         <div class="col-md-4">
                                                             <label class="form-label text-muted small mb-1">Kort</label>
-                                                            <input type="text" id="kort_{{ mac.id }}" class="form-control form-control-sm text-center fw-bold" placeholder="Kort">
+                                                            <input type="text" id="kort_liste_{{ mac.id }}" class="form-control form-control-sm text-center fw-bold" placeholder="Kort" value="{{ mac.kort|default_if_none:'' }}">
                                                         </div>
                                                         <div class="col-12 mt-2">
-                                                            <button onclick="maciKaydet({{ mac.id }})" id="btn-{{ mac.id }}" class="btn-save-match w-100">
+                                                            <button onclick="maciKaydet({{ mac.id }}, 'liste')" id="btn-liste-{{ mac.id }}" class="btn-save-match w-100">
                                                                 <i class="fa-solid fa-floppy-disk me-1"></i> Planla ve Kaydet
                                                             </button>
                                                         </div>
@@ -461,7 +457,7 @@
                                     <div class="group-header group-header-success fw-bold">{{ grup.grouper }} Planlanmış Maçlar</div>
                                     <div class="p-3 bg-white border border-top-0 rounded-bottom-3">
                                         {% for mac in grup.list %}
-                                            <div class="match-card match-item" id="mac-card-{{ mac.id }}" data-match-id="{{ mac.id }}" data-p1-id="{{ mac.oyuncu1.id|default:'0' }}" data-p2-id="{{ mac.oyuncu2.id|default:'0' }}" style="border-left: 4px solid var(--accent-green);">
+                                            <div class="match-card match-item" data-match-id="{{ mac.id }}" data-p1-id="{{ mac.oyuncu1.id|default:'0' }}" data-p2-id="{{ mac.oyuncu2.id|default:'0' }}" style="border-left: 4px solid var(--accent-green);">
                                                 <div class="player-vs">
                                                     <span class="text-truncate d-flex align-items-center gap-2">
                                                         {% if mac.oyuncu1 %}{{ mac.oyuncu1.ad }} {{ mac.oyuncu1.soyad }}{% else %}<i>Belli Değil</i>{% endif %}
@@ -477,32 +473,33 @@
                                                     <div class="row g-2 align-items-end">
                                                         <div class="col-md-5">
                                                             <label class="form-label text-muted small mb-1">Tarih Seç</label>
-                                                            <input type="date" id="tarih_{{ mac.id }}" class="form-control form-control-sm" value="{{ mac.tarih|date:'Y-m-d' }}">
+                                                            <input type="date" id="tarih_planli_{{ mac.id }}" class="form-control form-control-sm" value="{{ mac.tarih|date:'Y-m-d' }}">
                                                         </div>
                                                         <div class="col-md-3">
                                                             <label class="form-label text-muted small mb-1">Saat</label>
-                                                            <select id="saat_{{ mac.id }}" class="form-control form-control-sm">
+                                                            <select id="saat_planli_{{ mac.id }}" class="form-control form-control-sm">
                                                                 <option value="">Saat Seç</option>
                                                                 <script>
-                                                                    let selectedSaat_{{ mac.id }} = "{{ mac.saat|time:'H:i' }}";
+                                                                {
+                                                                    let sel = "{{ mac.saat|time:'H:i' }}";
                                                                     for (let i = 8; i < 24; i++) {
                                                                         let h = i.toString().padStart(2, '0');
-                                                                        let s00 = `${h}:00`, s30 = `${h}:30`;
-                                                                        document.write(`<option value="${s00}" ${s00 === selectedSaat_{{ mac.id }} ? 'selected':''}>${s00}</option>`);
-                                                                        document.write(`<option value="${s30}" ${s30 === selectedSaat_{{ mac.id }} ? 'selected':''}>${s30}</option>`);
+                                                                        document.write(`<option value="${h}:00" ${sel === h+':00' ? 'selected':''}>${h}:00</option>`);
+                                                                        document.write(`<option value="${h}:30" ${sel === h+':30' ? 'selected':''}>${h}:30</option>`);
                                                                     }
+                                                                }
                                                                 </script>
                                                             </select>
                                                         </div>
                                                         <div class="col-md-4">
                                                             <label class="form-label text-muted small mb-1">Kort</label>
-                                                            <input type="text" id="kort_{{ mac.id }}" class="form-control form-control-sm text-center fw-bold" value="{{ mac.kort|default_if_none:'' }}">
+                                                            <input type="text" id="kort_planli_{{ mac.id }}" class="form-control form-control-sm text-center fw-bold" value="{{ mac.kort|default_if_none:'' }}">
                                                         </div>
                                                         <div class="col-12 mt-2 d-flex gap-2">
-                                                            <button type="button" onclick="maciIptalEt({{ mac.id }})" id="btn-iptal-{{ mac.id }}" class="btn btn-outline-danger w-50 fw-bold shadow-sm" style="border-radius: 8px;">
+                                                            <button type="button" onclick="maciIptalEt({{ mac.id }}, 'planli')" id="btn-iptal-planli-{{ mac.id }}" class="btn btn-outline-danger w-50 fw-bold shadow-sm" style="border-radius: 8px;">
                                                                 <i class="fa-solid fa-rotate-left me-1"></i> İptal Et
                                                             </button>
-                                                            <button type="button" onclick="maciKaydet({{ mac.id }})" id="btn-{{ mac.id }}" class="btn-save-match bg-warning text-dark w-50">
+                                                            <button type="button" onclick="maciKaydet({{ mac.id }}, 'planli')" id="btn-planli-{{ mac.id }}" class="btn-save-match bg-warning text-dark w-50">
                                                                 <i class="fa-solid fa-pen-to-square me-1"></i> Güncelle
                                                             </button>
                                                         </div>
@@ -596,11 +593,12 @@
             });
         }
 
-        function maciKaydet(macId) {
-            let tarih = document.getElementById(`tarih_${macId}`).value;
-            let saat = document.getElementById(`saat_${macId}`).value;
-            let kort = document.getElementById(`kort_${macId}`).value;
-            let btn = document.getElementById(`btn-${macId}`);
+        // GÜNCELLENEN KAYIT FONKSİYONU
+        function maciKaydet(macId, prefix) {
+            let tarih = document.getElementById(`tarih_${prefix}_${macId}`).value;
+            let saat = document.getElementById(`saat_${prefix}_${macId}`).value;
+            let kort = document.getElementById(`kort_${prefix}_${macId}`).value;
+            let btn = document.getElementById(`btn-${prefix}-${macId}`);
             
             btn.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i>";
             btn.disabled = true;
@@ -626,14 +624,14 @@
                 } else {
                     alert("Hata: " + data.message);
                     btn.disabled = false;
-                    btn.innerHTML = "Tekrar Dene";
+                    btn.innerHTML = "Kaydet";
                 }
             });
         }
 
-        function maciIptalEt(macId) {
+        function maciIptalEt(macId, prefix) {
             if(!confirm('Bu maçın planlamasını iptal etmek istediğinize emin misiniz?')) return;
-            let btn = document.getElementById(`btn-iptal-${macId}`);
+            let btn = document.getElementById(`btn-iptal-${prefix}-${macId}`);
             btn.innerHTML = "<i class='fa-solid fa-spinner fa-spin'></i>";
             btn.disabled = true;
 
