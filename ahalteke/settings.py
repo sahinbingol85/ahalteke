@@ -75,9 +75,11 @@ WSGI_APPLICATION = 'ahalteke.wsgi.application'
 # Eğer sistemde DATABASE_URL varsa (yani Vercel/Canlı Sunucudaysa) Neon/Vercel veritabanını kullan
 if 'DATABASE_URL' in os.environ:
     DATABASES = {
-        'default': dj_database_url.config(conn_max_age=600)
+        'default': dj_database_url.config(
+            conn_max_age=0,
+            disable_server_side_cursors=True
+        )
     }
-# Eğer yoksa (yani senin bilgisayarındaysa) yerel SQLite veritabanını kullan
 else:
     DATABASES = {
         'default': {
