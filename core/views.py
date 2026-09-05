@@ -768,7 +768,14 @@ def hakem_canli_skor(request):
 # GENEL ZİYARETÇİ FİKSTÜR GÖRÜNÜMÜ
 # ==========================================
 def fikstur(request):
+    # Aktif (tamamlanmamış) turnuva yoksa fikstür sayfasını açma, ana sayfaya yönlendir
+    aktif_turnuva = Turnuva.objects.filter(tamamlandi=False).order_by('-id').first()
+    if not aktif_turnuva:
+        messages.info(request, "Şu anda devam eden aktif bir turnuva bulunmamaktadır.")
+        return redirect('index')
+
     tum_turnuvalar = Turnuva.objects.all().order_by('-id')
+    kategoriler = Kategori.objects.all()
     
     # Kullanıcı geçmiş turnuvalardan birini seçtiyse onu al, yoksa en son turnuvayı al
     turnuva_id = request.GET.get('turnuva_id')
