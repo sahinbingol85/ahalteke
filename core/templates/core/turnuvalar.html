@@ -159,15 +159,12 @@
                         {% endfor %}
                     {% endif %}
 
-                    {% if aktif_turnuvalar %}
+                    {% if aktif_turnuva and aktif_turnuva.kayit_acik_mi %}
+                    <!-- AKTİF BİR TURNUVA İÇİN KAYIT FORMU -->
                     <div class="coming-soon-box">
                         <span class="badge bg-accent-green mb-2" style="background-color: var(--accent-green); font-size: 1rem; padding: 10px 20px; border-radius: 30px;">KAYITLAR DEVAM EDİYOR</span>
-                        <h2 style="color: var(--main-navy); font-size: 2.5rem; margin-bottom: 20px;">YAZ TURNUVASI ÖN KAYIT FORMU</h2>
+                        <h2 style="color: var(--main-navy); font-size: 2.3rem; margin-bottom: 20px;">{{ aktif_turnuva.isim }} ÖN KAYIT FORMU</h2>
                         
-                        <div class="alert alert-info py-2 mb-4" style="border-radius: 10px; font-size: 0.95rem;">
-                            <i class="fa-solid fa-calendar-days me-2"></i> <strong>Turnuva Tarihi:</strong> 27 Haziran - 2 Ağustos
-                        </div>
-
                         <p class="lead text-muted mb-3" style="font-size: 1rem;">
                             Aşağıdaki formu doldurarak sistem üzerinden ön kaydınızı oluşturabilir <strong>VEYA</strong> doğrudan bize mesaj atarak kaydınızı yazdırabilirsiniz.
                         </p>
@@ -208,21 +205,34 @@
                     </div>
 
                     {% else %}
-                    <!-- TURNUVA DEVAM EDİYOR EKRANI -->
+                    <!-- TURNUVA TAMAMLANDI / YENİ TAKVİM DUYURUSU EKRANI -->
                     <div class="coming-soon-box">
-                        <span class="badge bg-warning text-dark mb-3 shadow-sm" style="font-size: 1rem; padding: 10px 20px; border-radius: 30px;">TURNUVA DEVAM EDİYOR 🎾</span>
+                        <div class="mb-3">
+                            <span class="badge bg-warning text-dark shadow-sm py-2 px-3 fs-6 rounded-pill">
+                                <i class="fa-solid fa-trophy me-1 text-dark"></i> TURNUVA TAMAMLANDI
+                            </span>
+                        </div>
                         
-                        <h2 style="color: var(--main-navy); font-size: 2.5rem; margin-bottom: 25px;">HEYECAN KORTLARDA!</h2>
-                        <p class="lead text-muted mb-4">
-                            Ahal Teke Tenis Kulübü Yaz Turnuvası için <strong>kayıtlarımız sona ermiştir.</strong> Gösterdiğiniz yoğun ilgiye teşekkür ederiz!
+                        <h2 style="color: var(--main-navy); font-size: 2.3rem; margin-bottom: 20px;">
+                            {% if son_turnuva %}{{ son_turnuva.isim }}{% else %}Ahal Teke Tenis Turnuvası{% endif %}
+                        </h2>
+                        
+                        <p class="lead text-muted mb-4" style="font-size: 1.15rem;">
+                            Büyük bir çekişmeye ve unutulmaz anlara sahne olan turnuvamız başarıyla tamamlanmıştır!
                         </p>
-                        <p class="mb-5" style="font-size: 1.1rem;">
-                            Turnuvamız şu anda tüm hızıyla devam etmektedir. Fikstürü, maç sonuçlarını ve güncel puan durumlarını anlık olarak takip etmek için aşağıdaki butonu kullanabilirsiniz. Tüm sporcularımıza başarılar dileriz!
-                        </p>
+                        
+                        <div class="p-4 bg-light rounded-4 mb-4 border text-start">
+                            <p class="mb-2 text-dark" style="font-size: 1.05rem;">
+                                👏 <strong>Teşekkürler:</strong> Turnuvamıza katılarak kortlarda ter döken, centilmence mücadele eden tüm sporcularımıza ve bizi tribünlerden destekleyen tüm tenis severlere gönülden teşekkür ederiz.
+                            </p>
+                            <p class="mb-0 text-muted small">
+                                📅 Bir sonraki turnuva takvimi ve kayıt duyuruları çok yakında web sitemiz ve sosyal medya hesaplarımız üzerinden paylaşılacaktır.
+                            </p>
+                        </div>
 
                         <div class="d-flex justify-content-center gap-3 flex-wrap">
                             <a href="{% url 'fikstur' %}" class="btn btn-accent">
-                                <i class="fa-solid fa-trophy me-2 fa-lg"></i> Fikstür ve Sonuçlar
+                                <i class="fa-solid fa-square-poll-vertical me-2 fa-lg"></i> Fikstür & Turnuva Sonuçları
                             </a>
                             <a href="https://instagram.com/ahalteketeniskulubu" target="_blank" class="btn btn-outline-dark rounded-pill px-4 py-3 fw-bold" style="border-width: 2px;">
                                 <i class="fa-brands fa-instagram fa-lg me-2"></i> Bizi Takip Edin

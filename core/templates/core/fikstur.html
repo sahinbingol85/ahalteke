@@ -41,6 +41,18 @@
         .category-pill { border-radius: 30px; font-weight: 700; padding: 8px 20px; border: 2px solid var(--cat-primary); color: var(--cat-primary); background: white; transition: all 0.3s; display: inline-block; cursor: pointer; }
         .category-pill:hover, .category-pill.active { background-color: var(--cat-primary); color: white; transform: translateY(-2px); box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
 
+        /* TURNUVA SEÇİM KUTUSU */
+        .tournament-select-box {
+            border: 2px solid var(--accent-green);
+            border-radius: 12px;
+            font-weight: 700;
+            color: var(--main-navy);
+            padding: 8px 16px;
+            background-color: #fff;
+            max-width: 320px;
+            margin: 0 auto;
+        }
+
         /* AĞAÇ SİSTEMİ */
         .bracket-container { overflow-x: auto; padding: 30px 20px 50px 20px; cursor: grab; }
         .bracket-container::-webkit-scrollbar { height: 12px; }
@@ -148,9 +160,26 @@
         <div class="row justify-content-center mb-5" style="margin-top: -45px; position: relative; z-index: 10;">
             <div class="col-lg-12">
                 <div class="bg-white p-4 shadow" style="border-radius: 15px; border-top: 5px solid var(--accent-green);">
+                    
+                    <!-- TURNUVA SEÇİM DROPDOWN'I -->
+                    {% if tum_turnuvalar|length > 1 %}
+                    <form method="GET" class="text-center mb-4 pb-3 border-bottom">
+                        <label class="fw-bold me-2 text-muted"><i class="fa-solid fa-trophy text-warning me-1"></i> Turnuva Seçin:</label>
+                        <select name="turnuva_id" class="form-select d-inline-block w-auto tournament-select-box" onchange="this.form.submit()">
+                            {% for t in tum_turnuvalar %}
+                                <option value="{{ t.id }}" {% if aktif_turnuva and t.id == aktif_turnuva.id %}selected{% endif %}>
+                                    {{ t.isim }} {% if t.tamamlandi %}(Tamamlandı){% elif t.kayit_acik_mi %}(Kayıtlar Açık){% endif %}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        {% if secili_kategori %}<input type="hidden" name="kategori" value="{{ secili_kategori.id }}">{% endif %}
+                    </form>
+                    {% endif %}
+
+                    <!-- KATEGORİ SEÇİM BUTONLARI -->
                     <div class="d-flex justify-content-center flex-wrap gap-2">
                         {% for kat in kategoriler %}
-                            <a href="?kategori={{ kat.id }}" class="text-decoration-none">
+                            <a href="?kategori={{ kat.id }}{% if aktif_turnuva %}&turnuva_id={{ aktif_turnuva.id }}{% endif %}" class="text-decoration-none">
                                 <div class="category-pill {% if secili_kategori and secili_kategori.id == kat.id %}active{% endif %} shadow-sm m-0">
                                     {{ kat.isim }}
                                 </div>
