@@ -60,6 +60,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'core.context_processors.turnuva_durumu',
             ],
         },
     },
@@ -75,11 +76,16 @@ WSGI_APPLICATION = 'ahalteke.wsgi.application'
 # Eğer sistemde DATABASE_URL varsa (yani Vercel/Canlı Sunucudaysa) Neon/Vercel veritabanını kullan
 if 'DATABASE_URL' in os.environ:
     DATABASES = {
-        'default': dj_database_url.config(
-            conn_max_age=0,
-            disable_server_side_cursors=True
-        )
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'neondb',
+        'USER': 'neondb_owner',
+        'PASSWORD': 'npg_ZJ0cwKbdX9gR',
+        'HOST': 'ep-lingering-dream-abilqv2k-pooler.eu-west-2.aws.neon.tech',
+        'PORT': '5432',
     }
+}
+# Eğer yoksa (yani senin bilgisayarındaysa) yerel SQLite veritabanını kullan
 else:
     DATABASES = {
         'default': {
