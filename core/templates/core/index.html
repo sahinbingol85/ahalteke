@@ -238,7 +238,9 @@
                     <li class="nav-item"><a class="nav-link" href="{% url 'index' %}#hakkimizda">Kulüp</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'index' %}#galeri">Kortlar</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'turnuvalar' %}">Turnuvalar</a></li>
-                    <li class="nav-item"><a class="nav-link" href="{% url 'fikstur' %}">Fikstür & Sonuçlar</a></li>
+                    {% if aktif_turnuva_var_mi %}
+                        <li class="nav-item"><a class="nav-link" href="{% url 'fikstur' %}">Fikstür & Sonuçlar</a></li>
+                    {% endif %}
                     <li class="nav-item"><a class="nav-link" href="{% url 'index' %}#iletisim">İletişim</a></li>
                     
                     {% if request.user.is_authenticated %}
