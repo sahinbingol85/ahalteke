@@ -100,9 +100,12 @@
                     <li class="nav-item"><a class="nav-link" href="{% url 'index' %}#hakkimizda">Kulüp</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'index' %}#galeri">Kortlar</a></li>
                     <li class="nav-item"><a class="nav-link active" href="{% url 'turnuvalar' %}">Turnuvalar</a></li>
+
+                    <!-- SADECE AKTİF TURNUVA VARSA GÖRÜNÜR -->
                     {% if aktif_turnuva_var_mi %}
                         <li class="nav-item"><a class="nav-link" href="{% url 'fikstur' %}">Fikstür & Sonuçlar</a></li>
                     {% endif %}
+
                     <li class="nav-item"><a class="nav-link" href="{% url 'index' %}#iletisim">İletişim</a></li>
 
                     {% if request.user.is_authenticated %}
@@ -121,7 +124,8 @@
                                 </li>
                             </ul>
                         </li>
-                    {% else %}
+                    {% elif aktif_turnuva_var_mi %}
+                        <!-- SADECE TURNUVA DÖNEMİNDE OYUNCU GİRİŞİ GÖRÜNÜR -->
                         <li class="nav-item ms-lg-2">
                             <a class="nav-link text-warning fw-bold" href="{% url 'login' %}" style="border: 1px solid #ffc107; padding: 5px 15px; border-radius: 20px;">
                                 <i class="fa-solid fa-right-to-bracket me-1"></i> Giriş
@@ -207,7 +211,7 @@
                     </div>
 
                     {% else %}
-                    <!-- TURNUVA TAMAMLANDI / YENİ TAKVİM DUYURUSU EKRANI -->
+                    <!-- TURNUVA TAMAMLANDI EKRANI (FİKSTÜR LİNKİ KALDIRILDI) -->
                     <div class="coming-soon-box">
                         <div class="mb-3">
                             <span class="badge bg-warning text-dark shadow-sm py-2 px-3 fs-6 rounded-pill">
@@ -232,12 +236,9 @@
                             </p>
                         </div>
 
-                        <div class="d-flex justify-content-center gap-3 flex-wrap">
-                            <a href="{% url 'fikstur' %}" class="btn btn-accent">
-                                <i class="fa-solid fa-square-poll-vertical me-2 fa-lg"></i> Fikstür & Turnuva Sonuçları
-                            </a>
-                            <a href="https://instagram.com/ahalteketeniskulubu" target="_blank" class="btn btn-outline-dark rounded-pill px-4 py-3 fw-bold" style="border-width: 2px;">
-                                <i class="fa-brands fa-instagram fa-lg me-2"></i> Bizi Takip Edin
+                        <div class="d-flex justify-content-center">
+                            <a href="https://instagram.com/ahalteketeniskulubu" target="_blank" class="btn btn-outline-dark rounded-pill px-5 py-3 fw-bold" style="border-width: 2px;">
+                                <i class="fa-brands fa-instagram fa-lg me-2"></i> Duyurular İçin Bizi Takip Edin
                             </a>
                         </div>
                     </div>

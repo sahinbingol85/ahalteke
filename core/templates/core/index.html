@@ -11,7 +11,7 @@
 
     <style>
         :root {
-            /* YENİ RENK PALETİ (Lacivert & Yeşil) */
+            /* LACİVERT & YEŞİL PALET */
             --main-navy: #0a2342;
             --accent-green: #28a745;
             --text-dark: #222222;
@@ -203,7 +203,7 @@
 
         /* --- YÖNETİCİ BUTONU STİLİ --- */
         .admin-link {
-            color: rgba(255, 255, 255, 0.15); /* Normalde çok silik */
+            color: rgba(255, 255, 255, 0.15);
             text-decoration: none;
             font-size: 0.8rem;
             display: inline-flex;
@@ -238,9 +238,12 @@
                     <li class="nav-item"><a class="nav-link" href="{% url 'index' %}#hakkimizda">Kulüp</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'index' %}#galeri">Kortlar</a></li>
                     <li class="nav-item"><a class="nav-link" href="{% url 'turnuvalar' %}">Turnuvalar</a></li>
+                    
+                    <!-- SADECE AKTİF TURNUVA VARSA GÖRÜNÜR -->
                     {% if aktif_turnuva_var_mi %}
                         <li class="nav-item"><a class="nav-link" href="{% url 'fikstur' %}">Fikstür & Sonuçlar</a></li>
                     {% endif %}
+                    
                     <li class="nav-item"><a class="nav-link" href="{% url 'index' %}#iletisim">İletişim</a></li>
                     
                     {% if request.user.is_authenticated %}
@@ -259,7 +262,8 @@
                                 </li>
                             </ul>
                         </li>
-                    {% else %}
+                    {% elif aktif_turnuva_var_mi %}
+                        <!-- TURNUVA OLMADIĞI DÖNEMDE GİRİŞ BUTONU GİZLENİR -->
                         <li class="nav-item ms-lg-2">
                             <a class="nav-link text-warning fw-bold" href="{% url 'login' %}" style="border: 1px solid #ffc107; padding: 5px 15px; border-radius: 20px;">
                                 <i class="fa-solid fa-right-to-bracket me-1"></i> Giriş
@@ -411,8 +415,6 @@
         </div>
     </footer>
 
-    <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-
 </body>
 </html>
