@@ -219,7 +219,10 @@ def index(request):
 
 def turnuvalar(request):
     aktif_turnuvalar = Turnuva.objects.filter(kayit_acik_mi=True)
-    aktif_turnuva = aktif_turnuvalar.first() 
+    aktif_turnuva = aktif_turnuvalar.first()
+    # Biten turnuvaları göstermek veya arşivlemek için
+    gecmis_turnuvalar = Turnuva.objects.filter(tamamlandi=True).order_by('-id')
+    son_turnuva = Turnuva.objects.order_by('-id').first()
     
     if request.method == 'POST':
         form = KayitForm(request.POST)
@@ -239,7 +242,12 @@ def turnuvalar(request):
             
             if ayni_kayit_var_mi:
                 messages.error(request, f"Sayın {kayit.ad} {kayit.soyad}, bu bilgiler ile ön kayıt zaten mevcut!")
-                return render(request, 'core/turnuvalar.html', {'form': form, 'aktif_turnuvalar': aktif_turnuvalar})
+                return render(request, 'core/turnuvalar.html', {
+                    'form': form, 
+                    'aktif_turnuvalar': aktif_turnuvalar,
+                    'gecmis_turnuvalar': gecmis_turnuvalar,
+                    'son_turnuva': son_turnuva
+                })
             
             kayit.turnuva = aktif_turnuva 
             kayit.save() 
@@ -255,7 +263,13 @@ def turnuvalar(request):
     else:
         form = KayitForm()
 
-    return render(request, 'core/turnuvalar.html', {'form': form, 'aktif_turnuvalar': aktif_turnuvalar})
+    return render(request, 'core/turnuvalar.html', {
+        'form': form, 
+        'aktif_turnuvalar': aktif_turnuvalar,
+        'aktif_turnuva': aktif_turnuva,
+        'gecmis_turnuvalar': gecmis_turnuvalar,
+        'son_turnuva': son_turnuva
+    })
 
 
 # ==========================================
@@ -754,7 +768,15 @@ def hakem_canli_skor(request):
 # GENEL ZİYARETÇİ FİKSTÜR GÖRÜNÜMÜ
 # ==========================================
 def fikstur(request):
-    aktif_turnuva = Turnuva.objects.order_by('-id').first()
+    tum_turnuvalar = Turnuva.objects.all().order_by('-id')
+    
+    # Kullanıcı geçmiş turnuvalardan birini seçtiyse onu al, yoksa en son turnuvayı al
+    turnuva_id = request.GET.get('turnuva_id')
+    if turnuva_id:
+        aktif_turnuva = Turnuva.objects.filter(id=turnuva_id).first()
+    else:
+        aktif_turnuva = Turnuva.objects.order_by('-id').first()
+        
     kategoriler = Kategori.objects.all() if aktif_turnuva else []
     eleme_sirasi = ["Son 128", "Son 64", "Son 32", "Son 16", "Çeyrek Final", "Yarı Final", "Final"]
     
@@ -765,8 +787,10 @@ def fikstur(request):
     final_group_exists = "no"
     
     kat_id = request.GET.get('kategori')
-    if kat_id: secili_kategori = Kategori.objects.filter(id=kat_id).first()
-    elif kategoriler: secili_kategori = kategoriler.first()
+    if kat_id: 
+        secili_kategori = Kategori.objects.filter(id=kat_id).first()
+    elif kategoriler: 
+        secili_kategori = kategoriler.first()
         
     if secili_kategori and aktif_turnuva:
         grup_isimleri = Mac.objects.filter(
@@ -774,6 +798,7 @@ def fikstur(request):
         ).exclude(grup__in=eleme_sirasi).exclude(grup='BAY').values_list('grup', flat=True).distinct()
         
         for grup_adi in grup_isimleri:
+            # Orijinal parametre sıralamanız aynen korundu
             istatistikler = puan_durumu_hesapla(grup_adi, secili_kategori, aktif_turnuva)
             grup_maclari = Mac.objects.filter(
                 turnuva=aktif_turnuva, kategori=secili_kategori, grup=grup_adi
@@ -797,6 +822,7 @@ def fikstur(request):
             
     return render(request, 'core/fikstur.html', {
         'aktif_turnuva': aktif_turnuva,
+        'tum_turnuvalar': tum_turnuvalar,
         'kategoriler': kategoriler,
         'secili_kategori': secili_kategori,
         'gruplar_verisi': gruplar_verisi,

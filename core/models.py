@@ -63,9 +63,10 @@ class KapaliDurum(models.Model):
 # ==========================================
 class Turnuva(models.Model):
     isim = models.CharField(max_length=100, verbose_name="Turnuva Adı")
-    baslangic_tarihi = models.DateField(verbose_name="Başlangıç Tarihi")
+    baslangic_tarihi = models.DateField(verbose_name="Başlangıç Tarihi", null=True, blank=True)
     kayit_acik_mi = models.BooleanField(default=True, verbose_name="Kayıtlar Açık mı?")
-    eleme_yayinlandi = models.BooleanField(default=False, verbose_name="Ana Tablo Yayınlandı mı?") # YENİ EKLENDİ
+    eleme_yayinlandi = models.BooleanField(default=False, verbose_name="Ana Tablo Yayınlandı mı?")
+    tamamlandi = models.BooleanField(default=False, verbose_name="Turnuva Tamamlandı mı?")  # YENİ
 
     def __str__(self):
         return self.isim
