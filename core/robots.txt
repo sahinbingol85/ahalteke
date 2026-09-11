@@ -1,0 +1,23 @@
+User-agent: *
+Allow: /
+
+# Tüm Arama Motorları İçin Sitemap Yolu
+Sitemap: https://www.ahalteketeniskulubu.com/sitemap.xml
+
+# YAPAY ZEKA BOTLARINA AÇIK ÇEK (AIO Optimizasyonu)
+User-agent: GPTBot
+Allow: /
+User-agent: ChatGPT-User
+Allow: /
+User-agent: Google-Extended
+Allow: /
+User-agent: CCBot
+Allow: /
+User-agent: anthropic-ai
+Allow: /
+User-agent: PerplexityBot
+Allow: /
+
+# Admin ve Yönetim Panellerini Gizle (Güvenlik)
+Disallow: /admin/
+Disallow: /yonetim-paneli/
