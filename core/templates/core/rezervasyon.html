@@ -124,16 +124,20 @@
         <div class="date-navigator">
             <a href="?tarih={{ onceki_gun }}" class="date-btn"><i class="fa-solid fa-chevron-left"></i> Dün</a>
             
-            <form method="GET" action="" class="date-form" style="position: relative; flex-grow: 1; text-align: center; cursor: pointer;" onclick="document.getElementById('gizliTakvim').showPicker();">
-                <h3 class="current-date">
+            <!-- iOS UYUMLU YENİ TARİH SEÇİCİ ALAN -->
+            <div style="position: relative; flex-grow: 1; text-align: center; cursor: pointer;">
+                <h3 class="current-date" style="position: relative; z-index: 1; pointer-events: none;">
                     <i class="fa-regular fa-calendar-days me-1"></i>
                     {{ secili_tarih|date:"d M Y, l" }}
                     <i class="fa-solid fa-caret-down ms-1" style="font-size: 0.8rem; opacity: 0.5;"></i>
                 </h3>
-                <input type="date" id="gizliTakvim" name="tarih" value="{{ secili_tarih|date:'Y-m-d' }}" 
-                       onchange="this.form.submit()" 
-                       style="position: absolute; top: 0; left: 50%; opacity: 0; width: 1px; height: 1px; border: none; padding: 0; pointer-events: none;">
-            </form>
+                
+                <input type="date" 
+                       id="gizliTakvim" 
+                       value="{{ secili_tarih|date:'Y-m-d' }}" 
+                       onchange="window.location.href='?tarih=' + this.value"
+                       style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; z-index: 2; margin: 0; padding: 0;">
+            </div>
 
             <a href="?tarih={{ sonraki_gun }}" class="date-btn">Yarın <i class="fa-solid fa-chevron-right"></i></a>
         </div>
@@ -285,7 +289,7 @@
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function() {
-                navigator.serviceWorker.register("{% url 'sw.js' %}");
+                navigator.serviceWorker.register("{% url 'sw.js' %}").catch(() => {});
             });
         }
 
